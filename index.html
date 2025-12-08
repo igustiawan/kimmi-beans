@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kimmi Beans</title>
 
-  <!-- Load Farcaster Mini App SDK -->
+  <!-- Farcaster Mini App SDK -->
   <script src="https://cdn.farcaster.xyz/mini-apps-sdk/v1.1.0/bundle.js"></script>
+
+  <meta name="theme-color" content="#FFA856" />
 
   <style>
     body {
@@ -14,28 +16,27 @@
       padding: 0;
       background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
       font-family: "Inter", sans-serif;
-      color: #fff;
+      color: #ffffff;
       text-align: center;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .container {
-      margin: 0 auto;
+      width: 100%;
       max-width: 420px;
-      padding: 32px 20px;
+      padding: 20px;
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(12px);
-      padding: 28px;
-      border-radius: 22px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-      animation: fadeIn 0.6s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      background: rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(14px);
+      padding: 32px 24px;
+      border-radius: 26px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+      animation: fadeIn 0.5s ease-out;
     }
 
     .title {
@@ -45,43 +46,41 @@
     }
 
     .subtitle {
-      font-size: 15px;
+      font-size: 16px;
       opacity: 0.95;
-      margin-bottom: 24px;
+      margin-bottom: 26px;
     }
 
     .bean-img {
       width: 150px;
       height: 150px;
-      border-radius: 20px;
+      border-radius: 22px;
       object-fit: cover;
-      margin-bottom: 24px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-      animation: popIn 0.5s ease;
-    }
-
-    @keyframes popIn {
-      from { transform: scale(0.7); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+      margin-bottom: 26px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
     }
 
     .mint-btn {
       width: 75%;
-      background: #fff;
+      background: #ffffff;
       color: #ff7f2e;
       font-size: 18px;
       font-weight: 700;
       padding: 14px 0;
-      border-radius: 50px;
+      border-radius: 40px;
       border: none;
       cursor: pointer;
-      box-shadow: 0 6px 18px rgba(255, 130, 58, 0.45);
-      transition: transform 0.18s ease, box-shadow 0.2s ease;
+      box-shadow: 0 6px 16px rgba(255, 130, 58, 0.45);
+      transition: 0.2s;
     }
 
     .mint-btn:active {
       transform: scale(0.94);
-      box-shadow: 0 3px 10px rgba(255, 130, 58, 0.3);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
@@ -93,46 +92,36 @@
       <div class="title">Kimmi Beans 🫘🫘</div>
       <div class="subtitle">Mint cute, unique beans every day!</div>
 
-      <!-- BEAN IMAGE -->
-      <img src="https://www.xkimmi.fun/icon.png" class="bean-img" alt="Kimmi Bean" />
+      <img src="https://xkimmi.fun/icon.png" class="bean-img" alt="Kimmi Bean" />
 
-      <!-- BUTTON -->
       <button class="mint-btn" onclick="mintBean()">Mint Bean</button>
     </div>
   </div>
 
-
-  <!-- Farcaster SDK READY FIX -->
   <script>
-    function callReady() {
+    /**
+     * FARCASTER MINI APP READY()
+     * Recommended approach: polling until SDK available
+     */
+    function sendReady() {
       try {
         if (window.farcaster?.actions?.ready) {
-          console.log("Farcaster ready() called!");
           window.farcaster.actions.ready();
+          console.log("Mini App READY sent ✔");
           return true;
         }
-      } catch (e) {
-        console.log("ready() error:", e);
+      } catch (err) {
+        console.log("ready() error:", err);
       }
       return false;
     }
 
-    // Try calling ready immediately
-    if (!callReady()) {
-      console.log("SDK not ready, retrying...");
+    // Poll setiap 120ms sampai SDK siap
+    const readyInterval = setInterval(() => {
+      if (sendReady()) clearInterval(readyInterval);
+    }, 120);
 
-      // Retry every 300ms until SDK loads
-      const interval = setInterval(() => {
-        if (callReady()) {
-          clearInterval(interval);
-        }
-      }, 300);
-
-      // Timeout after 5 seconds to avoid infinite loop
-      setTimeout(() => clearInterval(interval), 5000);
-    }
-
-    // Example button action
+    // Action button
     function mintBean() {
       alert("Minting coming soon!");
     }
