@@ -2,7 +2,7 @@
   "frame": {
     "name": "Kimmi Beans",
     "version": "1",
-    "iconUrl": "https://www.xkimmi.fun/public/icon.png",
+    "iconUrl": "https://www.xkimmi.fun/icon.png",
     "homeUrl": "https://xkimmi.fun",
     "tags": [
       "collectibles"
@@ -15,7 +15,7 @@
     "subtitle": "Mint cute beans every day!",
     "description": "Kimmi Beans is a cute minting mini app where every tap gives you a new, unique bean with its own personality. Collect daily beans, show them off, and discover rare, silly, and legendary beans in the world of Kimmi!",
     "primaryCategory": "games",
-    "splashImageUrl": "https://xkimmi.fun/public/splash.png"
+    "splashImageUrl": "https://xkimmi.fun/splash.png"
   },
   "accountAssociation": {
     "header": "eyJmaWQiOjI5OTkyOSwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDllNWRhZWU0MzE2YWVGRjIwNWJDMzFjRTA5MzBFM2Q2OEJhZEM3ZkEifQ",
