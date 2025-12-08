@@ -91,3 +91,17 @@ body {
     width: 90%;
   }
 }
+
+.main-btn.disabled {
+  background: #cccccc;
+  color: #666666;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.note {
+  margin-top: 14px;
+  font-size: 14px;
+  color: white;
+  opacity: 0.9;
+}
