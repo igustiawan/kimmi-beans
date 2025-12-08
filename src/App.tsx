@@ -70,13 +70,10 @@ export default function App() {
   }
 
   async function shareToCast() {
-    const url = "https://xkimmi.fun/share"; // INI YANG DISHARE
-
-    const message =
-      `I just joined the Kimmi Beans whitelist! 🫘✨\n\nTry it here:\n${url}`;
+    const embedUrl = "https://xkimmi.fun/share";
 
     await sdk.actions.openUrl({
-      url: `https://warpcast.com/~/compose?text=${encodeURIComponent(message)}`
+      url: `https://warpcast.com/~/compose?embeds[]=${encodeURIComponent(embedUrl)}`
     });
   }
 
