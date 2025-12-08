@@ -71,10 +71,11 @@ export default function App() {
 
   async function shareToCast() {
     try {
+      const message =
+        "I just joined the Kimmi Beans whitelist! 🫘✨\n\nTry it here:\nhttps://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+
       await sdk.actions.openUrl({
-        url: `https://warpcast.com/~/compose?text=${encodeURIComponent(
-          "I just joined the Kimmi Beans whitelist! 🫘✨"
-        )}`,
+        url: `https://warpcast.com/~/compose?text=${encodeURIComponent(message)}`,
       });
     } catch (err) {
       console.error("Share error:", err);
