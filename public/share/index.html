@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- === REQUIRED FOR MINIAPP EMBED === -->
-  <meta property="fc:miniapp" />
+  <!-- === REQUIRED FOR MINIAPP EMBED (THIS ENABLES EMBED IN WARPCAST) === -->
+  <meta property="fc:frame" content="vNext" />
+  <meta property="fc:miniapp" content="true" />
 
   <!-- === OG OpenGraph Preview === -->
   <meta property="og:title" content="Kimmi Beans — Cute Beans Everyday!" />
@@ -14,11 +15,16 @@
   <meta property="og:url" content="https://xkimmi.fun/share" />
   <meta property="og:type" content="website" />
 
-  <!-- OPTIONAL: Twitter preview -->
+  <!-- === Twitter cards (optional but recommended) === -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Kimmi Beans — Cute Beans Everyday!" />
   <meta name="twitter:description" content="Join the whitelist and mint adorable beans!" />
   <meta name="twitter:image" content="https://xkimmi.fun/share/og.png" />
+
+  <!-- === REQUIRED FOR openApp() SUPPORT === -->
+  <meta property="fc:app:url" content="https://xkimmi.fun" />
+  <meta property="fc:app:name" content="Kimmi Beans" />
+  <meta property="fc:app:description" content="Mint cute, unique beans every day!" />
 
   <title>Kimmi Beans Share</title>
 
