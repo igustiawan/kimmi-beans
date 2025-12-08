@@ -72,9 +72,12 @@ export default function App() {
   async function shareToCast() {
     const embedUrl = "https://xkimmi.fun/share";
 
-    await sdk.actions.openUrl({
-      url: `https://warpcast.com/~/compose?embeds[]=${encodeURIComponent(embedUrl)}`
-    });
+  await sdk.actions.openUrl({
+    url:
+      "https://warpcast.com/~/compose?" +
+      `text=${encodeURIComponent("I just joined the Kimmi Beans whitelist! 🫘")}` +
+      `&embeds[]=${encodeURIComponent("https://xkimmi.fun/share")}`
+  });
   }
 
   return (
