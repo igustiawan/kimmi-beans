@@ -1,20 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // === Anti-bot basic protection ===
-  const signature = req.headers["fc-request-signature"];
-  if (!signature || signature !== "verified") {
-    return res.status(403).json({ error: "Invalid request. Bot detected." });
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    return res.status(500).json({ error: "Supabase keys missing" });
   }
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
   const { fid, username } = req.body;
 
@@ -22,29 +20,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing FID" });
   }
 
-  // === Check if already whitelisted ===
-  const { data: exists } = await supabase
+  // Insert ke DB
+  const { data, error } = await supabase
     .from("whitelist")
-    .select("id")
-    .eq("fid", fid)
-    .maybeSingle();
-
-  if (exists) {
-    return res.json({
-      success: true,
-      message: "Already whitelisted",
-    });
-  }
-
-  // === Insert new whitelist entry ===
-  const { error } = await supabase.from("whitelist").insert({
-    fid,
-    username: username || null,
-  });
+    .insert([{ fid, username }]);
 
   if (error) {
+    console.error("Supabase error:", error);
     return res.status(500).json({ error: error.message });
   }
 
-  return res.json({ success: true, message: "Whitelisted!" });
+  return res.status(200).json({ success: true, data });
 }

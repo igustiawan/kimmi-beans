@@ -1,16 +1,8 @@
 body {
-  margin: 0;
-  padding: 0;
-  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
-  font-family: "Inter", sans-serif;
-  color: #ffffff;
-  text-align: center;
-  min-height: 100vh;
-
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* ⬅️ ubah dari center */
-  padding-top: 60px;       /* ⬅️ dorong sedikit agar pas */
+  align-items: flex-start; 
+  padding-top: 40px;
 }
 
 
@@ -90,4 +82,9 @@ body {
     width: 88%;
     margin: 0 auto;
   }
+}
+
+html, body {
+  overflow: hidden;
+  height: 100%;
 }
