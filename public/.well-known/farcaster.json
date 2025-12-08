@@ -1,22 +1,31 @@
 {
   "frame": {
     "name": "Kimmi Beans",
+    "slug": "kimmi-beans",
     "version": "1",
-    "iconUrl": "https://www.xkimmi.fun/icon.png",
+
+    "iconUrl": "https://xkimmi.fun/icon.png",
     "homeUrl": "https://xkimmi.fun",
-    "tags": [
-      "collectibles"
-    ],
+
+    "tags": ["collectibles", "fun", "beans"],
+    "primaryCategory": "games",
+
     "tagline": "Discover and mint cute beans!",
-    "buttonTitle": "Open Kimmi Beans",
-    "ogTitle": "Mint Your Daily Kimmi Bean!",
-    "ogDescription": "Mint cute, unique beans daily. Collect your favorites and enjoy the world of Kimmi Beans!",
-    "splashBackgroundColor": "#FFA856",
     "subtitle": "Mint cute beans every day!",
     "description": "Mint a unique bean every day! Collect cute and rare beans, each with its own personality, and grow your collection.",
-    "primaryCategory": "games",
-    "splashImageUrl": "https://xkimmi.fun/splash.png"
+
+    "buttonTitle": "Open Kimmi Beans",
+
+    "splashImageUrl": "https://xkimmi.fun/splash.png",
+    "splashBackgroundColor": "#FFA856",
+
+    "openGraph": {
+      "title": "Mint Your Daily Kimmi Bean!",
+      "description": "Mint cute, unique beans daily. Collect your favorites and enjoy the world of Kimmi Beans!",
+      "image": "https://xkimmi.fun/share/og-soft.png"
+    }
   },
+
   "accountAssociation": {
     "header": "eyJmaWQiOjI5OTkyOSwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDllNWRhZWU0MzE2YWVGRjIwNWJDMzFjRTA5MzBFM2Q2OEJhZEM3ZkEifQ",
     "payload": "eyJkb21haW4iOiJ4a2ltbWkuZnVuIn0",

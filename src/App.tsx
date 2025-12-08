@@ -70,12 +70,15 @@ export default function App() {
   }
 
 async function shareToCast() {
-  const url = "https://xkimmi.fun/share?v=2";
+  const miniAppURL =
+    "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
 
-  const msg = `I just joined the Kimmi Beans whitelist! 🫘✨`;
+  const msg = "I just joined the Kimmi Beans whitelist! 🫘✨";
 
   await sdk.actions.openUrl({
-    url: `https://warpcast.com/~/compose?text=${encodeURIComponent(msg)}&embeds[]=${encodeURIComponent(url)}`
+    url:
+      `https://warpcast.com/~/compose?text=${encodeURIComponent(msg)}` +
+      `&embeds[]=${encodeURIComponent(miniAppURL)}`
   });
 }
 
