@@ -30,12 +30,18 @@
       padding: 28px;
       border-radius: 22px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      animation: fadeIn 0.6s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .title {
-      font-size: 28px;
+      font-size: 30px;
       font-weight: 800;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .subtitle {
@@ -45,30 +51,37 @@
     }
 
     .bean-img {
-      width: 140px;
-      height: 140px;
-      border-radius: 18px;
+      width: 150px;
+      height: 150px;
+      border-radius: 20px;
       object-fit: cover;
-      margin-bottom: 22px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      margin-bottom: 24px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      animation: popIn 0.5s ease;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
 
     .mint-btn {
-      width: 70%;
-      background: white;
+      width: 75%;
+      background: #fff;
       color: #ff7f2e;
       font-size: 18px;
       font-weight: 700;
       padding: 14px 0;
-      border-radius: 40px;
+      border-radius: 50px;
       border: none;
       cursor: pointer;
-      box-shadow: 0 6px 16px rgba(255, 130, 58, 0.4);
-      transition: 0.2s;
+      box-shadow: 0 6px 18px rgba(255, 130, 58, 0.45);
+      transition: transform 0.18s ease, box-shadow 0.2s ease;
     }
 
     .mint-btn:active {
-      transform: scale(0.95);
+      transform: scale(0.94);
+      box-shadow: 0 3px 10px rgba(255, 130, 58, 0.3);
     }
   </style>
 </head>
@@ -88,22 +101,38 @@
     </div>
   </div>
 
-  <script>
-    // Notify Warpcast Mini App that page is ready → Splash screen will hide
-    window.addEventListener("DOMContentLoaded", () => {
-      try {
-        if (window.farcaster?.actions) {
-          window.farcaster.actions.ready();
-        } else {
-          // fallback (manual postMessage)
-          window.parent.postMessage({ type: "farcaster:ready" }, "*");
-        }
-      } catch (err) {
-        console.log("Farcaster ready() error:", err);
-      }
-    });
 
-    // Example action
+  <!-- Farcaster SDK READY FIX -->
+  <script>
+    function callReady() {
+      try {
+        if (window.farcaster?.actions?.ready) {
+          console.log("Farcaster ready() called!");
+          window.farcaster.actions.ready();
+          return true;
+        }
+      } catch (e) {
+        console.log("ready() error:", e);
+      }
+      return false;
+    }
+
+    // Try calling ready immediately
+    if (!callReady()) {
+      console.log("SDK not ready, retrying...");
+
+      // Retry every 300ms until SDK loads
+      const interval = setInterval(() => {
+        if (callReady()) {
+          clearInterval(interval);
+        }
+      }, 300);
+
+      // Timeout after 5 seconds to avoid infinite loop
+      setTimeout(() => clearInterval(interval), 5000);
+    }
+
+    // Example button action
     function mintBean() {
       alert("Minting coming soon!");
     }
