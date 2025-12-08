@@ -70,16 +70,14 @@ export default function App() {
   }
 
   async function shareToCast() {
-    try {
-      const message =
-        "I just joined the Kimmi Beans whitelist! 🫘✨\n\nTry it here:\nhttps://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+    const url = "https://xkimmi.fun/share"; // INI YANG DISHARE
 
-      await sdk.actions.openUrl({
-        url: `https://warpcast.com/~/compose?text=${encodeURIComponent(message)}`,
-      });
-    } catch (err) {
-      console.error("Share error:", err);
-    }
+    const message =
+      `I just joined the Kimmi Beans whitelist! 🫘✨\n\nTry it here:\n${url}`;
+
+    await sdk.actions.openUrl({
+      url: `https://warpcast.com/~/compose?text=${encodeURIComponent(message)}`
+    });
   }
 
   return (
