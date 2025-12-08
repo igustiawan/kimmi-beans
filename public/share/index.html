@@ -4,33 +4,44 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- 🚀 MiniApp Embed (WAJIB UNTUK TOMBOL OPEN APP) -->
-  <meta name="fc:miniapp" content='{"version":"1.0","type":"mini-app","miniAppId":"VV7PYCDPdD04"}' />
-  <meta name="fc:frame" content='{"version":"1.0","type":"mini-app","miniAppId":"VV7PYCDPdD04"}' />
+  <!-- ⭐ REQUIRED — VALID MiniAppEmbed schema -->
+  <meta name="fc:miniapp" content='{
+    "type": "miniapp",
+    "version": "1",
+    "id": "VV7PYCDPdD04"
+  }' />
+
+  <!-- Backward compatibility -->
+  <meta name="fc:frame" content='{
+    "type": "miniapp",
+    "version": "1",
+    "id": "VV7PYCDPdD04"
+  }' />
 
   <!-- OpenGraph -->
   <meta property="og:title" content="Kimmi Beans — Cute Beans Everyday!" />
-  <meta property="og:description" content="I just joined the Kimmi Beans whitelist! 🫘✨" />
+  <meta property="og:description" content="Mint cute, unique beans every day!" />
   <meta property="og:image" content="https://xkimmi.fun/share/og.png" />
   <meta property="og:url" content="https://xkimmi.fun/share" />
   <meta property="og:type" content="website" />
 
   <title>Kimmi Beans Share</title>
 
-  <!-- Redirect NON-Warpcast users -->
-  <script>
-    const isWarpcast = navigator.userAgent.includes("Warpcast");
-
-    // Delay redirect sedikit agar Warpcast bisa fetch meta tags lebih dulu
-    if (!isWarpcast) {
-      setTimeout(() => {
-        window.location.href =
-          "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
-      }, 300); // 300ms = cukup aman
+  <style>
+    body {
+      background: #ffa856;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+      margin: 0;
     }
-  </script>
+  </style>
 </head>
 
 <body>
+  <h2>Kimmi Beans 🫘</h2>
 </body>
 </html>
