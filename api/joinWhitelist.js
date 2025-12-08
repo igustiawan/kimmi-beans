@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
   if (!fid) return res.status(400).json({ error: "Missing FID" });
 
-  // Cek jika FID sudah whitelisted
+  // Cek sudah daftar?
   const { data: exists } = await supabase
     .from("whitelist")
     .select("fid")
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   if (exists) {
     return res.status(200).json({
       success: true,
-      message: "Already whitelisted",
+      status: "already",
     });
   }
 
@@ -27,7 +27,12 @@ export default async function handler(req, res) {
     .from("whitelist")
     .insert([{ fid, username }]);
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
 
-  return res.status(200).json({ success: true });
+  return res.status(200).json({
+    success: true,
+    status: "new",
+  });
 }
