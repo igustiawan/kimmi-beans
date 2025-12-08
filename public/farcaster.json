@@ -1,0 +1,14 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "app": {
+    "name": "Kimmi Beans",
+    "description": "Mint cute, unique beans daily!",
+    "iconUrl": "https://i.imgur.com/xuP8W6V.png",
+    "splashImageUrl": "https://i.imgur.com/VX4PyT0.png",
+    "publisher": "Kimmi"
+  }
+}

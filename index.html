@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kimmi Beans</title>
+
+  <script src="https://cdn.farcaster.xyz/mini-apps-sdk/v1.1.0/bundle.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #ff8f3a;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      color: #333;
+    }
+    .bean {
+      width: 180px;
+      margin: 40px auto;
+    }
+    button {
+      background: #fff;
+      border: none;
+      padding: 14px 22px;
+      font-size: 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Kimmi Beans 🫘✨</h1>
+  <p>Mint cute, unique beans every day!</p>
+
+  <img src="./public/icon.png" class="bean" />
+
+  <button id="mintBtn">Mint Bean</button>
+
+  <script>
+    async function start() {
+      const mini = window.FarcasterMini;
+      await mini.actions.ready();
+
+      document.getElementById("mintBtn").onclick = async () => {
+        alert("You minted a Kimmi Bean! 🫘✨");
+      };
+    }
+    start();
+  </script>
+
+</body>
+</html>
