@@ -5,52 +5,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kimmi Beans</title>
 
-  <script src="https://cdn.farcaster.xyz/mini-apps-sdk/v1.1.0/bundle.js"></script>
-
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #ff8f3a;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #FFA856 0%, #FF8A3D 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      border-radius: 20px;
+      padding: 28px;
       text-align: center;
-      color: #333;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
-    .bean {
-      width: 180px;
-      margin: 40px auto;
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #fff;
     }
-    button {
+
+    .subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+      color: #fff;
+      margin-bottom: 24px;
+    }
+
+    .bean-img {
+      max-width: 70%;
+      border-radius: 14px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      margin: 0 auto 24px auto;
+      display: block;
+    }
+
+    .mint-btn {
       background: #fff;
-      border: none;
-      padding: 14px 22px;
+      color: #FF7A2E;
+      font-weight: 700;
       font-size: 18px;
-      border-radius: 12px;
+      padding: 14px 32px;
+      border-radius: 50px;
+      border: none;
       cursor: pointer;
-      margin-top: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: transform 0.1s ease;
+    }
+
+    .mint-btn:active {
+      transform: scale(0.96);
     }
   </style>
 </head>
+
 <body>
+  <div class="container">
+    <h1>Kimmi Beans 🫘🫘</h1>
+    <div class="subtitle">Mint cute, unique beans every day!</div>
 
-  <h1>Kimmi Beans 🫘✨</h1>
-  <p>Mint cute, unique beans every day!</p>
+    <img src="/bean.png" alt="Kimmi Bean" class="bean-img" />
 
-  <img src="./public/icon.png" class="bean" />
-
-  <button id="mintBtn">Mint Bean</button>
-
-  <script>
-    async function start() {
-      const mini = window.FarcasterMini;
-      await mini.actions.ready();
-
-      document.getElementById("mintBtn").onclick = async () => {
-        alert("You minted a Kimmi Bean! 🫘✨");
-      };
-    }
-    start();
-  </script>
-
+    <button class="mint-btn">Mint Bean</button>
+  </div>
 </body>
 </html>
