@@ -1,42 +1,31 @@
 import { useEffect } from "react";
-import "./App.css";
+import { sdk } from "@farcaster/miniapp-sdk";
 
 export default function App() {
-  // Mini App Ready()
-  const sendReady = () => {
-    try {
-      if (window.farcaster?.actions?.ready) {
-        window.farcaster.actions.ready();
-        console.log("Mini App READY sent ✔");
-        return true;
-      }
-    } catch (err) {
-      console.log("ready() error:", err);
-    }
-    return false;
-  };
-
+  // FARCASTER READY()
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (sendReady()) clearInterval(interval);
-    }, 120);
+    async function init() {
+      try {
+        await sdk.actions.ready();
+        console.log("Mini App READY sent!");
+      } catch (err) {
+        console.error("READY ERROR:", err);
+      }
+    }
+    init();
   }, []);
 
-  const mintBean = () => {
+  function mintBean() {
     alert("Minting coming soon!");
-  };
+  }
 
   return (
     <div className="container">
       <div className="card">
-        <div className="title">Kimmi Beans</div>
+        <div className="title">Kimmi Beans 🫘🫘</div>
         <div className="subtitle">Mint cute, unique beans every day!</div>
 
-        <img
-          src="https://xkimmi.fun/icon.png"
-          className="bean-img"
-          alt="Kimmi Bean"
-        />
+        <img src="/icon.png" className="bean-img" alt="Kimmi Bean" />
 
         <button className="mint-btn" onClick={mintBean}>
           Mint Bean
