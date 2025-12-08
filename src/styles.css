@@ -4,8 +4,8 @@ body {
   background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
   font-family: "Inter", sans-serif;
   color: #ffffff;
-  text-align: center;
   min-height: 100vh;
+
   display: flex;
   justify-content: center;
   align-items: center;
@@ -14,58 +14,65 @@ body {
 .container {
   width: 100%;
   max-width: 420px;
-  padding: 20px;
+  padding: 16px;
 }
 
 .card {
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(14px);
-  padding: 32px 24px;
+  padding: 28px 20px;
   border-radius: 26px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
-  animation: fadeIn 0.5s ease-out;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  animation: fadeIn 0.38s ease-out;
 }
 
 .title {
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 800;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .subtitle {
-  font-size: 16px;
+  font-size: 15px;
   opacity: 0.95;
-  margin-bottom: 26px;
+  margin-bottom: 20px;
 }
 
 .bean-img {
-  width: 150px;
-  height: 150px;
-  border-radius: 22px;
+  width: 120px;
+  height: 120px;
+  border-radius: 20px;
   object-fit: cover;
-  margin-bottom: 26px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+
+  margin-bottom: 22px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
 }
 
-.mint-btn {
-  width: 75%;
+.main-btn {
+  width: 70%;
   background: #ffffff;
   color: #ff7f2e;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
-  padding: 14px 0;
+  padding: 12px 0;
   border-radius: 40px;
   border: none;
   cursor: pointer;
   box-shadow: 0 6px 16px rgba(255, 130, 58, 0.45);
-  transition: 0.2s;
+  transition: 0.15s ease;
 }
 
-.mint-btn:active {
+.main-btn:active {
   transform: scale(0.94);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }

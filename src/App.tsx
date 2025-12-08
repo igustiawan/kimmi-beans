@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
 
 export default function App() {
-  // FARCASTER READY()
   useEffect(() => {
     async function init() {
       try {
@@ -15,8 +14,8 @@ export default function App() {
     init();
   }, []);
 
-  function mintBean() {
-    alert("Minting coming soon!");
+  function joinWhitelist() {
+    alert("Whitelist registration opening soon!");
   }
 
   return (
@@ -27,8 +26,8 @@ export default function App() {
 
         <img src="/icon.png" className="bean-img" alt="Kimmi Bean" />
 
-        <button className="mint-btn" onClick={mintBean}>
-          Mint Bean
+        <button className="main-btn" onClick={joinWhitelist}>
+          Join Whitelist
         </button>
       </div>
     </div>
