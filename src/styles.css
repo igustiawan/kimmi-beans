@@ -107,3 +107,22 @@ body {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+.share-btn {
+  margin-top: 14px;
+  width: 75%;
+  background: #ffffff;
+  color: #ff7f2e;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 12px 0;
+  border-radius: 40px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(255, 130, 58, 0.45);
+  transition: 0.15s ease;
+}
+
+.share-btn:active {
+  transform: scale(0.94);
+}

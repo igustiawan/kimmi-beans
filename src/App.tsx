@@ -69,27 +69,39 @@ export default function App() {
     setLoading(false);
   }
 
+  async function shareToCast() {
+    try {
+      await sdk.actions.openUrl({
+        url: `https://warpcast.com/~/compose?text=${encodeURIComponent(
+          "I just joined the Kimmi Beans whitelist! 🫘✨"
+        )}`,
+      });
+    } catch (err) {
+      console.error("Share error:", err);
+    }
+  }
+
   return (
     <div className="container">
       <div className="card">
-
         <div className="title">Kimmi Beans</div>
         <div className="subtitle">Mint cute, unique beans every day!</div>
 
-        <img src="/icon.png" className="bean-img" />
+        <img src="/icon.png" className="bean-img" alt="Kimmi Bean" />
 
         <button
-          className="main-btn"
-          disabled={loading || isWhitelisted}
+          className={`main-btn ${isWhitelisted ? "disabled" : ""}`}
+          disabled={isWhitelisted}
           onClick={joinWhitelist}
         >
-          {loading
-            ? "Processing..."
-            : isWhitelisted
-            ? "Whitelisted ✓"
-            : "Join Whitelist"}
+          {isWhitelisted ? "Whitelisted ✓" : "Join Whitelist"}
         </button>
 
+        {isWhitelisted && (
+          <button className="share-btn" onClick={shareToCast}>
+            Share to Cast
+          </button>
+        )}
       </div>
     </div>
   );
