@@ -4,21 +4,39 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- ⭐ REQUIRED — VALID MiniAppEmbed schema -->
+  <!-- ⭐ MiniApp Embed (INI YANG MEMBUAT TOMBOL OPEN APP MUNCUL) -->
   <meta name="fc:miniapp" content='{
-    "type": "miniapp",
-    "version": "1",
-    "id": "VV7PYCDPdD04"
+    "version":"1",
+    "imageUrl":"https://xkimmi.fun/share/og.png",
+    "button":{
+      "title":"Open Kimmi Beans",
+      "action":{
+        "type":"launch_miniapp",
+        "name":"Kimmi Beans",
+        "url":"https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans",
+        "splashImageUrl":"https://xkimmi.fun/icon.png",
+        "splashBackgroundColor":"#FFA856"
+      }
+    }
   }' />
 
   <!-- Backward compatibility -->
   <meta name="fc:frame" content='{
-    "type": "miniapp",
-    "version": "1",
-    "id": "VV7PYCDPdD04"
+    "version":"1",
+    "imageUrl":"https://xkimmi.fun/share/og.png",
+    "button":{
+      "title":"Open Kimmi Beans",
+      "action":{
+        "type":"launch_miniapp",
+        "name":"Kimmi Beans",
+        "url":"https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans",
+        "splashImageUrl":"https://xkimmi.fun/icon.png",
+        "splashBackgroundColor":"#FFA856"
+      }
+    }
   }' />
 
-  <!-- OpenGraph -->
+  <!-- OG (image diambil Warpcast untuk preview card) -->
   <meta property="og:title" content="Kimmi Beans — Cute Beans Everyday!" />
   <meta property="og:description" content="Mint cute, unique beans every day!" />
   <meta property="og:image" content="https://xkimmi.fun/share/og.png" />
@@ -30,18 +48,18 @@
   <style>
     body {
       background: #ffa856;
+      color: white;
       font-family: sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      color: white;
       margin: 0;
     }
   </style>
 </head>
 
 <body>
-  <h2>Kimmi Beans 🫘</h2>
+  <h2>Kimmi Beans 🫘 — Shared via MiniApp</h2>
 </body>
 </html>
