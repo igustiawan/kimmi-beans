@@ -10,22 +10,30 @@ html, body {
 body {
   display: flex;
   justify-content: center;
-  align-items: center; /* PENTING: bikin card tetap di tengah secara vertikal */
+  align-items: center; /* Bikin card tetap center vertikal & horizontal */
   background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
   font-family: "Inter", sans-serif;
   color: #ffffff;
   overflow: hidden; /* hilangkan scroll */
 }
 
-/* Container */
+/* Container sebagai centering wrapper */
 .container {
   width: 100%;
   max-width: 420px;
-  padding: 16px;
+  padding: 0 16px;
+  box-sizing: border-box;
+
+  display: flex;
+  justify-content: center;  /* PENTING → center horizontal */
+  align-items: center;
 }
 
 /* CARD */
 .card {
+  width: 100%;
+  max-width: 420px;
+
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(14px);
   padding: 28px 20px;
@@ -80,18 +88,7 @@ body {
   transform: scale(0.94);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* MOBILE TWEAK */
-@media (max-width: 480px) {
-  .card {
-    width: 90%;
-  }
-}
-
+/* tombol disabled */
 .main-btn.disabled {
   background: #cccccc;
   color: #666666;
@@ -104,4 +101,9 @@ body {
   font-size: 14px;
   color: white;
   opacity: 0.9;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
