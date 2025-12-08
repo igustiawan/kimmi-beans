@@ -53,7 +53,7 @@ export default function App() {
   return (
     <div className="container">
       <div className="card">
-        <div className="title">Kimmi Beans 🫘🫘</div>
+        <div className="title">Kimmi Beans</div>
         <div className="subtitle">Mint cute, unique beans every day!</div>
 
         <img src="/icon.png" className="bean-img" alt="Kimmi Bean" />
