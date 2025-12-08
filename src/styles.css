@@ -1,0 +1,55 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
+  font-family: Inter, sans-serif;
+  color: #fff;
+  text-align: center;
+}
+
+.container {
+  margin: 0 auto;
+  max-width: 440px;
+  padding: 32px 20px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px);
+  padding: 28px;
+  border-radius: 22px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bean-img {
+  width: 150px;
+  height: 150px;
+  border-radius: 20px;
+  object-fit: cover;
+  margin-bottom: 22px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.mint-btn {
+  width: 70%;
+  background: white;
+  color: #ff7f2e;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 14px 0;
+  border-radius: 40px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(255, 130, 58, 0.4);
+  transition: 0.2s;
+}
+
+.mint-btn:active {
+  transform: scale(0.95);
+}

@@ -1,131 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kimmi Beans</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kimmi Beans</title>
 
-  <!-- Farcaster Mini App SDK -->
-  <script src="https://cdn.farcaster.xyz/mini-apps-sdk/v1.1.0/bundle.js"></script>
+    <!-- Farcaster Mini App SDK -->
+    <script src="https://cdn.farcaster.xyz/mini-apps-sdk/v1.1.0/bundle.js"></script>
 
-  <meta name="theme-color" content="#FFA856" />
+    <meta name="theme-color" content="#FFA856" />
+  </head>
 
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
-      font-family: "Inter", sans-serif;
-      color: #ffffff;
-      text-align: center;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 420px;
-      padding: 20px;
-    }
-
-    .card {
-      background: rgba(255, 255, 255, 0.22);
-      backdrop-filter: blur(14px);
-      padding: 32px 24px;
-      border-radius: 26px;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
-      animation: fadeIn 0.5s ease-out;
-    }
-
-    .title {
-      font-size: 30px;
-      font-weight: 800;
-      margin-bottom: 10px;
-    }
-
-    .subtitle {
-      font-size: 16px;
-      opacity: 0.95;
-      margin-bottom: 26px;
-    }
-
-    .bean-img {
-      width: 150px;
-      height: 150px;
-      border-radius: 22px;
-      object-fit: cover;
-      margin-bottom: 26px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
-    }
-
-    .mint-btn {
-      width: 75%;
-      background: #ffffff;
-      color: #ff7f2e;
-      font-size: 18px;
-      font-weight: 700;
-      padding: 14px 0;
-      border-radius: 40px;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 6px 16px rgba(255, 130, 58, 0.45);
-      transition: 0.2s;
-    }
-
-    .mint-btn:active {
-      transform: scale(0.94);
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
-</head>
-
-<body>
-
-  <div class="container">
-    <div class="card">
-      <div class="title">Kimmi Beans 🫘🫘</div>
-      <div class="subtitle">Mint cute, unique beans every day!</div>
-
-      <img src="https://xkimmi.fun/icon.png" class="bean-img" alt="Kimmi Bean" />
-
-      <button class="mint-btn" onclick="mintBean()">Mint Bean</button>
-    </div>
-  </div>
-
-  <script>
-    /**
-     * FARCASTER MINI APP READY()
-     * Recommended approach: polling until SDK available
-     */
-    function sendReady() {
-      try {
-        if (window.farcaster?.actions?.ready) {
-          window.farcaster.actions.ready();
-          console.log("Mini App READY sent ✔");
-          return true;
-        }
-      } catch (err) {
-        console.log("ready() error:", err);
-      }
-      return false;
-    }
-
-    // Poll setiap 120ms sampai SDK siap
-    const readyInterval = setInterval(() => {
-      if (sendReady()) clearInterval(readyInterval);
-    }, 120);
-
-    // Action button
-    function mintBean() {
-      alert("Minting coming soon!");
-    }
-  </script>
-
-</body>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
