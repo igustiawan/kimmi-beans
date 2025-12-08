@@ -14,8 +14,40 @@ export default function App() {
     init();
   }, []);
 
-  function joinWhitelist() {
-    alert("Whitelist registration opening soon!");
+  // === JOIN WHITELIST ===
+  async function joinWhitelist() {
+    try {
+      const ctx = await sdk.context;
+      const user = ctx?.user;
+
+      if (!user?.fid) {
+        alert("Unable to get user info. Please reopen the mini app.");
+        return;
+      }
+
+      const res = await fetch("/api/joinWhitelist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "fc-request-signature": "verified"
+        },
+        body: JSON.stringify({
+          fid: user.fid,
+          username: user.username,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (json.success) {
+        alert("You're whitelisted! 🎉");
+      } else {
+        alert("Error: " + json.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong.");
+    }
   }
 
   return (
