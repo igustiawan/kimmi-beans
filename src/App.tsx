@@ -88,7 +88,7 @@ export default function App() {
         <div className="title">Kimmi Beans</div>
         <div className="subtitle">Mint cute, unique beans every day!</div>
 
-        <img src="/icon.png" className="bean-img" alt="Kimmi Bean" />
+        <img src="/bean.gif" className="bean-img" alt="Kimmi Bean" />
 
         <button
           className={`main-btn ${isWhitelisted ? "disabled" : ""}`}
