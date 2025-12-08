@@ -1,77 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kimmi Beans</title>
+
+  <!-- Load Farcaster Mini App SDK -->
+  <script src="https://cdn.farcaster.xyz/mini-apps-sdk/v1.1.0/bundle.js"></script>
 
   <style>
     body {
       margin: 0;
       padding: 0;
-      font-family: Arial, sans-serif;
-      background: #FFA856;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
+      background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
+      font-family: "Inter", sans-serif;
+      color: #fff;
       text-align: center;
-      padding-top: 32px;
     }
 
-    .wrap {
-      width: 100%;
+    .container {
+      margin: 0 auto;
       max-width: 420px;
+      padding: 32px 20px;
     }
 
-    h1 {
-      margin: 0;
+    .card {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(12px);
+      padding: 28px;
+      border-radius: 22px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .title {
       font-size: 28px;
-      font-weight: 700;
-      color: #ffffff;
+      font-weight: 800;
+      margin-bottom: 8px;
     }
 
     .subtitle {
-      font-size: 14px;
-      color: #ffffffcc;
-      margin-top: 6px;
-      margin-bottom: 20px;
+      font-size: 15px;
+      opacity: 0.95;
+      margin-bottom: 24px;
     }
 
     .bean-img {
-      width: 160px;
-      height: 160px;
-      object-fit: contain;
-      display: block;
-      margin: 0 auto 16px auto;
+      width: 140px;
+      height: 140px;
+      border-radius: 18px;
+      object-fit: cover;
+      margin-bottom: 22px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
     }
 
     .mint-btn {
+      width: 70%;
       background: white;
-      color: #FF7A2E;
+      color: #ff7f2e;
+      font-size: 18px;
       font-weight: 700;
-      padding: 14px 30px;
+      padding: 14px 0;
       border-radius: 40px;
       border: none;
-      font-size: 18px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      margin-top: 8px;
+      box-shadow: 0 6px 16px rgba(255, 130, 58, 0.4);
+      transition: 0.2s;
     }
 
     .mint-btn:active {
-      transform: scale(0.97);
+      transform: scale(0.95);
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <h1>Kimmi Beans 🫘🫘</h1>
-    <div class="subtitle">Mint cute, unique beans every day!</div>
 
-    <img src="/bean.png" alt="Bean" class="bean-img" />
+  <div class="container">
+    <div class="card">
+      <div class="title">Kimmi Beans 🫘🫘</div>
+      <div class="subtitle">Mint cute, unique beans every day!</div>
 
-    <button class="mint-btn">Mint Bean</button>
+      <!-- BEAN IMAGE -->
+      <img src="https://www.xkimmi.fun/icon.png" class="bean-img" alt="Kimmi Bean" />
+
+      <!-- BUTTON -->
+      <button class="mint-btn" onclick="mintBean()">Mint Bean</button>
+    </div>
   </div>
+
+  <script>
+    // Notify Warpcast Mini App that page is ready → Splash screen will hide
+    window.addEventListener("DOMContentLoaded", () => {
+      try {
+        if (window.farcaster?.actions) {
+          window.farcaster.actions.ready();
+        } else {
+          // fallback (manual postMessage)
+          window.parent.postMessage({ type: "farcaster:ready" }, "*");
+        }
+      } catch (err) {
+        console.log("Farcaster ready() error:", err);
+      }
+    });
+
+    // Example action
+    function mintBean() {
+      alert("Minting coming soon!");
+    }
+  </script>
+
 </body>
 </html>
