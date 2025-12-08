@@ -4,37 +4,42 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Mini App Metadata (Required for Open App) -->
-  <meta property="fc:frame" content="vNext" />
-  <meta property="fc:analog-domain" content="xkimmi.fun" />
-  <meta property="fc:app:deeplink" content="farcaster://miniapp/VV7PYCDPdD04" />
-
-  <!-- OG Tags -->
+  <!-- Required untuk OG Mini App embed -->
+  <meta property="fc:open-graph-frame" content="https://xkimmi.fun/share/og-frame.html" />
+  
+  <!-- OpenGraph -->
   <meta property="og:title" content="Kimmi Beans — Cute Beans Everyday!" />
-  <meta property="og:description" content="Mint cute, unique beans every day!" />
+  <meta property="og:description" content="I just joined the Kimmi Beans whitelist! 🫘✨" />
   <meta property="og:image" content="https://xkimmi.fun/share/og.png" />
   <meta property="og:url" content="https://xkimmi.fun/share" />
   <meta property="og:type" content="website" />
 
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Kimmi Beans — Cute Beans Everyday!" />
-  <meta name="twitter:description" content="Join the whitelist and mint adorable beans!" />
-  <meta name="twitter:image" content="https://xkimmi.fun/share/og.png" />
-
   <title>Kimmi Beans Share</title>
+
+  <script>
+    // Redirect *hanya ketika user membuka via browser biasa*
+    const isWarpcast = navigator.userAgent.includes("Warpcast");
+    if (!isWarpcast) {
+      window.location.href = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+    }
+  </script>
+
+  <style>
+    body {
+      background: #ffa856;
+      color: white;
+      font-family: sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      margin: 0;
+      padding-bottom: 40px;
+    }
+  </style>
 </head>
 
-<body style="
-  background:#ffa856;
-  color:white;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  margin:0;
-  font-family:sans-serif;
-">
+<body>
   <h2>Kimmi Beans 🫘 — Shared from Mini App</h2>
 </body>
 </html>
