@@ -4,7 +4,10 @@ export default async function handler(req, res) {
   const { id } = req.query;
   const tokenId = parseInt(id);
 
-  // 1. Cek apakah metadata ID ini sudah tersimpan
+  // ambil data user dari query (miniapp send?)
+  const { fid, username, wallet } = req.query;
+
+  // Cek metadata existing
   const { data, error } = await supabase
     .from("nft_metadata")
     .select("*")
@@ -13,30 +16,33 @@ export default async function handler(req, res) {
 
   let rarity = data?.rarity;
 
-  // 2. Jika belum ada → generate random → simpan
+  // Generate & insert kalau belum ada
   if (!rarity) {
-    rarity = getRarity(); 
+    rarity = getRarity();
 
-    await supabase
-      .from("nft_metadata")
-      .insert([{ id: tokenId, rarity }]);
+    await supabase.from("nft_metadata").insert([
+      {
+        id: tokenId,
+        fid,
+        username,
+        wallet,
+        rarity
+      }
+    ]);
   }
 
-  // 3. Return metadata JSON untuk OpenSea
   res.status(200).json({
     name: `Kimmi Bean #${tokenId}`,
     description: "Cute Bean NFT",
     image: `https://xkimmi.fun/beans/${rarity}.png`,
-    attributes: [
-      { trait_type: "Rarity", value: rarity }
-    ]
+    attributes: [{ trait_type: "Rarity", value: rarity }]
   });
 }
 
 function getRarity() {
   const r = Math.random();
-  if (r > 0.98) return "legendary";      // 2%
-  if (r > 0.90) return "epic";           // 8%
-  if (r > 0.70) return "rare";           // 20%
-  return "common";                       // 70%
+  if (r > 0.98) return "legendary";
+  if (r > 0.90) return "epic";
+  if (r > 0.70) return "rare";
+  return "common";
 }
