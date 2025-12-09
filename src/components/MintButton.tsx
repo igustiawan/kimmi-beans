@@ -20,21 +20,25 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
   const [minted, setMinted] = useState(false);
   const [toast, setToast] = useState("");
   const [mintData, setMintData] = useState<MintResult | null>(null);
-
-  const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
   const { writeContractAsync } = useWriteContract();
+  const { data: receipt } = useWaitForTransactionReceipt({ hash: txHash });
 
-  // === Wait transaction confirmation ===
-  const { data: receipt } = useWaitForTransactionReceipt({
-    hash: txHash,
-  });
+  /** ========= RARITY LOCAL ========= **/
+  function getRarity() {
+    const r = Math.random();
+    if (r > 0.98) return "legendary";
+    if (r > 0.90) return "epic";
+    if (r > 0.70) return "rare";
+    return "common";
+  }
 
-  // === When receipt exists → process metadata ===
+  /** ========= PROSES SETELAH RECEIPT ========= **/
   useEffect(() => {
-    if (!receipt) return; // Fix TS warning
+    if (!receipt) return;
 
-    const process = async () => {
+    const processMint = async () => {
       try {
         const log = receipt.logs?.[0];
         const rawId = log?.topics?.[3];
@@ -42,16 +46,14 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
 
         const tokenId = parseInt(rawId, 16);
 
-        // Fetch metadata JSON (OpenSea-compatible)
-        const meta = await fetch(`/api/metadata/${tokenId}`).then((r) => r.json());
+        // rarity ambil dari local → bukan API
+        const rarity = getRarity();
+        const image = `https://xkimmi.fun/beans/${rarity}.png`;
 
-        const rarity = meta.attributes?.[0]?.value || "common";
-        const image = meta.image;
-
-        // Show preview
+        // tampilkan preview
         setMintData({ id: tokenId, rarity, image });
 
-        // Save metadata to Supabase via API
+        // ========= INSERT SUPABASE =========
         await fetch("/api/saveMetadata", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -67,23 +69,24 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
         setMinted(true);
         setToast("🎉 Minted successfully!");
         setTimeout(() => setToast(""), 3000);
-      } catch (e) {
-        console.error(e);
-        setToast("❌ Failed to process metadata");
+
+      } catch (err) {
+        console.error(err);
+        setToast("❌ Metadata error");
         setTimeout(() => setToast(""), 3000);
       } finally {
         setLoading(false);
       }
     };
 
-    process();
+    processMint();
   }, [receipt]);
 
-  // === Handle mint click ===
+
+  /** ========= HANDLE MINT ========= **/
   async function handleMint() {
     try {
       setLoading(true);
-
       const hash = await writeContractAsync({
         abi,
         address: import.meta.env.VITE_CONTRACT_ADDRESS as `0x${string}`,
@@ -91,6 +94,7 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
       });
 
       setTxHash(hash);
+
     } catch (err) {
       console.error(err);
       setToast("❌ Mint failed!");
