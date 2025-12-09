@@ -102,8 +102,8 @@ html, body {
 /* Background gradient for whole content */
 .content-bg {
   background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
-  padding: 20px 16px calc(90px + env(safe-area-inset-bottom));
-  /*                ↑ ruang untuk bottom-nav (70px) + margin (20px) */
+  padding: 20px 16px calc(140px + env(safe-area-inset-bottom));
+  /*                ↑ aman untuk card paling panjang (minted) */
 
   min-height: 100%;
   display: flex;
@@ -111,8 +111,6 @@ html, body {
   align-items: center;
   box-sizing: border-box;
 }
-
-
 
 /* Hide scrollbar */
 .container::-webkit-scrollbar {
