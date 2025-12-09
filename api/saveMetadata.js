@@ -6,20 +6,15 @@ export default async function handler(req, res) {
 
   const { tokenId, rarity, wallet, fid, username } = req.body;
 
-  /** ❗ VALIDASI WAJIB */
-  if (!tokenId || !wallet) {
-    return res.status(400).json({ error: "Missing tokenId or wallet" });
-  }
+  if (!tokenId || !wallet || !rarity)
+    return res.status(400).json({ error: "Missing fields" });
 
+  // Insert metadata saat mint
   const { error } = await supabase
     .from("nft_metadata")
-    .update({
-      rarity,
-      wallet,
-      fid,
-      username,
-    })
-    .eq("id", tokenId);
+    .insert([
+      { id: tokenId, rarity, wallet, fid, username }
+    ]);
 
   if (error) {
     console.error(error);

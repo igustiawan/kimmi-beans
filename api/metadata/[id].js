@@ -4,42 +4,27 @@ export default async function handler(req, res) {
   const { id } = req.query;
   const tokenId = parseInt(id);
 
-  // check existing metadata
-  const { data } = await supabase
+  // Ambil metadata (READ ONLY)
+  const { data, error } = await supabase
     .from("nft_metadata")
     .select("*")
     .eq("id", tokenId)
-    .single();
+    .maybeSingle();
 
-  let rarity = data?.rarity;
-
-  // generate if not exist
-  if (!rarity) {
-    rarity = getRarity();
-
-    await supabase.from("nft_metadata").insert([
-      {
-        id: tokenId,
-        rarity,
-        fid: null,
-        username: null,
-        wallet: null,
-      }
-    ]);
+  // Jika metadata tidak ditemukan → NFT belum dicetak
+  if (!data) {
+    return res.status(404).json({
+      name: `Kimmi Bean #${tokenId}`,
+      description: "This NFT has not been minted yet.",
+      image: "https://xkimmi.fun/beans/unminted.png",
+      attributes: [],
+    });
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     name: `Kimmi Bean #${tokenId}`,
     description: "Cute Bean NFT",
-    image: `https://xkimmi.fun/beans/${rarity}.png`,
-    attributes: [{ trait_type: "Rarity", value: rarity }],
+    image: `https://xkimmi.fun/beans/${data.rarity}.png`,
+    attributes: [{ trait_type: "Rarity", value: data.rarity }],
   });
-}
-
-function getRarity() {
-  const r = Math.random();
-  if (r > 0.98) return "legendary";
-  if (r > 0.90) return "epic";
-  if (r > 0.70) return "rare";
-  return "common";
 }
