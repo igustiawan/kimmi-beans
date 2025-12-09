@@ -102,15 +102,13 @@ html, body {
 /* Background gradient for whole content */
 .content-bg {
   background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
+  padding: 20px 16px calc(90px + env(safe-area-inset-bottom));
+  /*                ↑ ruang untuk bottom-nav (70px) + margin (20px) */
+
   min-height: 100%;
-  padding: 16px 16px 20px; /* dulu 20px 16px */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* jika mau di-top */
-  /* or center kalau mau card tepat ditengah */
-  /* justify-content: center; */
-
   box-sizing: border-box;
 }
 
