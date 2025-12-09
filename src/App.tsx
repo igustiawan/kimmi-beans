@@ -4,14 +4,12 @@ import { useAccount, useConnect } from "wagmi";
 import MintButton from "./components/MintButton";
 import EvolutionPanel from "./components/EvolutionPanel";
 
-// Developer FID (only this user sees My Bean tab)
+// Only you can see My Bean tab
 const DEV_FID = 299929;
 
 export default function App() {
-  // Tabs
   const [tab, setTab] = useState<"mint" | "bean" | "rank" | "faq">("mint");
 
-  // FID check
   const [userFID, setUserFID] = useState<number | null>(null);
   const isDev = userFID === DEV_FID;
 
@@ -30,11 +28,11 @@ export default function App() {
   const { isConnected, address: wallet } = useAccount();
   const { connect, connectors } = useConnect();
 
-  // Header counters
+  // Header counters (dummy for now)
   const [dailyBeans] = useState(0);
   const [lifetimeXp] = useState(0);
 
-  /** Miniapp Ready + load FID */
+  /* Load FID */
   useEffect(() => {
     sdk.actions.ready();
 
@@ -47,7 +45,7 @@ export default function App() {
     loadFID();
   }, []);
 
-  /** Check if wallet already minted */
+  /* Check if wallet has minted */
   useEffect(() => {
     async function checkMinted() {
       if (!wallet) return;
@@ -67,7 +65,7 @@ export default function App() {
     checkMinted();
   }, [wallet]);
 
-  /** Load mint supply */
+  /* Load supply */
   useEffect(() => {
     async function loadSupply() {
       const res = await fetch("/api/checkSupply");
@@ -82,7 +80,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  /** Share after mint */
+  /* Share after mint */
   async function shareToCast(tokenId: number, rarity: string) {
     const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
     const msg = `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨`;
@@ -95,9 +93,10 @@ export default function App() {
   }
 
   // ============================================================
-  // RENDER CONTENT PER TAB
+  // CONTENT RENDERING
   // ============================================================
   function renderContent() {
+    // ------------------ MINT TAB ------------------
     if (tab === "mint") {
       return (
         <div className="card">
@@ -120,6 +119,7 @@ export default function App() {
             )}
           </div>
 
+          {/* Before mint */}
           {!mintResult && (
             <>
               {!isConnected && (
@@ -137,7 +137,7 @@ export default function App() {
                 ) : (
                   <MintButton
                     userAddress={wallet}
-                    fid={0}
+                    fid={userFID ?? 0}
                     username={""}
                     onMintSuccess={(data) => {
                       setMintResult(data);
@@ -149,6 +149,7 @@ export default function App() {
             </>
           )}
 
+          {/* After mint */}
           {mintResult && (
             <>
               <div className="mint-info">
@@ -164,7 +165,8 @@ export default function App() {
             </>
           )}
 
-          {isConnected && wallet && (
+          {/* Wallet */}
+          {wallet && (
             <div className="wallet-display">
               Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
             </div>
@@ -173,7 +175,7 @@ export default function App() {
       );
     }
 
-    // My Bean (dev only)
+    // ------------------ MY BEAN TAB (DEV ONLY) ------------------
     if (tab === "bean") {
       return isDev ? (
         <EvolutionPanel
@@ -186,6 +188,7 @@ export default function App() {
       );
     }
 
+    // ------------------ RANK ------------------
     if (tab === "rank") {
       return (
         <div className="card">
@@ -195,6 +198,7 @@ export default function App() {
       );
     }
 
+    // ------------------ FAQ ------------------
     if (tab === "faq") {
       return (
         <div className="card">
@@ -206,12 +210,12 @@ export default function App() {
   }
 
   // ============================================================
-  // FINAL STRUCTURE — MATCH CSS (VERY IMPORTANT)
+  // FINAL STRUCTURE — matches CSS layout
   // ============================================================
   return (
     <div className="app">
 
-      {/* HEADER */}
+      {/* -------- HEADER -------- */}
       <div className="header">
         <div className="header-left">
           <img src="/icon.png" className="app-icon" />
@@ -224,10 +228,12 @@ export default function App() {
         </div>
       </div>
 
-      {/* SCROLLABLE CONTENT AREA */}
-      <div className="container">{renderContent()}</div>
+      {/* -------- SCROLLABLE CONTENT -------- */}
+      <div className="container">
+        {renderContent()}
+      </div>
 
-      {/* BOTTOM NAV */}
+      {/* -------- BOTTOM NAV -------- */}
       <div className="bottom-nav">
         <div
           className={`nav-item ${tab === "mint" ? "active" : ""}`}

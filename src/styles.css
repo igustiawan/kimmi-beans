@@ -255,3 +255,57 @@ html, body {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* =============================== */
+/*   EVOLUTION PANEL UI EXTRAS     */
+/* =============================== */
+
+.progress-wrapper {
+  width: 100%;
+  max-width: 280px;
+  margin-top: 12px;
+  text-align: center;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff8a3d, #ffb066);
+  border-radius: 8px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 13px;
+  margin-top: 6px;
+  opacity: 0.9;
+}
+
+.evo-btn-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.evo-btn {
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: none;
+  background: white;
+  color: #ff7f2e;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 4px 10px rgba(255, 130, 58, 0.35);
+  transition: 0.15s ease;
+}
+
+.evo-btn:active {
+  transform: scale(0.94);
+}
