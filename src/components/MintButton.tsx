@@ -7,7 +7,7 @@ type MintButtonProps = {
   userAddress: `0x${string}`;
   fid: number;
   username: string;
-  onMintSuccess: (data: { id: number; rarity: string }) => void; 
+  onMintSuccess: (data: { id: number; rarity: string; image: string }) => void;
 };
 
 type MintResult = {
@@ -20,12 +20,12 @@ export default function MintButton({ userAddress, fid, username, onMintSuccess }
   const [loading, setLoading] = useState(false);
   const [minted, setMinted] = useState(false);
   const [toast, setToast] = useState("");
-  const [mintData, setMintData] = useState<MintResult | null>(null);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
   const { writeContractAsync } = useWriteContract();
   const { data: receipt } = useWaitForTransactionReceipt({ hash: txHash });
 
+  /** PROSES SETELAH TX CONFIRMED */
   useEffect(() => {
     if (!receipt) return;
 
@@ -37,12 +37,13 @@ export default function MintButton({ userAddress, fid, username, onMintSuccess }
 
         const tokenId = parseInt(rawId, 16);
 
+        /** Ambil metadata server */
         const meta = await fetch(`/api/metadata/${tokenId}`).then((r) => r.json());
+
         const rarity = meta.attributes?.[0]?.value || "common";
         const image = meta.image;
 
-        setMintData({ id: tokenId, rarity, image });
-
+        /** Simpan ke Supabase */
         await fetch("/api/saveMetadata", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -55,14 +56,14 @@ export default function MintButton({ userAddress, fid, username, onMintSuccess }
           }),
         });
 
-        // 🟢 SHARE CALLBACK KE APP
-        onMintSuccess({ id: tokenId, rarity });
+        /** Kirim hasil mint ke App.tsx */
+        onMintSuccess({ id: tokenId, rarity, image });
 
         setMinted(true);
-        setTimeout(() => setToast(""), 3000);
 
       } catch (err) {
         console.error(err);
+        setToast("❌ Metadata error");
         setTimeout(() => setToast(""), 3000);
       } finally {
         setLoading(false);
@@ -72,10 +73,11 @@ export default function MintButton({ userAddress, fid, username, onMintSuccess }
     processMint();
   }, [receipt]);
 
-  /** === HANDLE MINT === **/
+  /** Handle Mint */
   async function handleMint() {
     try {
       setLoading(true);
+
       const hash = await writeContractAsync({
         abi,
         address: import.meta.env.VITE_CONTRACT_ADDRESS as `0x${string}`,
@@ -83,11 +85,9 @@ export default function MintButton({ userAddress, fid, username, onMintSuccess }
       });
 
       setTxHash(hash);
-
     } catch (err) {
       console.error(err);
       setToast("❌ Mint failed!");
-      setTimeout(() => setToast(""), 3000);
       setLoading(false);
     }
   }
@@ -99,15 +99,6 @@ export default function MintButton({ userAddress, fid, username, onMintSuccess }
       </button>
 
       {toast && <Toast message={toast} />}
-
-      {mintData && (
-        <div className="mint-card">
-          <img src={mintData.image} className="mint-preview" alt="Minted Bean" />
-          <div className="mint-info">
-            Token #{mintData.id} — Rarity: <b>{mintData.rarity}</b>
-          </div>
-        </div>
-      )}
     </>
   );
 }

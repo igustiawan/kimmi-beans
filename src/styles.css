@@ -224,17 +224,14 @@ body {
   margin-bottom: 14px;
 }
 
-/* Prevent layout jumping */
 .image-container {
   width: 240px;
   height: 240px;
   margin: 0 auto 16px;
   border-radius: 20px;
   overflow: hidden;
-  position: relative;
 }
 
-/* Smooth fade-in */
 .image-container img {
   width: 100%;
   height: 100%;
@@ -243,7 +240,6 @@ body {
   animation: fadeIn .3s forwards;
 }
 
-/* Pop reveal for minted NFT */
 .minted-img {
   animation: popReveal .35s ease-out;
 }

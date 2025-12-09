@@ -13,6 +13,7 @@ export default function App() {
   const [mintResult, setMintResult] = useState<{
     id: number;
     rarity: string;
+    image: string;
   } | null>(null);
 
   const { isConnected, address: wallet } = useAccount();
@@ -41,7 +42,6 @@ export default function App() {
         connect({ connector: connectors[0] });
       }
     }
-
     load();
   }, [isConnected, connect, connectors]);
 
@@ -88,14 +88,10 @@ export default function App() {
         <div className="title">Kimmi Beans</div>
         <div className="subtitle">Mint cute, unique beans every day!</div>
 
-        {/* IMAGE AREA (STABLE SIZE, NO GLITCH) */}
+        {/* IMAGE AREA (NO GLITCH) */}
         <div className="image-container">
           {mintResult ? (
-            <img
-              src={`/beans/${mintResult.rarity}.png`}
-              className="minted-img"
-              alt="Minted NFT"
-            />
+            <img src={mintResult.image} className="minted-img" alt="Minted Bean" />
           ) : (
             <img src="/bean.gif" alt="Bean" />
           )}
@@ -105,10 +101,7 @@ export default function App() {
         {!mintResult && (
           <>
             {!isConnected && fid !== SPECIAL_FID && (
-              <button
-                className="main-btn"
-                onClick={() => connect({ connector: connectors[0] })}
-              >
+              <button className="main-btn" onClick={() => connect({ connector: connectors[0] })}>
                 Connect Wallet
               </button>
             )}
