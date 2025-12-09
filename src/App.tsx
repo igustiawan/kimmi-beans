@@ -128,7 +128,7 @@ export default function App() {
         )}
 
         {/* ============================
-            TOMBOL SHARE CAST
+            TOMBOL SHARE CAST1
         ============================ */}
         {isWhitelisted && (
           <button className="share-btn" onClick={shareToCast}>
