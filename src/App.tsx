@@ -4,18 +4,18 @@ import { useAccount, useConnect } from "wagmi";
 import MintButton from "./components/MintButton";
 import EvolutionPanel from "./components/EvolutionPanel";
 
-// Developer FID (only this user sees "My Bean" tab)
+// Developer FID (only this user sees My Bean tab)
 const DEV_FID = 299929;
 
 export default function App() {
-  // === Tabs ===
+  // Tabs
   const [tab, setTab] = useState<"mint" | "bean" | "rank" | "faq">("mint");
 
-  // === User FID ===
+  // FID check
   const [userFID, setUserFID] = useState<number | null>(null);
   const isDev = userFID === DEV_FID;
 
-  // === Mint State ===
+  // Mint state
   const [mintResult, setMintResult] = useState<{
     id: number;
     rarity: string;
@@ -30,7 +30,7 @@ export default function App() {
   const { isConnected, address: wallet } = useAccount();
   const { connect, connectors } = useConnect();
 
-  // Example counters for header UI
+  // Header counters
   const [dailyBeans] = useState(0);
   const [lifetimeXp] = useState(0);
 
@@ -95,17 +95,15 @@ export default function App() {
   }
 
   // ============================================================
-  //                 CONTENT RENDERING PER TAB
+  // RENDER CONTENT PER TAB
   // ============================================================
   function renderContent() {
-    // === MINT TAB ===
     if (tab === "mint") {
       return (
         <div className="card">
           <div className="title">Kimmi Beans</div>
           <div className="subtitle">Mint cute, unique beans every day!</div>
 
-          {/* Counter */}
           <div className="counter">
             {soldOut ? (
               <b>🎉 Sold Out — 10000 / 10000</b>
@@ -114,7 +112,6 @@ export default function App() {
             )}
           </div>
 
-          {/* Image */}
           <div className="image-container">
             {mintResult ? (
               <img src={mintResult.image} alt="Minted Bean" />
@@ -123,7 +120,6 @@ export default function App() {
             )}
           </div>
 
-          {/* Before Mint */}
           {!mintResult && (
             <>
               {!isConnected && (
@@ -153,7 +149,6 @@ export default function App() {
             </>
           )}
 
-          {/* After Mint */}
           {mintResult && (
             <>
               <div className="mint-info">
@@ -169,7 +164,6 @@ export default function App() {
             </>
           )}
 
-          {/* Wallet */}
           {isConnected && wallet && (
             <div className="wallet-display">
               Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
@@ -179,7 +173,7 @@ export default function App() {
       );
     }
 
-    // === MY BEAN TAB (DEV ONLY) ===
+    // My Bean (dev only)
     if (tab === "bean") {
       return isDev ? (
         <EvolutionPanel
@@ -192,7 +186,6 @@ export default function App() {
       );
     }
 
-    // === RANK TAB ===
     if (tab === "rank") {
       return (
         <div className="card">
@@ -202,7 +195,6 @@ export default function App() {
       );
     }
 
-    // === FAQ TAB ===
     if (tab === "faq") {
       return (
         <div className="card">
@@ -214,10 +206,11 @@ export default function App() {
   }
 
   // ============================================================
-  //                       FINAL UI LAYOUT
+  // FINAL STRUCTURE — MATCH CSS (VERY IMPORTANT)
   // ============================================================
   return (
-    <>
+    <div className="app">
+
       {/* HEADER */}
       <div className="header">
         <div className="header-left">
@@ -231,10 +224,10 @@ export default function App() {
         </div>
       </div>
 
-      {/* SCROLLABLE CONTENT */}
+      {/* SCROLLABLE CONTENT AREA */}
       <div className="container">{renderContent()}</div>
 
-      {/* FLOATING BOTTOM NAV */}
+      {/* BOTTOM NAV */}
       <div className="bottom-nav">
         <div
           className={`nav-item ${tab === "mint" ? "active" : ""}`}
@@ -270,6 +263,7 @@ export default function App() {
           <span>FAQ</span>
         </div>
       </div>
-    </>
+
+    </div>
   );
 }

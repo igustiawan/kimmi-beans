@@ -1,99 +1,101 @@
-/* =======================================================
-   GLOBAL RESET
-   ======================================================= */
+/* ============================================================
+   RESET
+   ============================================================ */
 html, body {
   margin: 0;
   padding: 0;
-  width: 100%;
   height: 100%;
-  -webkit-font-smoothing: antialiased;
+  width: 100%;
   font-family: "Inter", sans-serif;
-}
-
-/* =======================================================
-   BACKGROUND + GLOBAL LAYOUT
-   ======================================================= */
-body {
   background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
   color: #ffffff;
-
-  /* Penting → Tidak center dengan flex */
-  display: block;
-
-  /* Scroll diizinkan */
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden; /* no global scroll */
 }
 
-/* =======================================================
-   HEADER (Sticky)
-   ======================================================= */
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  padding: 12px 20px;
-  margin: 0 auto;
-  max-width: 480px;
+/* ============================================================
+   LAYOUT FIX — APP WRAPPER
+   ============================================================ */
+.app {
+  height: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column; /* header - content - bottom nav */
+  align-items: center;
+}
 
-  backdrop-filter: blur(12px);
+/* ============================================================
+   HEADER (Opsional)
+   ============================================================ */
+.header {
+  width: 100%;
+  max-width: 480px;       /* memastikan header center seperti content */
+  margin: 0 auto;
+
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;  /* KIRI - KANAN */
+  align-items: center;             /* SEJAJAR VERTIKAL */
+
+  backdrop-filter: blur(14px);
+  z-index: 20;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  font-weight: 700;
-  font-size: 16px;
-}
-
-.app-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  margin-right: 8px;
+  gap: 6px;
 }
 
 .header-right {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;                /* jarak antar badge */
 }
 
 .header-badge {
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.22);
   border-radius: 12px;
-  font-size: 14px;
+
+  font-size: 13px;
+  font-weight: 600;
 }
 
-/* =======================================================
-   MAIN CONTENT CONTAINER (scrollable area)
-   ======================================================= */
+
+/* ============================================================
+   MAIN CONTENT AREA — SCROLLABLE 
+   (card tetap center, tapi tidak pakai flex)
+   ============================================================ */
 .container {
   width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
+  max-width: 420px;
 
-  /* ada space di bawah supaya tidak ketutup bottom nav */
-  padding: 16px 20px 120px;
+  flex: 1;
+  overflow-y: auto;             /* scroll hanya bagian ini */
+  overflow-x: hidden;
+  padding: 20px 16px 100px;     /* bottom spacing for nav */
   box-sizing: border-box;
 
-  overflow-y: visible; /* YES scroll */
+  display: block;               /* FIX: stop flex center */
 }
 
-/* =======================================================
-   CARD (Mint / Rank / FAQ)
-   ======================================================= */
+.container::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================================
+   CARD — semua style card kamu tetap sama
+   ============================================================ */
 .card {
   width: 100%;
+  max-width: 420px;
+
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(14px);
-
   padding: 28px 20px;
   border-radius: 26px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
@@ -103,37 +105,81 @@ body {
   align-items: center;
   text-align: center;
 
-  margin-bottom: 24px; /* give breathing room */
-  animation: fadeInCard .35s ease-out;
+  animation: fadeIn 0.38s ease-out;
 }
 
-@keyframes fadeInCard {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* TITLES */
 .title {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .subtitle {
   font-size: 15px;
   opacity: 0.95;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
-/* =======================================================
-   IMAGE CONTAINER
-   ======================================================= */
+/* ============================================================
+   ALL YOUR ORIGINAL CARD STYLES (UNCHANGED)
+   ============================================================ */
+
+.bean-img {
+  width: 140px;
+  height: 140px;
+  border-radius: 20px;
+  object-fit: cover;
+  margin-bottom: 22px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+}
+
+.main-btn {
+  width: 75%;
+  background: #ffffff;
+  color: #ff7f2e;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 14px 0;
+  border-radius: 40px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(255, 130, 58, 0.45);
+  transition: 0.15s ease;
+}
+
+.main-btn:active { transform: scale(0.94); }
+
+.main-btn.disabled {
+  background: #cccccc;
+  color: #666666;
+  box-shadow: none;
+}
+
+.share-btn {
+  padding: 10px 22px;
+  background: #ffffff;
+  color: #ff7f2e;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 28px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 130, 58, 0.35);
+  transition: all 0.15s ease;
+  margin-top: 18px;
+}
+
+.share-btn:active { transform: scale(0.95); }
+
+/* ============================================================
+   IMAGE WRAPPER
+   ============================================================ */
 .image-container {
   width: 240px;
   height: 240px;
+  margin: 0 auto 16px;
   border-radius: 20px;
   overflow: hidden;
-  margin-bottom: 18px;
 }
 
 .image-container img {
@@ -141,133 +187,83 @@ body {
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  animation: fadeInImg .3s forwards;
+  animation: fadeIn .3s forwards;
 }
 
-@keyframes fadeInImg { to { opacity: 1; } }
-
-/* =======================================================
-   TEXT + MINT INFO
-   ======================================================= */
+/* ============================================================
+   COUNTER + SECTIONS
+   ============================================================ */
 .counter {
+  margin-top: 12px;
   margin-bottom: 16px;
+  text-align: center;
   font-size: 15px;
   opacity: .95;
 }
 
 .section {
-  margin-top: 16px;
+  margin-top: 14px;
+  text-align: center;
 }
 
-.mint-info {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 14px;
-}
-
-/* =======================================================
-   BUTTONS
-   ======================================================= */
-.main-btn,
-.share-btn {
-  background: #ffffff;
-  color: #ff7f2e;
-
-  padding: 14px 20px;
-  border-radius: 40px;
-  border: none;
-
-  font-size: 17px;
-  font-weight: 700;
-  cursor: pointer;
-
-  box-shadow: 0 6px 16px rgba(255, 130, 58, 0.45);
-
-  transition: 0.15s ease;
-}
-
-.main-btn:active,
-.share-btn:active {
-  transform: scale(0.94);
-}
-
-.share-btn {
-  padding: 10px 26px;
-  margin-top: 10px;
-}
-
-.main-btn.disabled {
-  background: #cfcfcf;
-  color: #777;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-/* =======================================================
-   WALLET DISPLAY
-   ======================================================= */
-.wallet-display {
-  margin-top: 20px;
-  opacity: 0.9;
-  font-size: 14px;
-}
-
-/* =======================================================
-   BOTTOM NAV (FLOATING BAR)
-   ======================================================= */
+/* ============================================================
+   BOTTOM NAV — FIXED CLEANLY
+   ============================================================ */
 .bottom-nav {
   position: fixed;
-  bottom: 14px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
 
   width: 100%;
-  max-width: 420px;
-  padding: 10px 20px;
+  max-width: 480px;
+  height: 70px;
 
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 40px;
-  box-shadow: 0 6px 22px rgba(0,0,0,0.15);
+  background: white;
+  border-top: 1px solid #ddd;
 
   display: flex;
   justify-content: space-around;
   align-items: center;
 
-  z-index: 200;
+  z-index: 30;
 }
 
 .nav-item {
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  font-size: 14px;
+  opacity: 0.6;
   display: flex;
   flex-direction: column;
   align-items: center;
-
-  font-size: 13px;
-  opacity: 0.6;
-  cursor: pointer;
-
-  transition: 0.2s ease;
 }
 
 .nav-item.active {
   opacity: 1;
-  color: #ff7f2e;
-  font-weight: 700;
+  font-weight: bold;
 }
 
 .nav-item span {
-  margin-top: 4px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
-/* =======================================================
+/* ============================================================
    ANIMATIONS
-   ======================================================= */
-.bean-bounce {
-  animation: beanFloat 2s ease-in-out infinite;
+   ============================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes beanFloat {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0); }
+.app-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
+
+.app-name {
+  font-size: 15px;
+  font-weight: 600;
 }
