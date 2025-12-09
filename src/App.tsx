@@ -68,74 +68,67 @@ export default function App() {
   }
 
   return (
-    <div className="container">
-      <div className="card">
+  <div className="container">
+    <div className="card">
 
-        <div className="title">Kimmi Beans</div>
-        <div className="subtitle">Mint cute, unique beans every day!</div>
+      <div className="title">Kimmi Beans</div>
+      <div className="subtitle">Mint cute, unique beans every day!</div>
 
-        <img src="/bean.gif" className="bean-img" alt="Kimmi Bean" />
+      <img src="/bean.gif" className="bean-img" alt="Kimmi Bean" />
 
-        {/* Connect Manual → user biasa */}
-        {fid !== SPECIAL_FID && !isConnected && (
-          <button className="main-btn" onClick={() => connect({ connector: connectors[0] })}>
-            Connect Wallet
+      {/* === CONNECT WALLET — hanya user normal === */}
+      {!isConnected && fid !== SPECIAL_FID && (
+        <button
+          className="main-btn"
+          onClick={() => connect({ connector: connectors[0] })}
+        >
+          Connect Wallet
+        </button>
+      )}
+
+      {/* === JOIN WHITELIST === */}
+      {!isWhitelisted && (
+        <button className="main-btn" onClick={joinWhitelist}>
+          Join Whitelist
+        </button>
+      )}
+
+      {/* === USER NORMAL (bukan special) === */}
+      {isWhitelisted && fid !== SPECIAL_FID && (
+        <>
+          <button className="disabled-btn">Whitelisted ✓</button>
+          <button
+            className="share-btn"
+            onClick={() =>
+              sdk.actions.openUrl({
+                url: `https://warpcast.com/~/compose?text=${encodeURIComponent(
+                  "I just joined Kimmi Beans whitelist!"
+                )}`,
+              })
+            }
+          >
+            Share to Cast
           </button>
-        )}
+        </>
+      )}
 
-        {/* Join Whitelist */}
-        {!isWhitelisted && (
-          <button className="main-btn" onClick={joinWhitelist}>
-            Join Whitelist
-          </button>
-        )}
+      {/* === USER SPECIAL ONLY → MINT NFT === */}
+      {isWhitelisted && fid === SPECIAL_FID && wallet && (
+        <MintButton
+          userAddress={wallet}
+          fid={fid}
+          username={"special-user"}
+        />
+      )}
 
-        {/* After Whitelisted (non special FID) */}
-        {isWhitelisted && fid !== SPECIAL_FID && (
-          <>
-            <button className="disabled-btn">Whitelisted ✓</button>
+      {/* Wallet Display */}
+      {isConnected && wallet && (
+        <div className="wallet-display">
+          Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
+        </div>
+      )}
 
-            <button
-              className="share-btn"
-              onClick={() =>
-                sdk.actions.openUrl({
-                  url: `https://warpcast.com/~/compose?text=${encodeURIComponent(
-                    "I just joined Kimmi Beans whitelist!"
-                  )}`,
-                })
-              }
-            >
-              Share to Cast
-            </button>
-          </>
-        )}
-
-        {/* SPECIAL USER (FID 299929) → mint langsung */}
-        {isWhitelisted && wallet && fid === SPECIAL_FID && (
-          <MintButton
-            userAddress={wallet}
-            fid={fid}
-            username={username}
-          />
-        )}
-
-        {/* NORMAL USER → setelah connect dan whitelist, baru mint */}
-        {isWhitelisted && wallet && fid !== null && (
-          <MintButton
-            userAddress={wallet}
-            fid={fid}
-            username={username}
-          />
-        )}
-
-        {/* Wallet Display */}
-        {isConnected && wallet && (
-          <div className="wallet-display">
-            Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
-          </div>
-        )}
-
-      </div>
     </div>
-  );
+  </div>
+);
 }
