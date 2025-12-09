@@ -4,21 +4,45 @@ export default async function handler(req, res) {
   const { id } = req.query;
   const tokenId = parseInt(id);
 
-  // Ambil metadata dari Supabase
+  // ambil data user dari query (miniapp send?)
+  const { fid, username, wallet } = req.query;
+
+  // Cek metadata existing
   const { data, error } = await supabase
     .from("nft_metadata")
     .select("*")
     .eq("id", tokenId)
-    .maybeSingle(); // <-- penting
+    .single();
 
-  let rarity = data?.rarity ?? "common"; // fallback kalau belum ada insert
+  let rarity = data?.rarity;
 
-  return res.status(200).json({
+  // Generate & insert kalau belum ada
+  if (!rarity) {
+    rarity = getRarity();
+
+    await supabase.from("nft_metadata").insert([
+      {
+        id: tokenId,
+        fid,
+        username,
+        wallet,
+        rarity
+      }
+    ]);
+  }
+
+  res.status(200).json({
     name: `Kimmi Bean #${tokenId}`,
     description: "Cute Bean NFT",
     image: `https://xkimmi.fun/beans/${rarity}.png`,
-    attributes: [
-      { trait_type: "Rarity", value: rarity }
-    ]
+    attributes: [{ trait_type: "Rarity", value: rarity }]
   });
+}
+
+function getRarity() {
+  const r = Math.random();
+  if (r > 0.98) return "legendary";
+  if (r > 0.90) return "epic";
+  if (r > 0.70) return "rare";
+  return "common";
 }

@@ -7,18 +7,18 @@ export default function App() {
   const SPECIAL_FID = 299929;
 
   const [fid, setFid] = useState<number | null>(null);
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState<string>("");
   const [isWhitelisted, setIsWhitelisted] = useState(false);
 
   const { isConnected, address: wallet } = useAccount();
   const { connect, connectors } = useConnect();
 
-  // --- 1. Miniapp ready ---
+  /** Miniapp Ready */
   useEffect(() => {
     sdk.actions.ready();
   }, []);
 
-  // --- 2. Load FC user ---
+  /** Load FC User */
   useEffect(() => {
     async function load() {
       const ctx = await sdk.context;
@@ -32,7 +32,7 @@ export default function App() {
       const json = await res.json();
       if (json.whitelisted) setIsWhitelisted(true);
 
-      // Auto connect wallet for special user
+      // Auto connect ONLY special user
       if (user.fid === SPECIAL_FID && !isConnected) {
         connect({ connector: connectors[0] });
       }
@@ -41,7 +41,7 @@ export default function App() {
     load();
   }, [isConnected, connect, connectors]);
 
-  // --- 3. Join whitelist ---
+  /** Join whitelist */
   async function joinWhitelist() {
     if (!fid) return;
 
@@ -67,14 +67,13 @@ export default function App() {
   return (
     <div className="container">
       <div className="card">
-
         <div className="title">Kimmi Beans</div>
         <div className="subtitle">Mint cute, unique beans every day!</div>
 
         <img src="/bean.gif" className="bean-img" alt="Kimmi Bean" />
 
-        {/* USER NORMAL: Connect Wallet */}
-        {fid !== SPECIAL_FID && !isConnected && (
+        {/* NORMAL USERS: connect wallet */}
+        {!isConnected && fid !== SPECIAL_FID && (
           <button
             className="main-btn"
             onClick={() => connect({ connector: connectors[0] })}
@@ -90,12 +89,12 @@ export default function App() {
           </button>
         )}
 
-        {/* NORMAL USER → after whitelisted, no mint */}
+        {/* NORMAL USER WHITELISTED */}
         {isWhitelisted && fid !== SPECIAL_FID && (
           <button className="disabled-btn">Whitelisted ✓</button>
         )}
 
-        {/* SPECIAL USER → CAN MINT */}
+        {/* SPECIAL USER: CAN MINT */}
         {isWhitelisted && fid === SPECIAL_FID && wallet && (
           <MintButton
             userAddress={wallet}
@@ -104,13 +103,12 @@ export default function App() {
           />
         )}
 
-        {/* Wallet display */}
+        {/* WALLET DISPLAY */}
         {isConnected && wallet && (
           <div className="wallet-display">
             Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
           </div>
         )}
-
       </div>
     </div>
   );

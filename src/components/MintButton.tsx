@@ -23,37 +23,46 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
   const { writeContractAsync } = useWriteContract();
-  const { data: receipt } = useWaitForTransactionReceipt({ hash: txHash });
 
-  /** ========= RARITY LOCAL ========= **/
+  /** WAIT RECEIPT */
+  const { data: receipt } = useWaitForTransactionReceipt({
+    hash: txHash ?? undefined,
+  });
+
+  /** LOCAL RARITY */
   function getRarity() {
     const r = Math.random();
     if (r > 0.98) return "legendary";
-    if (r > 0.90) return "epic";
-    if (r > 0.70) return "rare";
+    if (r > 0.9) return "epic";
+    if (r > 0.7) return "rare";
     return "common";
   }
 
-  /** ========= PROSES SETELAH RECEIPT ========= **/
+  /** PROCESS RECEIPT */
   useEffect(() => {
-    if (!receipt) return;
+    if (!receipt) return;           // 🔥 FIX #1: Early guard (TS stops warning)
+    if (!receipt.logs) return;      // 🔥 FIX #2
 
     const processMint = async () => {
       try {
-        const log = receipt.logs?.[0];
-        const rawId = log?.topics?.[3];
+        // 🔥 FIX #3: runtime safety wrapper
+        if (!receipt || !receipt.logs) return;
+
+        const log = receipt.logs.find((l) => l.topics?.length === 4);
+        if (!log) throw new Error("Transfer event missing");
+
+        const rawId = log.topics?.[3];
         if (!rawId) throw new Error("Token ID missing");
 
         const tokenId = parseInt(rawId, 16);
 
-        // rarity ambil dari local → bukan API
+        // UI rarity only
         const rarity = getRarity();
         const image = `https://xkimmi.fun/beans/${rarity}.png`;
 
-        // tampilkan preview
         setMintData({ id: tokenId, rarity, image });
 
-        // ========= INSERT SUPABASE =========
+        // Save for dashboard
         await fetch("/api/saveMetadata", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -69,7 +78,6 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
         setMinted(true);
         setToast("🎉 Minted successfully!");
         setTimeout(() => setToast(""), 3000);
-
       } catch (err) {
         console.error(err);
         setToast("❌ Metadata error");
@@ -82,11 +90,11 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
     processMint();
   }, [receipt]);
 
-
-  /** ========= HANDLE MINT ========= **/
+  /** HANDLE MINT */
   async function handleMint() {
     try {
       setLoading(true);
+
       const hash = await writeContractAsync({
         abi,
         address: import.meta.env.VITE_CONTRACT_ADDRESS as `0x${string}`,
@@ -94,7 +102,6 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
       });
 
       setTxHash(hash);
-
     } catch (err) {
       console.error(err);
       setToast("❌ Mint failed!");
