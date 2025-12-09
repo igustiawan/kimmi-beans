@@ -10,15 +10,13 @@ type MintButtonProps = {
   onMintSuccess: (data: { id: number; rarity: string; image: string }) => void;
 };
 
-type MintResult = {
-  id: number;
-  rarity: string;
-  image: string;
-};
-
-export default function MintButton({ userAddress, fid, username, onMintSuccess }: MintButtonProps) {
+export default function MintButton({
+  userAddress,
+  fid,
+  username,
+  onMintSuccess,
+}: MintButtonProps) {
   const [loading, setLoading] = useState(false);
-  const [minted, setMinted] = useState(false);
   const [toast, setToast] = useState("");
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
@@ -31,15 +29,21 @@ export default function MintButton({ userAddress, fid, username, onMintSuccess }
 
     const processMint = async () => {
       try {
-        const log = receipt.logs?.[0];
-        const rawId = log?.topics?.[3];
+        // Cari log Transfer ERC721 (topics[0] = Transfer event signature)
+        const transferLog = receipt.logs?.find(
+          (l) =>
+            l.topics &&
+            l.topics[0] ===
+              "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+        );
+
+        const rawId = transferLog?.topics?.[3];
         if (!rawId) throw new Error("Token ID missing");
 
         const tokenId = parseInt(rawId, 16);
 
         /** Ambil metadata server */
         const meta = await fetch(`/api/metadata/${tokenId}`).then((r) => r.json());
-
         const rarity = meta.attributes?.[0]?.value || "common";
         const image = meta.image;
 
@@ -56,10 +60,8 @@ export default function MintButton({ userAddress, fid, username, onMintSuccess }
           }),
         });
 
-        /** Kirim hasil mint ke App.tsx */
+        /** Kirim ke App.tsx → UI langsung berubah */
         onMintSuccess({ id: tokenId, rarity, image });
-
-        setMinted(true);
 
       } catch (err) {
         console.error(err);
@@ -73,7 +75,7 @@ export default function MintButton({ userAddress, fid, username, onMintSuccess }
     processMint();
   }, [receipt]);
 
-  /** Handle Mint */
+  /** HANDLE MINT */
   async function handleMint() {
     try {
       setLoading(true);
@@ -88,6 +90,7 @@ export default function MintButton({ userAddress, fid, username, onMintSuccess }
     } catch (err) {
       console.error(err);
       setToast("❌ Mint failed!");
+      setTimeout(() => setToast(""), 3000);
       setLoading(false);
     }
   }
@@ -95,7 +98,7 @@ export default function MintButton({ userAddress, fid, username, onMintSuccess }
   return (
     <>
       <button className="main-btn" disabled={loading} onClick={handleMint}>
-        {loading ? "Minting..." : minted ? "Minted ✓" : "Mint NFT"}
+        {loading ? "Minting..." : "Mint NFT"}
       </button>
 
       {toast && <Toast message={toast} />}

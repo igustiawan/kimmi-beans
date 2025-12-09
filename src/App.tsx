@@ -43,12 +43,37 @@ export default function App() {
       const json = await res.json();
       if (json.whitelisted) setIsWhitelisted(true);
 
+      // Auto connect only for SPECIAL user
       if (user.fid === SPECIAL_FID && !isConnected) {
         connect({ connector: connectors[0] });
       }
     }
     load();
   }, [isConnected, connect, connectors]);
+
+  /** CHECK IF WALLET ALREADY MINTED */
+  useEffect(() => {
+    async function checkMinted() {
+      if (!wallet) return;
+
+      try {
+        const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
+        const data = await res.json();
+
+        if (data.minted) {
+          setMintResult({
+            id: data.tokenId,
+            rarity: data.rarity,
+            image: data.image,
+          });
+        }
+      } catch (e) {
+        console.error("Mint check error:", e);
+      }
+    }
+
+    checkMinted();
+  }, [wallet]);
 
   /** LIVE SUPPLY COUNTER */
   useEffect(() => {
@@ -65,7 +90,6 @@ export default function App() {
     }
 
     loadSupply();
-
     const interval = setInterval(loadSupply, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -118,11 +142,13 @@ export default function App() {
           {soldOut ? (
             <b>🎉 Sold Out — 10,000 / 10,000</b>
           ) : (
-            <b>{totalMinted.toLocaleString()} / {MAX_SUPPLY.toLocaleString()} Minted</b>
+            <b>
+              {totalMinted.toLocaleString()} / {MAX_SUPPLY.toLocaleString()} Minted
+            </b>
           )}
         </div>
 
-        {/* IMAGE AREA */}
+        {/* IMAGE AREA — no glitch */}
         <div className="image-container">
           {mintResult ? (
             <img src={mintResult.image} className="minted-img" alt="Minted Bean" />
@@ -158,7 +184,10 @@ export default function App() {
                   userAddress={wallet}
                   fid={fid}
                   username={username}
-                  onMintSuccess={(data) => setMintResult(data)}
+                  onMintSuccess={(data) => {
+                    setMintResult(data);
+                    setTotalMinted((n) => n + 1);
+                  }}
                 />
               )
             )}
@@ -181,6 +210,7 @@ export default function App() {
           </div>
         )}
 
+        {/* WALLET DISPLAY */}
         {isConnected && wallet && (
           <div className="wallet-display">
             Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
