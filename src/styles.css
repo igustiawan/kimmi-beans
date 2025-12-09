@@ -1,95 +1,101 @@
-/* ============================================================
-   RESET
-   ============================================================ */
+/* Reset layout supaya selalu tengah di semua device */
+/* RESET */
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
   width: 100%;
   font-family: "Inter", sans-serif;
-  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
-  color: #ffffff;
-  overflow: hidden; /* no global scroll */
 }
 
-/* ============================================================
-   LAYOUT FIX — APP WRAPPER
-   ============================================================ */
+/* FULL SCREEN CENTER */
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center; /* Bikin card tetap center vertikal & horizontal */
+  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
+  font-family: "Inter", sans-serif;
+  color: #ffffff;
+  overflow: hidden; /* hilangkan scroll */
+}
+
+/* ==== APP WRAPPER ==== */
 .app {
   height: 100%;
   width: 100%;
   display: flex;
-  flex-direction: column; /* header - content - bottom nav */
-  align-items: center;
+  flex-direction: column;
+  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
+  overflow: hidden; /* global no scroll, content scroll only via container */
 }
 
-/* ============================================================
-   HEADER (Opsional)
-   ============================================================ */
+/* ==== HEADER ==== */
 .header {
   width: 100%;
-  max-width: 480px;       /* memastikan header center seperti content */
+  max-width: 480px;
   margin: 0 auto;
+  padding: 12px 16px;
 
-  padding: 10px 16px;
   display: flex;
-  justify-content: space-between;  /* KIRI - KANAN */
-  align-items: center;             /* SEJAJAR VERTIKAL */
+  justify-content: space-between;
+  align-items: center;
 
-  backdrop-filter: blur(14px);
-  z-index: 20;
+  box-sizing: border-box;
 }
 
+/* kiri */
 .header-left {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
+.app-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+
+.app-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* kanan */
 .header-right {
   display: flex;
   align-items: center;
-  gap: 8px;                /* jarak antar badge */
+  gap: 8px;
 }
 
 .header-badge {
   display: flex;
   align-items: center;
   gap: 4px;
-
   padding: 4px 8px;
   background: rgba(255, 255, 255, 0.22);
   border-radius: 12px;
-
   font-size: 13px;
   font-weight: 600;
 }
 
-
-/* ============================================================
-   MAIN CONTENT AREA — SCROLLABLE 
-   (card tetap center, tapi tidak pakai flex)
-   ============================================================ */
+/* ==== SCROLL AREA ==== */
 .container {
+  flex: 1;                       /* ambil ruang tersisa */
   width: 100%;
-  max-width: 420px;
-
-  flex: 1;
-  overflow-y: auto;             /* scroll hanya bagian ini */
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px 16px 90px;       /* ada padding bawah agar tidak nabrak nav */
+  overflow-y: auto;
   overflow-x: hidden;
-  padding: 20px 16px 100px;     /* bottom spacing for nav */
   box-sizing: border-box;
-
-  display: block;               /* FIX: stop flex center */
 }
 
 .container::-webkit-scrollbar {
   display: none;
 }
 
-/* ============================================================
-   CARD — semua style card kamu tetap sama
-   ============================================================ */
+/* CARD */
 .card {
   width: 100%;
   max-width: 420px;
@@ -120,15 +126,12 @@ html, body {
   margin-bottom: 20px;
 }
 
-/* ============================================================
-   ALL YOUR ORIGINAL CARD STYLES (UNCHANGED)
-   ============================================================ */
-
 .bean-img {
   width: 140px;
   height: 140px;
   border-radius: 20px;
   object-fit: cover;
+
   margin-bottom: 22px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
 }
@@ -147,12 +150,28 @@ html, body {
   transition: 0.15s ease;
 }
 
-.main-btn:active { transform: scale(0.94); }
+.main-btn:active {
+  transform: scale(0.94);
+}
 
+/* tombol disabled */
 .main-btn.disabled {
   background: #cccccc;
   color: #666666;
   box-shadow: none;
+  cursor: not-allowed;
+}
+
+.note {
+  margin-top: 14px;
+  font-size: 14px;
+  color: white;
+  opacity: 0.9;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .share-btn {
@@ -166,14 +185,116 @@ html, body {
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(255, 130, 58, 0.35);
   transition: all 0.15s ease;
+  display: inline-block;
   margin-top: 18px;
 }
 
-.share-btn:active { transform: scale(0.95); }
+.share-btn:hover {
+  box-shadow: 0 6px 18px rgba(255, 130, 58, 0.45);
+}
 
-/* ============================================================
-   IMAGE WRAPPER
-   ============================================================ */
+.share-btn:active {
+  transform: scale(0.95);
+}
+
+
+.bean-bounce {
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0% { transform: translateY(0);}
+  50% { transform: translateY(-8px);}
+  100% { transform: translateY(0);}
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffbf47;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 16px;
+  color: #000;
+  animation: fadein 0.3s ease;
+}
+
+@keyframes fadein {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.mint-preview {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.bean-preview {
+  width: 180px;
+  border-radius: 12px;
+  animation: pop 0.3s ease-out;
+}
+
+.rarity-label {
+  font-weight: bold;
+  margin-top: 8px;
+  background: #fff3c4;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+@keyframes pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.mint-card {
+  margin-top: 20px;
+  text-align: center;
+  animation: fadeIn 0.4s ease;
+}
+
+.mint-preview {
+  width: 180px;
+  height: 180px;
+  border-radius: 20px;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.mint-info {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.wallet-display {
+  margin-top: 18px;   /* tambah jarak dari atas */
+  font-size: 14px;
+  opacity: 0.9;
+  text-align: center;
+}
+
+.mint-reveal-img {
+  width: 220px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+}
+
+.mint-info-big {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
 .image-container {
   width: 240px;
   height: 240px;
@@ -190,9 +311,14 @@ html, body {
   animation: fadeIn .3s forwards;
 }
 
-/* ============================================================
-   COUNTER + SECTIONS
-   ============================================================ */
+.minted-img {
+  animation: popReveal .35s ease-out;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
 .counter {
   margin-top: 12px;
   margin-bottom: 16px;
@@ -206,27 +332,27 @@ html, body {
   text-align: center;
 }
 
-/* ============================================================
-   BOTTOM NAV — FIXED CLEANLY
-   ============================================================ */
+.minted-img {
+  animation: popReveal .35s ease-out;
+}
+
+@keyframes popReveal {
+  0% { transform: scale(.8); opacity:0; }
+  100% { transform: scale(1); opacity:1; }
+}
+
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-
-  width: 100%;
-  max-width: 480px;
+  left: 0;
+  right: 0;
   height: 70px;
-
   background: white;
   border-top: 1px solid #ddd;
-
   display: flex;
   justify-content: space-around;
   align-items: center;
-
-  z-index: 30;
+  z-index: 50;
 }
 
 .nav-item {
@@ -247,52 +373,4 @@ html, body {
 
 .nav-item span {
   font-size: 12px;
-}
-
-/* ============================================================
-   ANIMATIONS
-   ============================================================ */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.app-icon {
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-}
-
-.app-name {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-/* ================================
-   FIX HEADER OVERLAP
-================================= */
-.app {
-  padding-top: 56px; /* Offset Warpcast miniapp header */
-}
-
-/* Resize & align header */
-.header {
-  padding: 8px 16px;
-  position: relative;
-  z-index: 10;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-right: 6px;
-}
-
-.header-badge {
-  padding: 3px 6px;
-  font-size: 12px;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.22);
-  border-radius: 10px;
 }
