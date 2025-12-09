@@ -26,17 +26,24 @@ html, body {
    HEADER
    ============================================================ */
 .header {
+  position: sticky;
+  top: 0;
+
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
-  padding: 10px 16px;
+
+  padding: calc(12px + env(safe-area-inset-top)) 16px 10px;
+  /*               ↑ extra padding to avoid Warpcast bar */
+
+  background: white;
+  z-index: 100;
 
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  z-index: 50;
-  position: relative;
+  box-sizing: border-box;
 }
 
 .header-left {
@@ -89,15 +96,14 @@ html, body {
   padding: 0;
 
   /* tinggi viewport minus header dan bottom-nav */
-  min-height: calc(100vh - 70px - 50px);
+
 }
 
 /* Background gradient for whole content */
 .content-bg {
   background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
   min-height: 100%;
-  padding: 20px 16px;
-
+  padding: 16px 16px 20px; /* dulu 20px 16px */
   display: flex;
   flex-direction: column;
   align-items: center;
