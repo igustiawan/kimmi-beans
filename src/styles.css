@@ -211,3 +211,15 @@ body {
   opacity: 0.9;
   text-align: center;
 }
+
+.mint-reveal-img {
+  width: 220px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+}
+
+.mint-info-big {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
