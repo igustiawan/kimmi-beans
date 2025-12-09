@@ -1,46 +1,46 @@
 import { useState } from "react";
 import { useWriteContract } from "wagmi";
 import abi from "../abi/KimmiBeansNFT.json";
-import { getRandomRarity } from "@utils/rarity";
+import Toast from "./Toast";
 
-type Props = {
-  onMintComplete: (data: { rarity: string; txHash: string }) => void;
-};
-
-export default function MintButton({ onMintComplete }: Props) {
+export default function MintButton({ userAddress }) {
   const [loading, setLoading] = useState(false);
-
+  const [minted, setMinted] = useState(false);
+  const [toast, setToast] = useState("");
+  
   const { writeContractAsync } = useWriteContract();
 
   async function handleMint() {
     try {
       setLoading(true);
 
-      const rarity = getRandomRarity();
-
-      const txHash = await writeContractAsync({
+      const tx = await writeContractAsync({
         abi,
-        address: import.meta.env.VITE_CONTRACT_ADDRESS as `0x${string}`,
+        address: import.meta.env.VITE_CONTRACT_ADDRESS,
         functionName: "mint",
-        args: [], // ❗ FIX: CONTRACT TIDAK BUTUH PARAMETER
       });
 
-      onMintComplete({
-        rarity,
-        txHash,
-      });
+      setMinted(true);
+      setToast("🎉 Minted successfully!");
+
+      // hilangkan toast setelah 3 detik
+      setTimeout(() => setToast(""), 3000);
 
     } catch (err) {
-      console.error("Mint error:", err);
-      alert("Mint failed!");
+      setToast("❌ Mint failed!");
+      setTimeout(() => setToast(""), 3000);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <button className="main-btn" disabled={loading} onClick={handleMint}>
-      {loading ? "Minting..." : "Mint NFT"}
-    </button>
+    <>
+      <button className="main-btn" disabled={minted || loading} onClick={handleMint}>
+        {minted ? "Minted ✓" : loading ? "Minting..." : "Mint NFT"}
+      </button>
+
+      {toast && <Toast message={toast} />}
+    </>
   );
 }

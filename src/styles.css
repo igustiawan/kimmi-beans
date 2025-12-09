@@ -126,3 +126,31 @@ body {
 .share-btn:active {
   transform: scale(0.94);
 }
+
+.bean-bounce {
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0% { transform: translateY(0);}
+  50% { transform: translateY(-8px);}
+  100% { transform: translateY(0);}
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffbf47;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 16px;
+  color: #000;
+  animation: fadein 0.3s ease;
+}
+
+@keyframes fadein {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
