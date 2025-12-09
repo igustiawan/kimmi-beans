@@ -117,13 +117,8 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
       {mintData && (
         <div className="mint-card">
           <img src={mintData.image} className="mint-preview" alt="Minted Bean" />
-
           <div className="mint-info">
             Token #{mintData.id} — Rarity: <b>{mintData.rarity}</b>
-          </div>
-
-          <div className="wallet-info">
-            Wallet: {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
           </div>
         </div>
       )}
