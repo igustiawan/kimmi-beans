@@ -78,6 +78,11 @@ export default function MintButton({
   /** HANDLE MINT */
   async function handleMint() {
     try {
+      if (!userAddress) {
+        setToast("❌ Connect wallet first!");
+        return;
+      }
+
       setLoading(true);
 
       const hash = await writeContractAsync({
@@ -90,7 +95,6 @@ export default function MintButton({
     } catch (err) {
       console.error(err);
       setToast("❌ Mint failed!");
-      setTimeout(() => setToast(""), 3000);
       setLoading(false);
     }
   }

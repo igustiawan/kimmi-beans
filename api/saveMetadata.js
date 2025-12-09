@@ -6,6 +6,11 @@ export default async function handler(req, res) {
 
   const { tokenId, rarity, wallet, fid, username } = req.body;
 
+  /** ❗ VALIDASI WAJIB */
+  if (!tokenId || !wallet) {
+    return res.status(400).json({ error: "Missing tokenId or wallet" });
+  }
+
   const { error } = await supabase
     .from("nft_metadata")
     .update({
