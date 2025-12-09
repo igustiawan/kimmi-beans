@@ -1,53 +1,52 @@
 import { useEffect, useState } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
-import MintButton from "@components/MintButton";
+import MintButton from "./components/MintButton";
 import { useAccount, useConnect } from "wagmi";
 
 export default function App() {
-  const [isWhitelisted, setIsWhitelisted] = useState(false);
-  const [fid, setFid] = useState<number | null>(null);
-  const [fcUser, setFcUser] = useState<any>(null);
-
   const SPECIAL_FID = 299929;
 
-  // Wagmi hooks
+  const [fid, setFid] = useState<number | null>(null);
+  const [username, setUsername] = useState("");
+  const [isWhitelisted, setIsWhitelisted] = useState(false);
+
   const { isConnected, address: wallet } = useAccount();
   const { connect, connectors } = useConnect();
 
-  // === READY ===
+  // --- 1. Miniapp ready ---
   useEffect(() => {
     sdk.actions.ready();
   }, []);
 
-  // === Load Farcaster Context ===
+  // --- 2. Load FC user ---
   useEffect(() => {
     async function load() {
       const ctx = await sdk.context;
       const user = ctx?.user;
-
-      if (!user?.fid) return;
+      if (!user) return;
 
       setFid(user.fid);
-      setFcUser(user); // ← SIMPAN USERNAME + FID SEKALIGUS
+      setUsername(user.username ?? "");
 
-      // cek whitelist
       const res = await fetch(`/api/checkWhitelist?fid=${user.fid}`);
       const json = await res.json();
-
       if (json.whitelisted) setIsWhitelisted(true);
 
-      // AUTO CONNECT → hanya untuk SPECIAL_FID
+      // Auto connect wallet for special user
       if (user.fid === SPECIAL_FID && !isConnected) {
         connect({ connector: connectors[0] });
       }
     }
 
     load();
-  }, [connect, connectors, isConnected]);
+  }, [isConnected, connect, connectors]);
 
-  // === Join Whitelist ===
+  // --- 3. Join whitelist ---
   async function joinWhitelist() {
-    if (!fid || !fcUser) return;
+    if (!fid) return;
+
+    const ctx = await sdk.context;
+    const user = ctx?.user;
 
     const res = await fetch("/api/joinWhitelist", {
       method: "POST",
@@ -56,8 +55,8 @@ export default function App() {
         "fc-request-signature": "verified",
       },
       body: JSON.stringify({
-        fid: fcUser.fid,
-        username: fcUser.username,
+        fid: user.fid,
+        username: user.username,
       }),
     });
 
@@ -74,8 +73,8 @@ export default function App() {
 
         <img src="/bean.gif" className="bean-img" alt="Kimmi Bean" />
 
-        {/* === CONNECT WALLET — hanya user normal === */}
-        {!isConnected && fid !== SPECIAL_FID && (
+        {/* USER NORMAL: Connect Wallet */}
+        {fid !== SPECIAL_FID && !isConnected && (
           <button
             className="main-btn"
             onClick={() => connect({ connector: connectors[0] })}
@@ -84,48 +83,34 @@ export default function App() {
           </button>
         )}
 
-        {/* === JOIN WHITELIST === */}
+        {/* JOIN WHITELIST */}
         {!isWhitelisted && (
           <button className="main-btn" onClick={joinWhitelist}>
             Join Whitelist
           </button>
         )}
 
-        {/* === USER NORMAL yang sudah WL === */}
+        {/* NORMAL USER → after whitelisted, no mint */}
         {isWhitelisted && fid !== SPECIAL_FID && (
-          <>
-            <button className="disabled-btn">Whitelisted ✓</button>
-
-            <button
-              className="share-btn"
-              onClick={() =>
-                sdk.actions.openUrl({
-                  url: `https://warpcast.com/~/compose?text=${encodeURIComponent(
-                    "I just joined Kimmi Beans whitelist!"
-                  )}`,
-                })
-              }
-            >
-              Share to Cast
-            </button>
-          </>
+          <button className="disabled-btn">Whitelisted ✓</button>
         )}
 
-        {/* === SPECIAL USER (299929) — hanya dia yang boleh mint === */}
-        {isWhitelisted && fid === SPECIAL_FID && wallet && fcUser && (
+        {/* SPECIAL USER → CAN MINT */}
+        {isWhitelisted && fid === SPECIAL_FID && wallet && (
           <MintButton
             userAddress={wallet}
-            fid={fcUser.fid}
-            username={fcUser.username}
+            fid={fid}
+            username={username}
           />
         )}
 
-        {/* === Wallet Display === */}
+        {/* Wallet display */}
         {isConnected && wallet && (
           <div className="wallet-display">
             Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
           </div>
         )}
+
       </div>
     </div>
   );
