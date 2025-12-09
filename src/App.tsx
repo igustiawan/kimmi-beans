@@ -99,78 +99,77 @@ export default function App() {
     // ------------------ MINT TAB ------------------
     if (tab === "mint") {
       return (
-        <div className="card">
-          <div className="title">Kimmi Beans</div>
-          <div className="subtitle">Mint cute, unique beans every day!</div>
+        <div className="page-section">
+          <div className="card">
+            <div className="title">Kimmi Beans</div>
+            <div className="subtitle">Mint cute, unique beans every day!</div>
 
-          <div className="counter">
-            {soldOut ? (
-              <b>🎉 Sold Out — 10000 / 10000</b>
-            ) : (
-              <b>{totalMinted} / {MAX_SUPPLY} Minted</b>
-            )}
-          </div>
-
-          <div className="image-container">
-            {mintResult ? (
-              <img src={mintResult.image} alt="Minted Bean" />
-            ) : (
-              <img src="/bean.gif" alt="Bean" />
-            )}
-          </div>
-
-          {/* Before mint */}
-          {!mintResult && (
-            <>
-              {!isConnected && (
-                <button
-                  className="main-btn"
-                  onClick={() => connect({ connector: connectors[0] })}
-                >
-                  Connect Wallet
-                </button>
+            <div className="counter">
+              {soldOut ? (
+                <b>🎉 Sold Out — 10000 / 10000</b>
+              ) : (
+                <b>{totalMinted} / {MAX_SUPPLY} Minted</b>
               )}
-
-              {isConnected && wallet && (
-                soldOut ? (
-                  <button className="main-btn disabled">Sold Out 🎉</button>
-                ) : (
-                  <MintButton
-                    userAddress={wallet}
-                    fid={userFID ?? 0}
-                    username={""}
-                    onMintSuccess={(data) => {
-                      setMintResult(data);
-                      setTotalMinted((prev) => prev + 1);
-                    }}
-                  />
-                )
-              )}
-            </>
-          )}
-
-          {/* After mint */}
-          {mintResult && (
-            <>
-              <div className="mint-info">
-                Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
-              </div>
-
-              <button
-                className="share-btn"
-                onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
-              >
-                Share to Cast 🚀
-              </button>
-            </>
-          )}
-
-          {/* Wallet */}
-          {wallet && (
-            <div className="wallet-display">
-              Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
             </div>
-          )}
+
+            <div className="image-container">
+              {mintResult ? (
+                <img src={mintResult.image} alt="Minted Bean" />
+              ) : (
+                <img src="/bean.gif" alt="Bean" />
+              )}
+            </div>
+
+            {!mintResult && (
+              <>
+                {!isConnected && (
+                  <button
+                    className="main-btn"
+                    onClick={() => connect({ connector: connectors[0] })}
+                  >
+                    Connect Wallet
+                  </button>
+                )}
+
+                {isConnected && wallet && (
+                  soldOut ? (
+                    <button className="main-btn disabled">Sold Out 🎉</button>
+                  ) : (
+                    <MintButton
+                      userAddress={wallet}
+                      fid={userFID ?? 0}
+                      username={""}
+                      onMintSuccess={(data) => {
+                        setMintResult(data);
+                        setTotalMinted((prev) => prev + 1);
+                      }}
+                    />
+                  )
+                )}
+              </>
+            )}
+
+            {mintResult && (
+              <>
+                <div className="mint-info">
+                  Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
+                </div>
+
+                <button
+                  className="share-btn"
+                  onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
+                >
+                  Share to Cast 🚀
+                </button>
+              </>
+            )}
+
+            {wallet && (
+              <div className="wallet-display">
+                Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
+              </div>
+            )}
+          </div>
         </div>
       );
     }
@@ -230,7 +229,9 @@ export default function App() {
 
       {/* -------- SCROLLABLE CONTENT -------- */}
       <div className="container">
-        {renderContent()}
+        <div className="content-bg">
+          {renderContent()}
+        </div>
       </div>
 
       {/* -------- BOTTOM NAV -------- */}

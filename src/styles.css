@@ -1,27 +1,25 @@
 /* ============================================================
-   RESET
+   RESET & ROOT LAYOUT
    ============================================================ */
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%;
   width: 100%;
+  height: 100%;
+  overflow: hidden; /* cegah geser kiri/kanan */
+  background: #f5f5f5; /* plain supaya header Warpcast tidak bentrok */
   font-family: "Inter", sans-serif;
-  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
-  color: #ffffff;
-  overflow: hidden; /* no global scroll */
 }
 
-/* ============================================================
-   APP WRAPPER – FIX WIDTH ISSUES
-   ============================================================ */
+/* Wrapper utama */
 .app {
+  width: 100%;
   height: 100%;
-  width: 100%;            /* FIX: jangan 100vw */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  overflow: hidden;
+
+  /* Untuk iPhone notch */
+  padding-top: env(safe-area-inset-top);
 }
 
 /* ============================================================
@@ -30,14 +28,15 @@ html, body {
 .header {
   width: 100%;
   max-width: 480px;
+  margin: 0 auto;
   padding: 10px 16px;
 
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  backdrop-filter: blur(14px);
-  z-index: 20;
+  z-index: 50;
+  position: relative;
 }
 
 .header-left {
@@ -46,27 +45,10 @@ html, body {
   gap: 6px;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.header-badge {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.22);
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
 .app-icon {
   width: 18px;
   height: 18px;
-  border-radius: 5px;
+  border-radius: 4px;
 }
 
 .app-name {
@@ -74,46 +56,87 @@ html, body {
   font-weight: 600;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-badge {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
 /* ============================================================
-   SCROLLABLE CONTENT AREA
+   SCROLLABLE CONTENT WRAPPER
    ============================================================ */
 .container {
   width: 100%;
-  max-width: 420px;
-
+  max-width: 480px;
+  margin: 0 auto;
   flex: 1;
-  overflow-y: auto;        /* scroll only vertical */
-  overflow-x: hidden;      /* FIX: no horizontal scroll */
-  
-  padding: 20px 16px 120px; /* SAFE SPACE bottom nav */
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  box-sizing: border-box;
+  padding: 0;
+
+  /* tinggi viewport minus header dan bottom-nav */
+  min-height: calc(100vh - 70px - 50px);
+}
+
+/* Background gradient for whole content */
+.content-bg {
+  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
+  min-height: 100%;
+  padding: 20px 16px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* jika mau di-top */
+  /* or center kalau mau card tepat ditengah */
+  /* justify-content: center; */
+
   box-sizing: border-box;
 }
 
+
+
+/* Hide scrollbar */
 .container::-webkit-scrollbar {
   display: none;
 }
 
 /* ============================================================
-   CARD — RESPONSIVE FIX
+   CARD STYLE
    ============================================================ */
 .card {
   width: 100%;
   max-width: 420px;
-  margin: 0 auto;           /* FIX overflow */
-  
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(14px);
+
   padding: 28px 20px;
+  margin: 0 auto;
+
   border-radius: 26px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(14px);
+
+  box-shadow: 0 10px 28px rgba(0,0,0,0.15);
 
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-
-  animation: fadeIn 0.38s ease-out;
 }
+
+
 
 .title {
   font-size: 28px;
@@ -127,33 +150,78 @@ html, body {
   margin-bottom: 20px;
 }
 
-/* ============================================================
-   IMAGE CONTAINER
-   ============================================================ */
-.image-container {
-  width: 240px;
-  height: 240px;
-  margin: 0 auto 16px;
-  border-radius: 20px;
-  overflow: hidden;
+.counter {
+  margin: 12px 0 16px;
+  font-size: 15px;
+  opacity: .95;
 }
+
+/* ============================================================
+   IMAGE CONTAINER (no cropping!)
+   ============================================================ */
+
+.image-container {
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 1 / 1;
+  border-radius: 20px;
+  margin: 16px auto;
+  overflow: hidden;
+  background: rgba(255,255,255,0.25);
+}
+
 
 .image-container img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  animation: fadeIn .3s forwards;
+  object-fit: contain;  /* FIX CROPPING */
 }
 
+
+
 /* ============================================================
-   COUNTERS + TEXT
+   BUTTONS
    ============================================================ */
-.counter {
-  margin-top: 12px;
-  margin-bottom: 16px;
-  font-size: 15px;
-  opacity: .95;
+
+.main-btn {
+  width: 75%;
+  padding: 14px 0;
+  border-radius: 40px;
+  border: none;
+  background: white;
+  color: #ff7f2e;
+  font-weight: 700;
+  font-size: 17px;
+  cursor: pointer;
+
+  box-shadow: 0 6px 16px rgba(255, 130, 58, 0.45);
+  transition: .15s ease;
+}
+
+.main-btn:active {
+  transform: scale(.94);
+}
+
+.main-btn.disabled {
+  background: #ccc;
+  color: #666;
+  box-shadow: none;
+}
+
+.share-btn {
+  padding: 10px 22px;
+  border-radius: 28px;
+  border: none;
+  background: #ffffff;
+  color: #ff7f2e;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(255,130,58,.35);
+  margin-top: 18px;
+}
+
+.share-btn:active {
+  transform: scale(.95);
 }
 
 .wallet-display {
@@ -163,50 +231,7 @@ html, body {
 }
 
 /* ============================================================
-   BUTTONS
-   ============================================================ */
-.main-btn {
-  width: 75%;
-  background: #ffffff;
-  color: #ff7f2e;
-  font-size: 17px;
-  font-weight: 700;
-  padding: 14px 0;
-  border-radius: 40px;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 6px 16px rgba(255, 130, 58, 0.45);
-  transition: 0.15s ease;
-}
-
-.main-btn:active { transform: scale(0.94); }
-
-.main-btn.disabled {
-  background: #cccccc;
-  color: #666;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.share-btn {
-  padding: 10px 22px;
-  background: #ffffff;
-  color: #ff7f2e;
-  font-size: 16px;
-  font-weight: 700;
-  border-radius: 28px;
-  border: none;
-  cursor: pointer;
-  margin-top: 18px;
-  box-shadow: 0 4px 12px rgba(255, 130, 58, 0.35);
-}
-
-.share-btn:active {
-  transform: scale(0.95);
-}
-
-/* ============================================================
-   BOTTOM NAV — FIXED CLEAN AND CENTERED
+   BOTTOM NAV (consistent, no shifting)
    ============================================================ */
 .bottom-nav {
   position: fixed;
@@ -214,29 +239,26 @@ html, body {
   left: 50%;
   transform: translateX(-50%);
 
-  width: 100%;         /* FIX: dulu 100vw bikin overflow */
+  width: 100%;
   max-width: 480px;
-
   height: 70px;
-  background: white;
+
+  background: #fff;
   border-top: 1px solid #ddd;
 
   display: flex;
   justify-content: space-around;
   align-items: center;
-
-  z-index: 30;
+  z-index: 60;
 }
 
 .nav-item {
-  background: none;
-  border: none;
-  padding: 6px 8px;
-  font-size: 14px;
-  opacity: 0.6;
   display: flex;
   flex-direction: column;
   align-items: center;
+  opacity: .6;
+  cursor: pointer;
+  font-size: 14px;
 }
 
 .nav-item.active {
@@ -252,60 +274,35 @@ html, body {
    ANIMATIONS
    ============================================================ */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* =============================== */
-/*   EVOLUTION PANEL UI EXTRAS     */
-/* =============================== */
+@keyframes fadeInImg {
+  to { opacity: 1; }
+}
 
-.progress-wrapper {
+/* FIX CARD TERPOTONG */
+.card {
+  width: calc(100% - 32px);
+  max-width: 420px;
+}
+
+/* FIX HORIZONTAL SHIFT */
+.app {
+  overflow-x: hidden;
+}
+
+/* FIX PADDING PARENT YANG BIKIN KEPOTONG */
+.content-bg {
+  padding: 0 16px 20px;
+  box-sizing: border-box;
+}
+
+.page-section {
   width: 100%;
-  max-width: 280px;
-  margin-top: 12px;
-  text-align: center;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 12px;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #ff8a3d, #ffb066);
-  border-radius: 8px;
-  transition: width 0.3s ease;
-}
-
-.progress-text {
-  font-size: 13px;
-  margin-top: 6px;
-  opacity: 0.9;
-}
-
-.evo-btn-group {
   display: flex;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.evo-btn {
-  padding: 10px 14px;
-  border-radius: 14px;
-  border: none;
-  background: white;
-  color: #ff7f2e;
-  font-weight: 700;
-  font-size: 14px;
-  box-shadow: 0 4px 10px rgba(255, 130, 58, 0.35);
-  transition: 0.15s ease;
-}
-
-.evo-btn:active {
-  transform: scale(0.94);
+  justify-content: center;
+  padding: 20px 0 40px; /* memberi ruang atas & bawah agar card tidak kepotong */
+  box-sizing: border-box;
 }
