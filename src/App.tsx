@@ -4,7 +4,7 @@ import MintButton from "./components/MintButton";
 import { useAccount, useConnect } from "wagmi";
 
 export default function App() {
-  const SPECIAL_FID = 299929;
+  const SPECIAL_FID = 2999291;
 
   const [fid, setFid] = useState<number | null>(null);
   const [username, setUsername] = useState<string>("");
