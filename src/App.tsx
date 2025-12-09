@@ -4,19 +4,21 @@ import MintButton from "./components/MintButton";
 import { useAccount, useConnect } from "wagmi";
 
 export default function App() {
-  const SPECIAL_FID = 299929;
 
-  const [fid, setFid] = useState<number | null>(null);
-  const [username, setUsername] = useState<string>("");
-  const [isWhitelisted, setIsWhitelisted] = useState(false);
+  // === REMOVE WHITELIST ===
+  // const SPECIAL_FID = 299929;
+  // const [fid, setFid] = useState<number | null>(null);
+  // const [username, setUsername] = useState<string>("");
+  // const [isWhitelisted, setIsWhitelisted] = useState(false);
 
+  // Mint result (NFT info)
   const [mintResult, setMintResult] = useState<{
     id: number;
     rarity: string;
     image: string;
   } | null>(null);
 
-  // LIVE COUNTER
+  // Live counter
   const [soldOut, setSoldOut] = useState(false);
   const [totalMinted, setTotalMinted] = useState(0);
   const MAX_SUPPLY = 10000;
@@ -29,7 +31,8 @@ export default function App() {
     sdk.actions.ready();
   }, []);
 
-  /** Load FC User */
+  /** LOAD USER — REMOVE WHITELIST */
+  /*
   useEffect(() => {
     async function load() {
       const ctx = await sdk.context;
@@ -43,13 +46,13 @@ export default function App() {
       const json = await res.json();
       if (json.whitelisted) setIsWhitelisted(true);
 
-      // Auto connect only for SPECIAL user
       if (user.fid === SPECIAL_FID && !isConnected) {
         connect({ connector: connectors[0] });
       }
     }
     load();
   }, [isConnected, connect, connectors]);
+  */
 
   /** CHECK IF WALLET ALREADY MINTED */
   useEffect(() => {
@@ -94,7 +97,8 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  /** Join whitelist */
+  /** OLD WHITELIST — REMOVED */
+  /*
   async function joinWhitelist() {
     if (!fid) return;
 
@@ -116,6 +120,7 @@ export default function App() {
     const json = await res.json();
     if (json.success) setIsWhitelisted(true);
   }
+  */
 
   /** Share after mint */
   async function shareToCast(tokenId: number, rarity: string) {
@@ -148,7 +153,7 @@ export default function App() {
           )}
         </div>
 
-        {/* IMAGE AREA — no glitch */}
+        {/* IMAGE */}
         <div className="image-container">
           {mintResult ? (
             <img src={mintResult.image} className="minted-img" alt="Minted Bean" />
@@ -160,30 +165,25 @@ export default function App() {
         {/* BEFORE MINT */}
         {!mintResult && (
           <>
-            {!isConnected && fid !== SPECIAL_FID && (
-              <button className="main-btn" onClick={() => connect({ connector: connectors[0] })}>
+            {/* Connect wallet */}
+            {!isConnected && (
+              <button
+                className="main-btn"
+                onClick={() => connect({ connector: connectors[0] })}
+              >
                 Connect Wallet
               </button>
             )}
 
-            {!isWhitelisted && (
-              <button className="main-btn" onClick={joinWhitelist}>
-                Join Whitelist
-              </button>
-            )}
-
-            {isWhitelisted && fid !== SPECIAL_FID && (
-              <button className="disabled-btn">Whitelisted ✓</button>
-            )}
-
-            {isWhitelisted && fid === SPECIAL_FID && wallet && (
+            {/* Mint button for everyone */}
+            {isConnected && wallet && (
               soldOut ? (
                 <button className="disabled-btn">Sold Out 🎉</button>
               ) : (
                 <MintButton
                   userAddress={wallet}
-                  fid={fid}
-                  username={username}
+                  fid={0}           // FID removed
+                  username={""}     // Username removed
                   onMintSuccess={(data) => {
                     setMintResult(data);
                     setTotalMinted((n) => n + 1);
