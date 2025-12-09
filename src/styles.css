@@ -267,3 +267,32 @@ html, body {
   font-size: 15px;
   font-weight: 600;
 }
+
+/* ================================
+   FIX HEADER OVERLAP
+================================= */
+.app {
+  padding-top: 56px; /* Offset Warpcast miniapp header */
+}
+
+/* Resize & align header */
+.header {
+  padding: 8px 16px;
+  position: relative;
+  z-index: 10;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 6px;
+}
+
+.header-badge {
+  padding: 3px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+}
