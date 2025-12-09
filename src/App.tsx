@@ -16,6 +16,11 @@ export default function App() {
     image: string;
   } | null>(null);
 
+  // LIVE COUNTER
+  const [soldOut, setSoldOut] = useState(false);
+  const [totalMinted, setTotalMinted] = useState(0);
+  const MAX_SUPPLY = 10000;
+
   const { isConnected, address: wallet } = useAccount();
   const { connect, connectors } = useConnect();
 
@@ -44,6 +49,26 @@ export default function App() {
     }
     load();
   }, [isConnected, connect, connectors]);
+
+  /** LIVE SUPPLY COUNTER */
+  useEffect(() => {
+    async function loadSupply() {
+      try {
+        const res = await fetch("/api/checkSupply");
+        const data = await res.json();
+
+        setTotalMinted(data.totalMinted);
+        setSoldOut(data.soldOut);
+      } catch (e) {
+        console.error("Error fetching supply:", e);
+      }
+    }
+
+    loadSupply();
+
+    const interval = setInterval(loadSupply, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   /** Join whitelist */
   async function joinWhitelist() {
@@ -88,7 +113,16 @@ export default function App() {
         <div className="title">Kimmi Beans</div>
         <div className="subtitle">Mint cute, unique beans every day!</div>
 
-        {/* IMAGE AREA (NO GLITCH) */}
+        {/* LIVE COUNTER */}
+        <div className="counter">
+          {soldOut ? (
+            <b>🎉 Sold Out — 10,000 / 10,000</b>
+          ) : (
+            <b>{totalMinted.toLocaleString()} / {MAX_SUPPLY.toLocaleString()} Minted</b>
+          )}
+        </div>
+
+        {/* IMAGE AREA */}
         <div className="image-container">
           {mintResult ? (
             <img src={mintResult.image} className="minted-img" alt="Minted Bean" />
@@ -117,32 +151,34 @@ export default function App() {
             )}
 
             {isWhitelisted && fid === SPECIAL_FID && wallet && (
-              <MintButton
-                userAddress={wallet}
-                fid={fid}
-                username={username}
-                onMintSuccess={(data) => setMintResult(data)}
-              />
+              soldOut ? (
+                <button className="disabled-btn">Sold Out 🎉</button>
+              ) : (
+                <MintButton
+                  userAddress={wallet}
+                  fid={fid}
+                  username={username}
+                  onMintSuccess={(data) => setMintResult(data)}
+                />
+              )
             )}
           </>
         )}
 
         {/* AFTER MINT */}
         {mintResult && (
-          <>
-            <div className="section">
-              <div className="mint-info">
-                Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
-              </div>
-
-              <button
-                className="main-btn share-btn"
-                onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
-              >
-                Share to Cast 🚀
-              </button>
+          <div className="section">
+            <div className="mint-info">
+              Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
             </div>
-          </>
+
+            <button
+              className="main-btn share-btn"
+              onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
+            >
+              Share to Cast 🚀
+            </button>
+          </div>
         )}
 
         {isConnected && wallet && (
