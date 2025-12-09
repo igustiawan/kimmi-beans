@@ -4,11 +4,17 @@ import MintButton from "./components/MintButton";
 import { useAccount, useConnect } from "wagmi";
 
 export default function App() {
-  const SPECIAL_FID = 2999291;
+  const SPECIAL_FID = 299929;
 
   const [fid, setFid] = useState<number | null>(null);
   const [username, setUsername] = useState<string>("");
   const [isWhitelisted, setIsWhitelisted] = useState(false);
+
+  // ⬇️ NEW: hasil mint
+  const [mintResult, setMintResult] = useState<{
+    id: number;
+    rarity: string;
+  } | null>(null);
 
   const { isConnected, address: wallet } = useAccount();
   const { connect, connectors } = useConnect();
@@ -32,7 +38,7 @@ export default function App() {
       const json = await res.json();
       if (json.whitelisted) setIsWhitelisted(true);
 
-      // Auto connect ONLY special user
+      // Auto connect special FID
       if (user.fid === SPECIAL_FID && !isConnected) {
         connect({ connector: connectors[0] });
       }
@@ -62,6 +68,20 @@ export default function App() {
 
     const json = await res.json();
     if (json.success) setIsWhitelisted(true);
+  }
+
+  /** NEW: Share after mint */
+  async function shareToCast(tokenId: number, rarity: string) {
+    const miniAppURL =
+      "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+
+    const msg = `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨`;
+
+    await sdk.actions.openUrl({
+      url:
+        `https://warpcast.com/~/compose?text=${encodeURIComponent(msg)}` +
+        `&embeds[]=${encodeURIComponent(miniAppURL)}`
+    });
   }
 
   return (
@@ -100,7 +120,20 @@ export default function App() {
             userAddress={wallet}
             fid={fid}
             username={username}
+            onMintSuccess={(data) => setMintResult(data)} // ⬅️ CALLBACK
           />
+        )}
+
+        {/* SHOW SHARE BUTTON AFTER MINT */}
+        {mintResult && (
+          <button
+            className="main-btn"
+            onClick={() =>
+              shareToCast(mintResult.id, mintResult.rarity)
+            }
+          >
+            Share to Cast 🚀
+          </button>
         )}
 
         {/* WALLET DISPLAY */}

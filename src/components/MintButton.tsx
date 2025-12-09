@@ -7,6 +7,7 @@ type MintButtonProps = {
   userAddress: `0x${string}`;
   fid: number;
   username: string;
+  onMintSuccess: (data: { id: number; rarity: string }) => void; 
 };
 
 type MintResult = {
@@ -15,7 +16,7 @@ type MintResult = {
   image: string;
 };
 
-export default function MintButton({ userAddress, fid, username }: MintButtonProps) {
+export default function MintButton({ userAddress, fid, username, onMintSuccess }: MintButtonProps) {
   const [loading, setLoading] = useState(false);
   const [minted, setMinted] = useState(false);
   const [toast, setToast] = useState("");
@@ -25,7 +26,6 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
   const { writeContractAsync } = useWriteContract();
   const { data: receipt } = useWaitForTransactionReceipt({ hash: txHash });
 
-  /** === PROSES SETELAH TRANSAKSI CONFIRMED === **/
   useEffect(() => {
     if (!receipt) return;
 
@@ -37,15 +37,12 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
 
         const tokenId = parseInt(rawId, 16);
 
-        /** Ambil metadata dari API (RARITY FIXED DI SERVER) */
         const meta = await fetch(`/api/metadata/${tokenId}`).then((r) => r.json());
-
         const rarity = meta.attributes?.[0]?.value || "common";
         const image = meta.image;
 
         setMintData({ id: tokenId, rarity, image });
 
-        /** Insert Supabase */
         await fetch("/api/saveMetadata", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -58,13 +55,14 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
           }),
         });
 
+        // 🟢 SHARE CALLBACK KE APP
+        onMintSuccess({ id: tokenId, rarity });
+
         setMinted(true);
-        //setToast("🎉 Minted successfully!");
         setTimeout(() => setToast(""), 3000);
 
       } catch (err) {
         console.error(err);
-        //setToast("❌ Metadata error");
         setTimeout(() => setToast(""), 3000);
       } finally {
         setLoading(false);
