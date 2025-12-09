@@ -1,5 +1,5 @@
 /* ============================================================
-   GLOBAL RESET + SAFE-AREA FIX + NO HORIZONTAL SCROLL
+   RESET
    ============================================================ */
 html, body {
   margin: 0;
@@ -7,31 +7,21 @@ html, body {
   height: 100%;
   width: 100%;
   font-family: "Inter", sans-serif;
-
   background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
-  overflow-x: hidden !important;   /* FIX geser kiri-kanan */
-  overflow-y: hidden;              /* scroll hanya pada container */
-  position: relative;
-}
-
-body {
-  display: block; /* FIX body-flex yang bikin UI kacau */
+  color: #ffffff;
+  overflow: hidden; /* no global scroll */
 }
 
 /* ============================================================
-   APP WRAPPER — HANDLES SAFE AREA
+   APP WRAPPER – FIX WIDTH ISSUES
    ============================================================ */
 .app {
   height: 100%;
-  width: 100vw;                 /* jamin tidak lebih dari viewport */
-  max-width: 480px;
-  margin: 0 auto;
-
+  width: 100%;            /* FIX: jangan 100vw */
   display: flex;
   flex-direction: column;
-
-  padding-top: env(safe-area-inset-top); /* FIX HEADER KE POTONG */
-  overflow-x: hidden !important;         /* jangan geser */
+  align-items: center;
+  overflow: hidden;
 }
 
 /* ============================================================
@@ -39,13 +29,15 @@ body {
    ============================================================ */
 .header {
   width: 100%;
-  padding: 12px 16px;
+  max-width: 480px;
+  padding: 10px 16px;
 
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  box-sizing: border-box;
+  backdrop-filter: blur(14px);
+  z-index: 20;
 }
 
 .header-left {
@@ -54,10 +46,27 @@ body {
   gap: 6px;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .app-icon {
   width: 18px;
   height: 18px;
-  border-radius: 4px;
+  border-radius: 5px;
 }
 
 .app-name {
@@ -65,38 +74,18 @@ body {
   font-weight: 600;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.header-badge {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.22);
-  border-radius: 12px;
-
-  font-size: 13px;
-  font-weight: 600;
-}
-
 /* ============================================================
-   MAIN CONTENT — SCROLLABLE
+   SCROLLABLE CONTENT AREA
    ============================================================ */
 .container {
-  flex: 1;
   width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
+  max-width: 420px;
 
-  padding: 16px 16px 90px; /* space untuk bottom nav */
-  overflow-y: auto;
-  overflow-x: hidden !important;
-
+  flex: 1;
+  overflow-y: auto;        /* scroll only vertical */
+  overflow-x: hidden;      /* FIX: no horizontal scroll */
+  
+  padding: 20px 16px 120px; /* SAFE SPACE bottom nav */
   box-sizing: border-box;
 }
 
@@ -105,10 +94,13 @@ body {
 }
 
 /* ============================================================
-   CARD UI (from your previous CSS)
+   CARD — RESPONSIVE FIX
    ============================================================ */
 .card {
   width: 100%;
+  max-width: 420px;
+  margin: 0 auto;           /* FIX overflow */
+  
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(14px);
   padding: 28px 20px;
@@ -135,10 +127,13 @@ body {
   margin-bottom: 20px;
 }
 
+/* ============================================================
+   IMAGE CONTAINER
+   ============================================================ */
 .image-container {
   width: 240px;
   height: 240px;
-  margin-bottom: 16px;
+  margin: 0 auto 16px;
   border-radius: 20px;
   overflow: hidden;
 }
@@ -151,6 +146,25 @@ body {
   animation: fadeIn .3s forwards;
 }
 
+/* ============================================================
+   COUNTERS + TEXT
+   ============================================================ */
+.counter {
+  margin-top: 12px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  opacity: .95;
+}
+
+.wallet-display {
+  margin-top: 18px;
+  font-size: 14px;
+  opacity: .9;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
 .main-btn {
   width: 75%;
   background: #ffffff;
@@ -165,15 +179,13 @@ body {
   transition: 0.15s ease;
 }
 
-.main-btn:active {
-  transform: scale(0.94);
-}
+.main-btn:active { transform: scale(0.94); }
 
 .main-btn.disabled {
   background: #cccccc;
-  color: #666666;
-  box-shadow: none;
+  color: #666;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .share-btn {
@@ -185,33 +197,25 @@ body {
   border-radius: 28px;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(255, 130, 58, 0.35);
   margin-top: 18px;
-  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(255, 130, 58, 0.35);
 }
 
 .share-btn:active {
   transform: scale(0.95);
 }
 
-.wallet-display {
-  margin-top: 18px;
-  font-size: 14px;
-  opacity: 0.9;
-}
-
 /* ============================================================
-   BOTTOM NAV (FIXED)
+   BOTTOM NAV — FIXED CLEAN AND CENTERED
    ============================================================ */
 .bottom-nav {
   position: fixed;
   bottom: 0;
-
-  width: 100vw !important;       /* FIX overflow */
-  max-width: 480px;
-
   left: 50%;
   transform: translateX(-50%);
+
+  width: 100%;         /* FIX: dulu 100vw bikin overflow */
+  max-width: 480px;
 
   height: 70px;
   background: white;
@@ -221,23 +225,18 @@ body {
   justify-content: space-around;
   align-items: center;
 
-  z-index: 100;
-  overflow-x: hidden;
+  z-index: 30;
 }
 
 .nav-item {
   background: none;
   border: none;
   padding: 6px 8px;
-
   font-size: 14px;
   opacity: 0.6;
-
   display: flex;
   flex-direction: column;
   align-items: center;
-
-  cursor: pointer;
 }
 
 .nav-item.active {
@@ -254,10 +253,5 @@ body {
    ============================================================ */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes popReveal {
-  0% { transform: scale(.8); opacity:0; }
-  100% { transform: scale(1); opacity:1; }
+  to   { opacity: 1; transform: translateY(0); }
 }
