@@ -1,41 +1,99 @@
-/* Reset layout supaya selalu tengah di semua device */
+/* =======================================================
+   GLOBAL RESET
+   ======================================================= */
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%;
   width: 100%;
-}
-
-/* FULL SCREEN CENTER */
-body {
-  display: flex;
-  justify-content: center;
-  align-items: center; /* Bikin card tetap center vertikal & horizontal */
-  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
   font-family: "Inter", sans-serif;
-  color: #ffffff;
-  overflow: hidden; /* hilangkan scroll */
 }
 
-/* Container sebagai centering wrapper */
+/* =======================================================
+   BACKGROUND + GLOBAL LAYOUT
+   ======================================================= */
+body {
+  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
+  color: #ffffff;
+
+  /* Penting → Tidak center dengan flex */
+  display: block;
+
+  /* Scroll diizinkan */
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* =======================================================
+   HEADER (Sticky)
+   ======================================================= */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 12px 20px;
+  margin: 0 auto;
+  max-width: 480px;
+  width: 100%;
+
+  backdrop-filter: blur(12px);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.app-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  margin-right: 8px;
+}
+
+.header-right {
+  display: flex;
+  gap: 6px;
+}
+
+.header-badge {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+/* =======================================================
+   MAIN CONTENT CONTAINER (scrollable area)
+   ======================================================= */
 .container {
   width: 100%;
-  max-width: 420px;
-  padding: 0 16px;
+  max-width: 480px;
+  margin: 0 auto;
+
+  /* ada space di bawah supaya tidak ketutup bottom nav */
+  padding: 16px 20px 120px;
   box-sizing: border-box;
 
-  display: flex;
-  justify-content: center;  /* PENTING → center horizontal */
-  align-items: center;
+  overflow-y: visible; /* YES scroll */
 }
 
-/* CARD */
+/* =======================================================
+   CARD (Mint / Rank / FAQ)
+   ======================================================= */
 .card {
   width: 100%;
-  max-width: 420px;
-
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(14px);
+
   padding: 28px 20px;
   border-radius: 26px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
@@ -45,196 +103,37 @@ body {
   align-items: center;
   text-align: center;
 
-  animation: fadeIn 0.38s ease-out;
+  margin-bottom: 24px; /* give breathing room */
+  animation: fadeInCard .35s ease-out;
 }
 
+@keyframes fadeInCard {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* TITLES */
 .title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .subtitle {
   font-size: 15px;
   opacity: 0.95;
-  margin-bottom: 20px;
-}
-
-.bean-img {
-  width: 140px;
-  height: 140px;
-  border-radius: 20px;
-  object-fit: cover;
-
-  margin-bottom: 22px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
-}
-
-.main-btn {
-  width: 75%;
-  background: #ffffff;
-  color: #ff7f2e;
-  font-size: 17px;
-  font-weight: 700;
-  padding: 14px 0;
-  border-radius: 40px;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 6px 16px rgba(255, 130, 58, 0.45);
-  transition: 0.15s ease;
-}
-
-.main-btn:active {
-  transform: scale(0.94);
-}
-
-/* tombol disabled */
-.main-btn.disabled {
-  background: #cccccc;
-  color: #666666;
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-.note {
-  margin-top: 14px;
-  font-size: 14px;
-  color: white;
-  opacity: 0.9;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.share-btn {
-  padding: 10px 22px;
-  background: #ffffff;
-  color: #ff7f2e;
-  font-size: 16px;
-  font-weight: 700;
-  border-radius: 28px;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(255, 130, 58, 0.35);
-  transition: all 0.15s ease;
-  display: inline-block;
-  margin-top: 18px;
-}
-
-.share-btn:hover {
-  box-shadow: 0 6px 18px rgba(255, 130, 58, 0.45);
-}
-
-.share-btn:active {
-  transform: scale(0.95);
-}
-
-
-.bean-bounce {
-  animation: bounce 1s ease infinite;
-}
-
-@keyframes bounce {
-  0% { transform: translateY(0);}
-  50% { transform: translateY(-8px);}
-  100% { transform: translateY(0);}
-}
-
-.toast {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #ffbf47;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-size: 16px;
-  color: #000;
-  animation: fadein 0.3s ease;
-}
-
-@keyframes fadein {
-  from { opacity: 0; transform: translate(-50%, 20px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
-}
-
-.mint-preview {
   margin-bottom: 16px;
-  text-align: center;
 }
 
-.bean-preview {
-  width: 180px;
-  border-radius: 12px;
-  animation: pop 0.3s ease-out;
-}
-
-.rarity-label {
-  font-weight: bold;
-  margin-top: 8px;
-  background: #fff3c4;
-  padding: 6px 12px;
-  border-radius: 8px;
-  display: inline-block;
-}
-
-@keyframes pop {
-  0% { transform: scale(0.8); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-.mint-card {
-  margin-top: 20px;
-  text-align: center;
-  animation: fadeIn 0.4s ease;
-}
-
-.mint-preview {
-  width: 180px;
-  height: 180px;
-  border-radius: 20px;
-  object-fit: cover;
-  margin-bottom: 10px;
-}
-
-.mint-info {
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.wallet-display {
-  margin-top: 18px;   /* tambah jarak dari atas */
-  font-size: 14px;
-  opacity: 0.9;
-  text-align: center;
-}
-
-.mint-reveal-img {
-  width: 220px;
-  border-radius: 20px;
-  margin-bottom: 14px;
-}
-
-.mint-info-big {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 14px;
-}
-
+/* =======================================================
+   IMAGE CONTAINER
+   ======================================================= */
 .image-container {
   width: 240px;
   height: 240px;
-  margin: 0 auto 16px;
   border-radius: 20px;
   overflow: hidden;
+  margin-bottom: 18px;
 }
 
 .image-container img {
@@ -242,69 +141,133 @@ body {
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  animation: fadeIn .3s forwards;
+  animation: fadeInImg .3s forwards;
 }
 
-.minted-img {
-  animation: popReveal .35s ease-out;
-}
+@keyframes fadeInImg { to { opacity: 1; } }
 
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
-
+/* =======================================================
+   TEXT + MINT INFO
+   ======================================================= */
 .counter {
-  margin-top: 12px;
   margin-bottom: 16px;
-  text-align: center;
   font-size: 15px;
   opacity: .95;
 }
 
 .section {
-  margin-top: 14px;
-  text-align: center;
+  margin-top: 16px;
 }
 
-.minted-img {
-  animation: popReveal .35s ease-out;
+.mint-info {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 14px;
 }
 
-@keyframes popReveal {
-  0% { transform: scale(.8); opacity:0; }
-  100% { transform: scale(1); opacity:1; }
+/* =======================================================
+   BUTTONS
+   ======================================================= */
+.main-btn,
+.share-btn {
+  background: #ffffff;
+  color: #ff7f2e;
+
+  padding: 14px 20px;
+  border-radius: 40px;
+  border: none;
+
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+
+  box-shadow: 0 6px 16px rgba(255, 130, 58, 0.45);
+
+  transition: 0.15s ease;
 }
 
+.main-btn:active,
+.share-btn:active {
+  transform: scale(0.94);
+}
+
+.share-btn {
+  padding: 10px 26px;
+  margin-top: 10px;
+}
+
+.main-btn.disabled {
+  background: #cfcfcf;
+  color: #777;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* =======================================================
+   WALLET DISPLAY
+   ======================================================= */
+.wallet-display {
+  margin-top: 20px;
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+/* =======================================================
+   BOTTOM NAV (FLOATING BAR)
+   ======================================================= */
 .bottom-nav {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 70px;
-  background: white;
-  border-top: 1px solid #ddd;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: 100%;
+  max-width: 420px;
+  padding: 10px 20px;
+
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 40px;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.15);
+
   display: flex;
   justify-content: space-around;
   align-items: center;
-  z-index: 50;
+
+  z-index: 200;
 }
 
 .nav-item {
-  background: none;
-  border: none;
-  padding: 6px 8px;
-  font-size: 14px;
-  opacity: 0.6;
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  font-size: 13px;
+  opacity: 0.6;
+  cursor: pointer;
+
+  transition: 0.2s ease;
 }
 
 .nav-item.active {
   opacity: 1;
-  font-weight: bold;
+  color: #ff7f2e;
+  font-weight: 700;
 }
 
 .nav-item span {
-  font-size: 12px;
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+/* =======================================================
+   ANIMATIONS
+   ======================================================= */
+.bean-bounce {
+  animation: beanFloat 2s ease-in-out infinite;
+}
+
+@keyframes beanFloat {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
 }

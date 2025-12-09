@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
+import { useAccount, useConnect } from "wagmi";
 import MintButton from "./components/MintButton";
 import EvolutionPanel from "./components/EvolutionPanel";
-import { useAccount, useConnect } from "wagmi";
 
+// Developer FID (only this user sees "My Bean" tab)
 const DEV_FID = 299929;
 
 export default function App() {
-  const [tab, setTab] = useState<"mint" | "bean" | "leaderboard" | "faq">("mint");
-  const [userFID, setUserFID] = useState<number | null>(null);
+  // === Tabs ===
+  const [tab, setTab] = useState<"mint" | "bean" | "rank" | "faq">("mint");
 
+  // === User FID ===
+  const [userFID, setUserFID] = useState<number | null>(null);
+  const isDev = userFID === DEV_FID;
+
+  // === Mint State ===
   const [mintResult, setMintResult] = useState<{
     id: number;
     rarity: string;
@@ -20,58 +26,55 @@ export default function App() {
   const [totalMinted, setTotalMinted] = useState(0);
   const MAX_SUPPLY = 10000;
 
+  // Wallet
   const { isConnected, address: wallet } = useAccount();
   const { connect, connectors } = useConnect();
 
-  /** Miniapp Ready + Load FID */
+  // Example counters for header UI
+  const [dailyBeans] = useState(0);
+  const [lifetimeXp] = useState(0);
+
+  /** Miniapp Ready + load FID */
   useEffect(() => {
     sdk.actions.ready();
+
     async function loadFID() {
       const ctx = await sdk.context;
       const user = ctx?.user;
       if (user) setUserFID(user.fid);
     }
+
     loadFID();
   }, []);
 
-  const isDev = userFID === DEV_FID;
-
-  /** CHECK IF WALLET ALREADY MINTED */
+  /** Check if wallet already minted */
   useEffect(() => {
     async function checkMinted() {
       if (!wallet) return;
 
-      try {
-        const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
-        const data = await res.json();
+      const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
+      const data = await res.json();
 
-        if (data.minted) {
-          setMintResult({
-            id: data.tokenId,
-            rarity: data.rarity,
-            image: data.image,
-          });
-        }
-      } catch (e) {
-        console.error("Mint check error:", e);
+      if (data.minted) {
+        setMintResult({
+          id: data.tokenId,
+          rarity: data.rarity,
+          image: data.image,
+        });
       }
     }
 
     checkMinted();
   }, [wallet]);
 
-  /** LIVE SUPPLY COUNTER */
+  /** Load mint supply */
   useEffect(() => {
     async function loadSupply() {
-      try {
-        const res = await fetch("/api/checkSupply");
-        const data = await res.json();
+      const res = await fetch("/api/checkSupply");
+      const data = await res.json();
 
-        setTotalMinted(data.totalMinted);
-        setSoldOut(data.soldOut);
-      } catch (e) {
-        console.error("Error fetching supply:", e);
-      }
+      setTotalMinted(data.totalMinted);
+      setSoldOut(data.soldOut);
     }
 
     loadSupply();
@@ -79,7 +82,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  /** Share to Warpcast */
+  /** Share after mint */
   async function shareToCast(tokenId: number, rarity: string) {
     const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
     const msg = `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨`;
@@ -91,11 +94,11 @@ export default function App() {
     });
   }
 
-  // =====================================================
-  //                    TAB CONTENT
-  // =====================================================
-
+  // ============================================================
+  //                 CONTENT RENDERING PER TAB
+  // ============================================================
   function renderContent() {
+    // === MINT TAB ===
     if (tab === "mint") {
       return (
         <div className="card">
@@ -104,23 +107,24 @@ export default function App() {
 
           {/* Counter */}
           <div className="counter">
-            {soldOut ?
-              (<b>🎉 Sold Out — 10,000 / 10,000</b>) :
-              (<b>{totalMinted} / {MAX_SUPPLY} Minted</b>)
-            }
+            {soldOut ? (
+              <b>🎉 Sold Out — 10000 / 10000</b>
+            ) : (
+              <b>{totalMinted} / {MAX_SUPPLY} Minted</b>
+            )}
           </div>
 
           {/* Image */}
           <div className="image-container">
             {mintResult ? (
-              <img src={mintResult.image} className="minted-img" />
+              <img src={mintResult.image} alt="Minted Bean" />
             ) : (
-              <img src="/bean.gif" />
+              <img src="/bean.gif" alt="Bean" />
             )}
           </div>
 
-          {/* Mint Flow */}
-          {!mintResult ? (
+          {/* Before Mint */}
+          {!mintResult && (
             <>
               {!isConnected && (
                 <button
@@ -133,7 +137,7 @@ export default function App() {
 
               {isConnected && wallet && (
                 soldOut ? (
-                  <button className="disabled-btn">Sold Out 🎉</button>
+                  <button className="main-btn disabled">Sold Out 🎉</button>
                 ) : (
                   <MintButton
                     userAddress={wallet}
@@ -141,14 +145,17 @@ export default function App() {
                     username={""}
                     onMintSuccess={(data) => {
                       setMintResult(data);
-                      setTotalMinted((n) => n + 1);
+                      setTotalMinted((prev) => prev + 1);
                     }}
                   />
                 )
               )}
             </>
-          ) : (
-            <div className="section">
+          )}
+
+          {/* After Mint */}
+          {mintResult && (
+            <>
               <div className="mint-info">
                 Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
               </div>
@@ -159,10 +166,10 @@ export default function App() {
               >
                 Share to Cast 🚀
               </button>
-            </div>
+            </>
           )}
 
-          {/* Wallet shown */}
+          {/* Wallet */}
           {isConnected && wallet && (
             <div className="wallet-display">
               Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
@@ -172,6 +179,7 @@ export default function App() {
       );
     }
 
+    // === MY BEAN TAB (DEV ONLY) ===
     if (tab === "bean") {
       return isDev ? (
         <EvolutionPanel
@@ -180,67 +188,88 @@ export default function App() {
           mintRarity={mintResult?.rarity ?? null}
         />
       ) : (
-        <div className="locked">Feature not available</div>
+        <div className="card">This feature is not available.</div>
       );
     }
 
-    if (tab === "leaderboard") {
-      return <div className="card"><div className="title">Leaderboard</div></div>;
+    // === RANK TAB ===
+    if (tab === "rank") {
+      return (
+        <div className="card">
+          <div className="title">Leaderboard</div>
+          <p>Coming soon!</p>
+        </div>
+      );
     }
 
+    // === FAQ TAB ===
     if (tab === "faq") {
-      return <div className="card"><div className="title">FAQ</div></div>;
+      return (
+        <div className="card">
+          <div className="title">FAQ</div>
+          <p>Common questions will be shown here.</p>
+        </div>
+      );
     }
   }
 
+  // ============================================================
+  //                       FINAL UI LAYOUT
+  // ============================================================
   return (
-    <div className="container">
-      {renderContent()}
+    <>
+      {/* HEADER */}
+      <div className="header">
+        <div className="header-left">
+          <img src="/icon.png" className="app-icon" />
+          <span className="app-name">Kimmi Beans</span>
+        </div>
 
-      {/* =====================================================
-            BOTTOM NAVIGATION
-      ===================================================== */}
+        <div className="header-right">
+          <div className="header-badge">🫘 {dailyBeans}</div>
+          <div className="header-badge">⭐ {lifetimeXp}</div>
+        </div>
+      </div>
+
+      {/* SCROLLABLE CONTENT */}
+      <div className="container">{renderContent()}</div>
+
+      {/* FLOATING BOTTOM NAV */}
       <div className="bottom-nav">
-
-        {/* Mint */}
-        <button
-          className={tab === "mint" ? "nav-item active" : "nav-item"}
+        <div
+          className={`nav-item ${tab === "mint" ? "active" : ""}`}
           onClick={() => setTab("mint")}
         >
           🫘
           <span>Mint</span>
-        </button>
+        </div>
 
-        {/* My Bean — only developer */}
         {isDev && (
-          <button
-            className={tab === "bean" ? "nav-item active" : "nav-item"}
+          <div
+            className={`nav-item ${tab === "bean" ? "active" : ""}`}
             onClick={() => setTab("bean")}
           >
             🌱
             <span>My Bean</span>
-          </button>
+          </div>
         )}
 
-        {/* Leaderboard */}
-        <button
-          className={tab === "leaderboard" ? "nav-item active" : "nav-item"}
-          onClick={() => setTab("leaderboard")}
+        <div
+          className={`nav-item ${tab === "rank" ? "active" : ""}`}
+          onClick={() => setTab("rank")}
         >
           🏆
           <span>Rank</span>
-        </button>
+        </div>
 
-        {/* FAQ */}
-        <button
-          className={tab === "faq" ? "nav-item active" : "nav-item"}
+        <div
+          className={`nav-item ${tab === "faq" ? "active" : ""}`}
           onClick={() => setTab("faq")}
         >
           ❓
           <span>FAQ</span>
-        </button>
-
+        </div>
       </div>
-    </div>
+    </>
   );
 }
