@@ -1,94 +1,127 @@
-import { useState } from "react";
-import { useWriteContract } from "wagmi";
-import { waitForTransactionReceipt } from "@wagmi/core";
-import { config } from "../wagmi";
+import { useState, useEffect } from "react";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import abi from "../abi/KimmiBeansNFT.json";
 import Toast from "./Toast";
 
-type Props = {
+type MintButtonProps = {
   userAddress: `0x${string}`;
   fid: number;
   username: string;
 };
 
-export default function MintButton({ userAddress, fid, username }: Props) {
+type MintResult = {
+  id: number;
+  rarity: string;
+  image: string;
+};
+
+export default function MintButton({ userAddress, fid, username }: MintButtonProps) {
   const [loading, setLoading] = useState(false);
   const [minted, setMinted] = useState(false);
   const [toast, setToast] = useState("");
-  const [mintData, setMintData] = useState<{
-    id: number;
-    rarity: string;
-    image: string;
-  } | null>(null);
+  const [mintData, setMintData] = useState<MintResult | null>(null);
+
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
 
   const { writeContractAsync } = useWriteContract();
 
+  // --- 1. Tunggu transaksi selesai ---
+  const { data: receipt } = useWaitForTransactionReceipt({
+    hash: txHash ?? undefined,
+  });
+
+  // --- 2. Kalau receipt sudah ada → proses tokenId + metadata ---
+  useEffect(() => {
+    if (!receipt) return;
+
+    async function processMint() {
+      // Tambahan fix TS: guard kedua
+      if (!receipt) return;
+
+      try {
+        const event = receipt.logs?.[0];
+        const rawId = event?.topics?.[3];
+        if (!rawId) throw new Error("Token ID not found");
+
+        const tokenId = parseInt(rawId, 16);
+
+        const meta = await fetch(`/api/metadata/${tokenId}`).then(r => r.json());
+
+        const rarity = meta.attributes?.[0]?.value || "common";
+        const image = meta.image;
+
+        setMintData({ id: tokenId, rarity, image });
+
+        await fetch("/api/saveMetadata", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tokenId,
+            rarity,
+            wallet: userAddress,
+            fid,
+            username,
+          }),
+        });
+
+        setMinted(true);
+        setToast("🎉 Minted successfully!");
+        setTimeout(() => setToast(""), 3000);
+
+      } catch (err) {
+        console.error(err);
+        setToast("❌ Metadata error");
+        setTimeout(() => setToast(""), 3000);
+
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    processMint();
+  }, [receipt]);
+
+
+  // --- 3. Handle mint click ---
   async function handleMint() {
     try {
       setLoading(true);
 
-      // 1. Send transaction
-      const txHash = await writeContractAsync({
+      // Call contract
+      const hash = await writeContractAsync({
         abi,
         address: import.meta.env.VITE_CONTRACT_ADDRESS as `0x${string}`,
         functionName: "mint",
       });
 
-      // 2. Wait for confirmation
-      const receipt = await waitForTransactionReceipt(config, {
-        hash: txHash,
-      });
-
-      // 3. Read tokenId from Transfer event
-      const log = receipt.logs?.[0] as any;
-      const tokenId = parseInt(log.topics[3], 16);
-
-      // 4. Fetch metadata
-      const metaRes = await fetch(`/api/metadata/${tokenId}`);
-      const metadata = await metaRes.json();
-
-      setMintData({
-        id: tokenId,
-        rarity: metadata.attributes[0].value,
-        image: metadata.image,
-      });
-
-      setMinted(true);
-      setToast("🎉 Mint success!");
-
-      setTimeout(() => setToast(""), 3000);
+      // Simpan hash → trigger receipt watcher
+      setTxHash(hash);
 
     } catch (err) {
       console.error(err);
       setToast("❌ Mint failed!");
       setTimeout(() => setToast(""), 3000);
-    } finally {
       setLoading(false);
     }
   }
 
   return (
     <>
-      <button
-        className="main-btn"
-        disabled={minted || loading}
-        onClick={handleMint}
-      >
-        {minted ? "Minted ✓" : loading ? "Minting..." : "Mint NFT"}
+      <button className="main-btn" disabled={loading} onClick={handleMint}>
+        {loading ? "Minting..." : minted ? "Minted ✓" : "Mint NFT"}
       </button>
 
-      {/* Show minted result */}
+      {toast && <Toast message={toast} />}
+
+      {/* Preview setelah mint */}
       {mintData && (
         <div className="mint-card">
-          <img src={mintData.image} className="mint-preview" />
+          <img src={mintData.image} className="mint-preview" alt="Minted Bean" />
           <div className="mint-info">
-            <div>ID #{mintData.id}</div>
-            <div>Rarity: {mintData.rarity}</div>
+            Token #{mintData.id} — Rarity: <b>{mintData.rarity}</b>
           </div>
         </div>
       )}
-
-      {toast && <Toast message={toast} />}
     </>
   );
 }

@@ -6,6 +6,7 @@ import { useAccount, useConnect } from "wagmi";
 export default function App() {
   const [isWhitelisted, setIsWhitelisted] = useState(false);
   const [fid, setFid] = useState<number | null>(null);
+  const [username, setUsername] = useState<string>("");
 
   const SPECIAL_FID = 299929;
 
@@ -13,26 +14,28 @@ export default function App() {
   const { isConnected, address: wallet } = useAccount();
   const { connect, connectors } = useConnect();
 
-  // === READY ===
+  // Miniapp ready
   useEffect(() => {
     sdk.actions.ready();
   }, []);
 
-  // === Load Farcaster Context ===
+  // Load Farcaster Context
   useEffect(() => {
     async function load() {
       const ctx = await sdk.context;
       const user = ctx?.user;
 
       if (!user?.fid) return;
-      setFid(user.fid);
 
-      // cek whitelist
+      setFid(user.fid);
+      setUsername(user.username || "");
+
+      // Check whitelist status
       const res = await fetch(`/api/checkWhitelist?fid=${user.fid}`);
       const json = await res.json();
       if (json.whitelisted) setIsWhitelisted(true);
 
-      // AUTO CONNECT → hanya untuk FID 299929
+      // Auto connect for special FID only
       if (user.fid === SPECIAL_FID && !isConnected) {
         connect({ connector: connectors[0] });
       }
@@ -41,7 +44,7 @@ export default function App() {
     load();
   }, [connect, connectors, isConnected]);
 
-  // === Join Whitelist ===
+  // Join Whitelist
   async function joinWhitelist() {
     if (!fid) return;
 
@@ -73,31 +76,32 @@ export default function App() {
 
         <img src="/bean.gif" className="bean-img" alt="Kimmi Bean" />
 
-        {/* USER NORMAL (bukan 299929) */}
+        {/* Connect Manual → user biasa */}
         {fid !== SPECIAL_FID && !isConnected && (
           <button className="main-btn" onClick={() => connect({ connector: connectors[0] })}>
             Connect Wallet
           </button>
         )}
 
-        {/* JOIN WHITELIST */}
+        {/* Join Whitelist */}
         {!isWhitelisted && (
           <button className="main-btn" onClick={joinWhitelist}>
             Join Whitelist
           </button>
         )}
 
-        {/* WHITELISTED */}
+        {/* After Whitelisted (non special FID) */}
         {isWhitelisted && fid !== SPECIAL_FID && (
           <>
             <button className="disabled-btn">Whitelisted ✓</button>
-            <button className="share-btn"
+
+            <button
+              className="share-btn"
               onClick={() =>
                 sdk.actions.openUrl({
-                  url:
-                    `https://warpcast.com/~/compose?text=${encodeURIComponent(
-                      "I just joined Kimmi Beans whitelist!"
-                    )}`
+                  url: `https://warpcast.com/~/compose?text=${encodeURIComponent(
+                    "I just joined Kimmi Beans whitelist!"
+                  )}`,
                 })
               }
             >
@@ -106,13 +110,21 @@ export default function App() {
           </>
         )}
 
-        {/* USER SPECIAL (299929) → MINT NFT */}
-        {isWhitelisted && fid === SPECIAL_FID && wallet && (
+        {/* SPECIAL USER (FID 299929) → mint langsung */}
+        {isWhitelisted && wallet && fid === SPECIAL_FID && (
           <MintButton
             userAddress={wallet}
-            onMintComplete={(data) => {
-              alert(`Mint success! Rarity: ${data.rarity}`);
-            }}
+            fid={fid}
+            username={username}
+          />
+        )}
+
+        {/* NORMAL USER → setelah connect dan whitelist, baru mint */}
+        {isWhitelisted && wallet && fid !== null && (
+          <MintButton
+            userAddress={wallet}
+            fid={fid}
+            username={username}
           />
         )}
 
