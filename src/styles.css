@@ -5,18 +5,14 @@ html, body {
   padding: 0;
   height: 100%;
   width: 100%;
+  overflow: hidden;
   font-family: "Inter", sans-serif;
+  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
 }
 
-/* FULL SCREEN CENTER */
+/* STOP FLEXLAYOUT ON BODY */
 body {
-  display: flex;
-  justify-content: center;
-  align-items: center; /* Bikin card tetap center vertikal & horizontal */
-  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
-  font-family: "Inter", sans-serif;
-  color: #ffffff;
-  overflow: hidden; /* hilangkan scroll */
+  display: block; /* FIX UTAMA */
 }
 
 /* ==== APP WRAPPER ==== */
@@ -25,8 +21,15 @@ body {
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
-  overflow: hidden; /* global no scroll, content scroll only via container */
+
+  padding-top: env(safe-area-inset-top); /* FIX HEADER KE POTONG */
+}
+
+
+@supports (padding-top: env(safe-area-inset-top)) {
+  .app {
+    padding-top: env(safe-area-inset-top);
+  }
 }
 
 /* ==== HEADER ==== */
@@ -81,15 +84,11 @@ body {
 
 /* ==== SCROLL AREA ==== */
 .container {
-  flex: 1;                       /* ambil ruang tersisa */
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 16px 16px 90px;       /* ada padding bawah agar tidak nabrak nav */
+  flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
-  box-sizing: border-box;
+  padding: 20px 16px 100px;
 }
+
 
 .container::-webkit-scrollbar {
   display: none;
