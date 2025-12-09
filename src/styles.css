@@ -182,22 +182,32 @@ body {
 
 .mint-card {
   margin-top: 20px;
+  padding: 20px;
+  background: white;
+  border-radius: 20px;
   text-align: center;
-  animation: fadeIn 0.4s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 
 .mint-preview {
-  width: 180px;
-  height: 180px;
+  width: 100%;
+  max-width: 260px;
   border-radius: 20px;
-  object-fit: cover;
-  margin-bottom: 10px;
+  display: block;
+  margin: 0 auto;
 }
 
 .mint-info {
-  font-size: 14px;
-  font-weight: bold;
+  margin-top: 14px;
+  font-size: 16px;
   color: #333;
+  font-weight: 600;
+}
+
+.wallet-info {
+  margin-top: 6px;        /* ⭐ Tambahin margin kecil */
+  font-size: 14px;
+  color: #555;
 }
 
 @keyframes fadeIn {
