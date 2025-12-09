@@ -21,37 +21,37 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
   const [toast, setToast] = useState("");
   const [mintData, setMintData] = useState<MintResult | null>(null);
 
-  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
 
   const { writeContractAsync } = useWriteContract();
 
-  // --- 1. Tunggu transaksi selesai ---
+  // === Wait transaction confirmation ===
   const { data: receipt } = useWaitForTransactionReceipt({
-    hash: txHash ?? undefined,
+    hash: txHash,
   });
 
-  // --- 2. Kalau receipt sudah ada → proses tokenId + metadata ---
+  // === When receipt exists → process metadata ===
   useEffect(() => {
-    if (!receipt) return;
+    if (!receipt) return; // Fix TS warning
 
-    async function processMint() {
-      // Tambahan fix TS: guard kedua
-      if (!receipt) return;
-
+    const process = async () => {
       try {
-        const event = receipt.logs?.[0];
-        const rawId = event?.topics?.[3];
-        if (!rawId) throw new Error("Token ID not found");
+        const log = receipt.logs?.[0];
+        const rawId = log?.topics?.[3];
+        if (!rawId) throw new Error("Token ID missing");
 
         const tokenId = parseInt(rawId, 16);
 
-        const meta = await fetch(`/api/metadata/${tokenId}`).then(r => r.json());
+        // Fetch metadata JSON (OpenSea-compatible)
+        const meta = await fetch(`/api/metadata/${tokenId}`).then((r) => r.json());
 
         const rarity = meta.attributes?.[0]?.value || "common";
         const image = meta.image;
 
+        // Show preview
         setMintData({ id: tokenId, rarity, image });
 
+        // Save metadata to Supabase via API
         await fetch("/api/saveMetadata", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -67,36 +67,30 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
         setMinted(true);
         setToast("🎉 Minted successfully!");
         setTimeout(() => setToast(""), 3000);
-
-      } catch (err) {
-        console.error(err);
-        setToast("❌ Metadata error");
+      } catch (e) {
+        console.error(e);
+        setToast("❌ Failed to process metadata");
         setTimeout(() => setToast(""), 3000);
-
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    processMint();
+    process();
   }, [receipt]);
 
-
-  // --- 3. Handle mint click ---
+  // === Handle mint click ===
   async function handleMint() {
     try {
       setLoading(true);
 
-      // Call contract
       const hash = await writeContractAsync({
         abi,
         address: import.meta.env.VITE_CONTRACT_ADDRESS as `0x${string}`,
         functionName: "mint",
       });
 
-      // Simpan hash → trigger receipt watcher
       setTxHash(hash);
-
     } catch (err) {
       console.error(err);
       setToast("❌ Mint failed!");
@@ -113,7 +107,6 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
 
       {toast && <Toast message={toast} />}
 
-      {/* Preview setelah mint */}
       {mintData && (
         <div className="mint-card">
           <img src={mintData.image} className="mint-preview" alt="Minted Bean" />
