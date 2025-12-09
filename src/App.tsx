@@ -1,140 +1,112 @@
 import { useEffect, useState } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
 import MintButton from "@components/MintButton";
+import { useAccount, useConnect } from "wagmi";
 
 export default function App() {
   const [isWhitelisted, setIsWhitelisted] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [fid, setFid] = useState<number | null>(null);
 
   const SPECIAL_FID = 299929;
 
-  // READY()
+  const { isConnected, address: wallet } = useAccount();
+  const { connect, connectors } = useConnect();
+
+  // READY
   useEffect(() => {
-    async function init() {
-      try {
-        await sdk.actions.ready();
-        console.log("Mini App READY sent!");
-      } catch (err) {
-        console.error("READY ERROR:", err);
-      }
-    }
-    init();
+    sdk.actions.ready();
   }, []);
 
-  // CEK STATUS USER + SIMPAN FID
+  // Load user data
   useEffect(() => {
-    async function check() {
+    async function load() {
       const ctx = await sdk.context;
       const user = ctx?.user;
 
       if (!user?.fid) return;
-
-      // simpan fid user sekarang
       setFid(user.fid);
 
-      // cek whitelist
       const res = await fetch(`/api/checkWhitelist?fid=${user.fid}`);
       const json = await res.json();
-      
-      if (json?.whitelisted) {
-        setIsWhitelisted(true);
-      }
+      if (json.whitelisted) setIsWhitelisted(true);
     }
 
-    check();
+    load();
   }, []);
 
-  // JOIN WHITELIST
-  async function joinWhitelist() {
-    setLoading(true);
+  // 🔥 AUTO CONNECT hanya FID tertentu
+  useEffect(() => {
+    if (!fid) return;
 
-    try {
-      const ctx = await sdk.context;
-      const user = ctx?.user;
-
-      if (!user?.fid) {
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch("/api/joinWhitelist", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "fc-request-signature": "verified",
-        },
-        body: JSON.stringify({
-          fid: user.fid,
-          username: user.username,
-        }),
-      });
-
-      const json = await res.json();
-
-      if (json.success) {
-        setIsWhitelisted(true);
-      }
-    } catch (err) {
-      console.error(err);
+    if (fid === SPECIAL_FID && !isConnected) {
+      connect({ connector: connectors[0] });
     }
+  }, [fid]);
 
-    setLoading(false);
-  }
+  // Join whitelist
+  async function joinWhitelist() {
+    if (!fid) return;
 
-  // SHARE CAST
-  async function shareToCast() {
-    const miniAppURL =
-      "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+    const ctx = await sdk.context;
+    const user = ctx?.user;
+    if (!user?.fid) return;
 
-    const msg = "I just joined the Kimmi Beans whitelist! 🫘✨";
-
-    await sdk.actions.openUrl({
-      url:
-        `https://warpcast.com/~/compose?text=${encodeURIComponent(msg)}` +
-        `&embeds[]=${encodeURIComponent(miniAppURL)}`
+    const res = await fetch("/api/joinWhitelist", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "fc-request-signature": "verified"
+      },
+      body: JSON.stringify({
+        fid: user.fid,
+        username: user.username
+      })
     });
+
+    const json = await res.json();
+    if (json.success) setIsWhitelisted(true);
   }
 
   return (
     <div className="container">
       <div className="card">
+
         <div className="title">Kimmi Beans</div>
         <div className="subtitle">Mint cute, unique beans every day!</div>
 
         <img src="/bean.gif" className="bean-img" alt="Kimmi Bean" />
 
-        {/* ============================
-            TOMBOL JOIN WHITELIST
-        ============================ */}
-        <button
-          className={`main-btn ${isWhitelisted ? "disabled" : ""}`}
-          disabled={isWhitelisted}
-          onClick={joinWhitelist}
-        >
-          {isWhitelisted ? "Whitelisted ✓" : "Join Whitelist"}
-        </button>
+        {/* Connect wallet (TAMPIL kalau bukan FID spesial) */}
+        {!isConnected && fid !== SPECIAL_FID && (
+          <button className="main-btn" onClick={() => connect({ connector: connectors[0] })}>
+            Connect Wallet
+          </button>
+        )}
 
-        {/* ============================
-            TOMBOL MINT — KHUSUS FID 299929
-        ============================ */}
-        {isWhitelisted && fid === SPECIAL_FID && (
+        {/* Join whitelist */}
+        {!isWhitelisted && isConnected && (
+          <button className="main-btn" onClick={joinWhitelist}>
+            Join Whitelist
+          </button>
+        )}
+
+        {/* Mint NFT KHUSUS FID 299929 */}
+        {isWhitelisted && fid === SPECIAL_FID && wallet && (
           <MintButton
+            userAddress={wallet}
             onMintComplete={(data) => {
-              console.log("Mint Result:", data);
-              alert(`Mint success! You got ${data.rarity}!`);
+              alert(`Mint success! Rarity: ${data.rarity}`);
             }}
           />
         )}
 
-        {/* ============================
-            TOMBOL SHARE CAST1
-        ============================ */}
-        {isWhitelisted && (
-          <button className="share-btn" onClick={shareToCast}>
-            Share to Cast
-          </button>
+        {/* Wallet display */}
+        {isConnected && wallet && (
+          <div className="wallet-display">
+            Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
+          </div>
         )}
+
       </div>
     </div>
   );
