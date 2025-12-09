@@ -10,7 +10,6 @@ export default function App() {
   const [username, setUsername] = useState<string>("");
   const [isWhitelisted, setIsWhitelisted] = useState(false);
 
-  // Hasil mint
   const [mintResult, setMintResult] = useState<{
     id: number;
     rarity: string;
@@ -38,7 +37,6 @@ export default function App() {
       const json = await res.json();
       if (json.whitelisted) setIsWhitelisted(true);
 
-      // Auto connect special user
       if (user.fid === SPECIAL_FID && !isConnected) {
         connect({ connector: connectors[0] });
       }
@@ -87,41 +85,25 @@ export default function App() {
   return (
     <div className="container">
       <div className="card">
-
         <div className="title">Kimmi Beans</div>
         <div className="subtitle">Mint cute, unique beans every day!</div>
 
-        {/* ===========================
-            CLEAN VIEW: AFTER MINT
-           =========================== */}
-        {mintResult ? (
-          <>
-            {/* NFT Reveal Image */}
+        {/* IMAGE AREA (STABLE SIZE, NO GLITCH) */}
+        <div className="image-container">
+          {mintResult ? (
             <img
               src={`/beans/${mintResult.rarity}.png`}
-              className="mint-preview"
-              style={{ width: "220px", margin: "0 auto", borderRadius: "20px", marginBottom: "14px" }}
+              className="minted-img"
+              alt="Minted NFT"
             />
+          ) : (
+            <img src="/bean.gif" alt="Bean" />
+          )}
+        </div>
 
-            <div className="mint-info" style={{ marginBottom: "14px" }}>
-              Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
-            </div>
-
-            <button
-              className="main-btn"
-              onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
-            >
-              Share to Cast 🚀
-            </button>
-          </>
-        ) : (
+        {/* BEFORE MINT */}
+        {!mintResult && (
           <>
-            {/* ===========================
-                NORMAL VIEW BEFORE MINT
-               =========================== */}
-            <img src="/bean.gif" className="bean-img" alt="Kimmi Bean" />
-
-            {/* Normal users: connect wallet */}
             {!isConnected && fid !== SPECIAL_FID && (
               <button
                 className="main-btn"
@@ -131,19 +113,16 @@ export default function App() {
               </button>
             )}
 
-            {/* Join Whitelist */}
             {!isWhitelisted && (
               <button className="main-btn" onClick={joinWhitelist}>
                 Join Whitelist
               </button>
             )}
 
-            {/* Already whitelisted (normal user) */}
             {isWhitelisted && fid !== SPECIAL_FID && (
               <button className="disabled-btn">Whitelisted ✓</button>
             )}
 
-            {/* SPECIAL USER: CAN MINT */}
             {isWhitelisted && fid === SPECIAL_FID && wallet && (
               <MintButton
                 userAddress={wallet}
@@ -155,7 +134,22 @@ export default function App() {
           </>
         )}
 
-        {/* WALLET DISPLAY */}
+        {/* AFTER MINT */}
+        {mintResult && (
+          <>
+            <div className="mint-info">
+              Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
+            </div>
+
+            <button
+              className="main-btn"
+              onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
+            >
+              Share to Cast 🚀
+            </button>
+          </>
+        )}
+
         {isConnected && wallet && (
           <div className="wallet-display">
             Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
