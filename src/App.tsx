@@ -130,16 +130,18 @@ export default function App() {
         {/* AFTER MINT */}
         {mintResult && (
           <>
-            <div className="mint-info">
-              Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
-            </div>
+            <div className="section">
+              <div className="mint-info">
+                Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
+              </div>
 
-            <button
-              className="main-btn"
-              onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
-            >
-              Share to Cast 🚀
-            </button>
+              <button
+                className="main-btn share-btn"
+                onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
+              >
+                Share to Cast 🚀
+              </button>
+            </div>
           </>
         )}
 
