@@ -154,3 +154,28 @@ body {
   from { opacity: 0; transform: translate(-50%, 20px); }
   to { opacity: 1; transform: translate(-50%, 0); }
 }
+
+.mint-preview {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.bean-preview {
+  width: 180px;
+  border-radius: 12px;
+  animation: pop 0.3s ease-out;
+}
+
+.rarity-label {
+  font-weight: bold;
+  margin-top: 8px;
+  background: #fff3c4;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+@keyframes pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
