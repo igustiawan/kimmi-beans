@@ -4,8 +4,7 @@ import { useAccount, useConnect } from "wagmi";
 import MintButton from "./components/MintButton";
 import EvolutionPanel from "./components/EvolutionPanel";
 
-// Only you can see My Bean tab
-const DEV_FID = 299929;
+const DEV_FID = 299929; // Only dev sees My Bean tab
 
 export default function App() {
   const [tab, setTab] = useState<"mint" | "bean" | "rank" | "faq">("mint");
@@ -13,7 +12,6 @@ export default function App() {
   const [userFID, setUserFID] = useState<number | null>(null);
   const isDev = userFID === DEV_FID;
 
-  // Mint state
   const [mintResult, setMintResult] = useState<{
     id: number;
     rarity: string;
@@ -24,35 +22,28 @@ export default function App() {
   const [totalMinted, setTotalMinted] = useState(0);
   const MAX_SUPPLY = 10000;
 
-  // Wallet
   const { isConnected, address: wallet } = useAccount();
   const { connect, connectors } = useConnect();
 
-  // Header counters (dummy for now)
   const [dailyBeans] = useState(0);
   const [lifetimeXp] = useState(0);
 
   /* Load FID */
   useEffect(() => {
     sdk.actions.ready();
-
-    async function loadFID() {
+    (async () => {
       const ctx = await sdk.context;
       const user = ctx?.user;
       if (user) setUserFID(user.fid);
-    }
-
-    loadFID();
+    })();
   }, []);
 
-  /* Check if wallet has minted */
+  /* Check if wallet has minted before */
   useEffect(() => {
-    async function checkMinted() {
-      if (!wallet) return;
-
+    if (!wallet) return;
+    (async () => {
       const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
       const data = await res.json();
-
       if (data.minted) {
         setMintResult({
           id: data.tokenId,
@@ -60,9 +51,7 @@ export default function App() {
           image: data.image,
         });
       }
-    }
-
-    checkMinted();
+    })();
   }, [wallet]);
 
   /* Load supply */
@@ -70,7 +59,6 @@ export default function App() {
     async function loadSupply() {
       const res = await fetch("/api/checkSupply");
       const data = await res.json();
-
       setTotalMinted(data.totalMinted);
       setSoldOut(data.soldOut);
     }
@@ -80,114 +68,105 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  /* Share after mint */
-  async function shareToCast(tokenId: number, rarity: string) {
+  /* Share cast */
+  async function shareToCast(id: number, rarity: string) {
     const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
-    const msg = `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨`;
+    const text = `I just minted Kimmi Bean #${id} — Rarity: ${rarity} 🫘✨`;
 
     await sdk.actions.openUrl({
       url:
-        `https://warpcast.com/~/compose?text=${encodeURIComponent(msg)}` +
-        `&embeds[]=${encodeURIComponent(miniAppURL)}`
+        `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`
+        + `&embeds[]=${encodeURIComponent(miniAppURL)}`
     });
   }
 
-  // ============================================================
-  // CONTENT RENDERING
-  // ============================================================
+  /* Main content */
   function renderContent() {
-    // ------------------ MINT TAB ------------------
     if (tab === "mint") {
       return (
-        <div className="page-section">
-          <div className="card">
-            <div className="title">Kimmi Beans</div>
-            <div className="subtitle">Mint cute, unique beans every day!</div>
+        <div className="card">
+          <div className="title">Kimmi Beans</div>
+          <div className="subtitle">Mint cute, unique beans every day!</div>
 
-            <div className="counter">
-              {soldOut ? (
-                <b>🎉 Sold Out — 10000 / 10000</b>
-              ) : (
-                <b>{totalMinted} / {MAX_SUPPLY} Minted</b>
-              )}
-            </div>
-
-            <div className="image-container">
-              {mintResult ? (
-                <img src={mintResult.image} alt="Minted Bean" />
-              ) : (
-                <img src="/bean.gif" alt="Bean" />
-              )}
-            </div>
-
-            {!mintResult && (
-              <>
-                {!isConnected && (
-                  <button
-                    className="main-btn"
-                    onClick={() => connect({ connector: connectors[0] })}
-                  >
-                    Connect Wallet
-                  </button>
-                )}
-
-                {isConnected && wallet && (
-                  soldOut ? (
-                    <button className="main-btn disabled">Sold Out 🎉</button>
-                  ) : (
-                    <MintButton
-                      userAddress={wallet}
-                      fid={userFID ?? 0}
-                      username={""}
-                      onMintSuccess={(data) => {
-                        setMintResult(data);
-                        setTotalMinted((prev) => prev + 1);
-                      }}
-                    />
-                  )
-                )}
-              </>
-            )}
-
-            {mintResult && (
-              <>
-                <div className="mint-info">
-                  Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
-                </div>
-
-                <button
-                  className="share-btn"
-                  onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
-                >
-                  Share to Cast 🚀
-                </button>
-              </>
-            )}
-
-            {wallet && (
-              <div className="wallet-display">
-                Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
-              </div>
-            )}
+          <div className="counter">
+            {soldOut
+              ? <b>🎉 Sold Out — 10000 / 10000</b>
+              : <b>{totalMinted} / {MAX_SUPPLY} Minted</b>
+            }
           </div>
+
+          <div className="image-container">
+            {mintResult
+              ? <img src={mintResult.image} />
+              : <img src="/bean.gif" />
+            }
+          </div>
+
+          {!mintResult && (
+            <>
+              {!isConnected && (
+                <button
+                  className="main-btn"
+                  onClick={() => connect({ connector: connectors[0] })}
+                >
+                  Connect Wallet
+                </button>
+              )}
+
+              {isConnected && wallet && (
+                soldOut ? (
+                  <button className="main-btn disabled">Sold Out 🎉</button>
+                ) : (
+                  <MintButton
+                    userAddress={wallet}
+                    fid={userFID ?? 0}
+                    username=""
+                    onMintSuccess={(data) => {
+                      setMintResult(data);
+                      setTotalMinted((prev) => prev + 1);
+                    }}
+                  />
+                )
+              )}
+            </>
+          )}
+
+          {mintResult && (
+            <>
+              <div className="mint-info">
+                Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
+              </div>
+
+              <button
+                className="share-btn"
+                onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
+              >
+                Share to Cast 🚀
+              </button>
+            </>
+          )}
+
+          {wallet && (
+            <div className="wallet-display">
+              Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
+            </div>
+          )}
         </div>
       );
     }
 
-    // ------------------ MY BEAN TAB (DEV ONLY) ------------------
     if (tab === "bean") {
-      return isDev ? (
-        <EvolutionPanel
-          wallet={wallet}
-          isConnected={isConnected}
-          mintRarity={mintResult?.rarity ?? null}
-        />
-      ) : (
-        <div className="card">This feature is not available.</div>
-      );
+      return isDev
+        ? (
+          <EvolutionPanel
+            wallet={wallet}
+            isConnected={isConnected}
+            mintRarity={mintResult?.rarity ?? null}
+          />
+        )
+        : <div className="card">This feature is not available.</div>;
     }
 
-    // ------------------ RANK ------------------
     if (tab === "rank") {
       return (
         <div className="card">
@@ -197,7 +176,6 @@ export default function App() {
       );
     }
 
-    // ------------------ FAQ ------------------
     if (tab === "faq") {
       return (
         <div className="card">
@@ -208,13 +186,10 @@ export default function App() {
     }
   }
 
-  // ============================================================
-  // FINAL STRUCTURE — matches CSS layout
-  // ============================================================
   return (
     <div className="app">
 
-      {/* -------- HEADER -------- */}
+      {/* Header */}
       <div className="header">
         <div className="header-left">
           <img src="/icon.png" className="app-icon" />
@@ -227,14 +202,14 @@ export default function App() {
         </div>
       </div>
 
-      {/* -------- SCROLLABLE CONTENT -------- */}
+      {/* Scrollable Content */}
       <div className="container">
         <div className="content-bg">
           {renderContent()}
         </div>
       </div>
 
-      {/* -------- BOTTOM NAV -------- */}
+      {/* Bottom Navigation */}
       <div className="bottom-nav">
         <div
           className={`nav-item ${tab === "mint" ? "active" : ""}`}
@@ -270,7 +245,6 @@ export default function App() {
           <span>FAQ</span>
         </div>
       </div>
-
     </div>
   );
 }
