@@ -11,15 +11,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing tokenId or wallet" });
   }
 
-  const { error } = await supabase.from("nft_metadata").insert([
-    {
-      id: tokenId,
+  // UPDATE row yang sudah dibuat oleh metadata/[id]
+  const { error } = await supabase
+    .from("nft_metadata")
+    .update({
       rarity,
       wallet,
       fid: fid ?? null,
-      username: username || null,
-    }
-  ]);
+      username: username ?? null,
+    })
+    .eq("id", tokenId);
 
   if (error) {
     console.error(error);
