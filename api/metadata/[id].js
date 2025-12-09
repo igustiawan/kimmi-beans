@@ -4,11 +4,8 @@ export default async function handler(req, res) {
   const { id } = req.query;
   const tokenId = parseInt(id);
 
-  // ambil data user dari query (miniapp send?)
-  const { fid, username, wallet } = req.query;
-
-  // Cek metadata existing
-  const { data, error } = await supabase
+  // check existing metadata
+  const { data } = await supabase
     .from("nft_metadata")
     .select("*")
     .eq("id", tokenId)
@@ -16,17 +13,17 @@ export default async function handler(req, res) {
 
   let rarity = data?.rarity;
 
-  // Generate & insert kalau belum ada
+  // generate if not exist
   if (!rarity) {
     rarity = getRarity();
 
     await supabase.from("nft_metadata").insert([
       {
         id: tokenId,
-        fid,
-        username,
-        wallet,
-        rarity
+        rarity,
+        fid: null,
+        username: null,
+        wallet: null,
       }
     ]);
   }
@@ -35,7 +32,7 @@ export default async function handler(req, res) {
     name: `Kimmi Bean #${tokenId}`,
     description: "Cute Bean NFT",
     image: `https://xkimmi.fun/beans/${rarity}.png`,
-    attributes: [{ trait_type: "Rarity", value: rarity }]
+    attributes: [{ trait_type: "Rarity", value: rarity }],
   });
 }
 
