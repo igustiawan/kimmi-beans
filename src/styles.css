@@ -109,23 +109,28 @@ body {
 }
 
 .share-btn {
-  margin-top: 14px;
-  width: 75%;
+  padding: 10px 22px;
   background: #ffffff;
   color: #ff7f2e;
   font-size: 16px;
   font-weight: 700;
-  padding: 12px 0;
-  border-radius: 40px;
+  border-radius: 28px;
   border: none;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(255, 130, 58, 0.45);
-  transition: 0.15s ease;
+  box-shadow: 0 4px 12px rgba(255, 130, 58, 0.35);
+  transition: all 0.15s ease;
+  display: inline-block;
+  margin-top: 18px;
+}
+
+.share-btn:hover {
+  box-shadow: 0 6px 18px rgba(255, 130, 58, 0.45);
 }
 
 .share-btn:active {
-  transform: scale(0.94);
+  transform: scale(0.95);
 }
+
 
 .bean-bounce {
   animation: bounce 1s ease infinite;
@@ -254,15 +259,6 @@ body {
   text-align: center;
   font-size: 15px;
   opacity: .95;
-}
-
-.share-btn {
-  margin-top: 18px;
-  margin-bottom: 20px;
-  width: 80%;
-  max-width: 260px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .section {

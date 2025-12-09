@@ -202,7 +202,7 @@ export default function App() {
             </div>
 
             <button
-              className="main-btn share-btn"
+              className="share-btn"
               onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
             >
               Share to Cast 🚀
