@@ -59,12 +59,12 @@ export default function MintButton({ userAddress, fid, username }: MintButtonPro
         });
 
         setMinted(true);
-        setToast("🎉 Minted successfully!");
+        //setToast("🎉 Minted successfully!");
         setTimeout(() => setToast(""), 3000);
 
       } catch (err) {
         console.error(err);
-        setToast("❌ Metadata error");
+        //setToast("❌ Metadata error");
         setTimeout(() => setToast(""), 3000);
       } finally {
         setLoading(false);
