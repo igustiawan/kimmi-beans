@@ -4,11 +4,10 @@ import abi from "../abi/KimmiBeansNFT.json";
 import { getRandomRarity } from "@utils/rarity";
 
 type Props = {
-  userAddress: `0x${string}`;
   onMintComplete: (data: { rarity: string; txHash: string }) => void;
 };
 
-export default function MintButton({ userAddress, onMintComplete }: Props) {
+export default function MintButton({ onMintComplete }: Props) {
   const [loading, setLoading] = useState(false);
 
   const { writeContractAsync } = useWriteContract();
@@ -17,26 +16,22 @@ export default function MintButton({ userAddress, onMintComplete }: Props) {
     try {
       setLoading(true);
 
-      if (!userAddress) {
-        alert("Wallet not connected!");
-        return;
-      }
-
       const rarity = getRandomRarity();
 
       const txHash = await writeContractAsync({
         abi,
         address: import.meta.env.VITE_CONTRACT_ADDRESS as `0x${string}`,
         functionName: "mint",
-        args: [userAddress],
+        args: [], // ❗ FIX: CONTRACT TIDAK BUTUH PARAMETER
       });
 
       onMintComplete({
         rarity,
         txHash,
       });
+
     } catch (err) {
-      console.error(err);
+      console.error("Mint error:", err);
       alert("Mint failed!");
     } finally {
       setLoading(false);
