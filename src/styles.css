@@ -102,11 +102,14 @@ html, body {
 /* Background gradient for whole content */
 .content-bg {
   background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
-  padding: 24px 16px 40px;
-  min-height: auto;
+  padding: 24px 16px 120px;   /* ruang bawah agar card tidak mentok nav */
   height: auto;
-  display: block;
+  min-height: auto;
   box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Hide scrollbar */
@@ -118,16 +121,13 @@ html, body {
    CARD STYLE
    ============================================================ */
 .card {
-  width: 100%;
+  width: calc(100% - 32px);
   max-width: 420px;
-
   padding: 28px 20px;
-  margin: 0 auto;
-  margin-bottom: 120px; /* jarak aman dari bottom nav */
+  margin: 20px auto 40px;  /* ruang aman bawah */
   border-radius: 26px;
   background: rgba(255,255,255,0.22);
   backdrop-filter: blur(14px);
-
   box-shadow: 0 10px 28px rgba(0,0,0,0.15);
 
   display: flex;
@@ -281,23 +281,12 @@ html, body {
   to { opacity: 1; }
 }
 
-/* FIX CARD TERPOTONG */
-.card {
-  width: calc(100% - 32px);
-  max-width: 420px;
-}
-
 /* FIX HORIZONTAL SHIFT */
 .app {
   overflow-x: hidden;
 }
 
 /* FIX PADDING PARENT YANG BIKIN KEPOTONG */
-.content-bg {
-  padding: 0 16px 20px;
-  box-sizing: border-box;
-}
-
 .page-section {
   width: 100%;
   display: flex;
