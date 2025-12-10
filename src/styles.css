@@ -105,7 +105,8 @@ html, body {
   padding: 20px 16px calc(140px + env(safe-area-inset-bottom));
   /*                ↑ aman untuk card paling panjang (minted) */
 
-  min-height: 100%;
+  min-height: auto;
+  height: auto;
   display: block;
   box-sizing: border-box;
 }
@@ -124,7 +125,7 @@ html, body {
 
   padding: 28px 20px;
   margin: 0 auto;
-
+  margin-bottom: 120px; /* jarak aman dari bottom nav */
   border-radius: 26px;
   background: rgba(255,255,255,0.22);
   backdrop-filter: blur(14px);
