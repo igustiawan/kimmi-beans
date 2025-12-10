@@ -37,24 +37,13 @@ html, body {
    HEADER
    ============================================================ */
 .header {
-  position: sticky;
-  top: 0;
-
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-
-  padding: calc(12px + env(safe-area-inset-top)) 16px 10px;
-  /*               ↑ extra padding to avoid Warpcast bar */
-
-  background: white;
-  z-index: 100;
-
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  box-sizing: border-box;
+  padding: calc(12px + env(safe-area-inset-top)) 16px 10px;
+  background: white;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 .header-left {
@@ -70,25 +59,33 @@ html, body {
 }
 
 .app-name {
-  font-size: 15px;
+  font-size: 13px;         /* lebih kecil */
   font-weight: 600;
+  max-width: 120px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
+/* RIGHT SIDE — BEANS + XP + WALLET */
 .header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  margin-left: auto;       /* paksa ke kanan */
 }
 
 .header-badge {
-  background: rgba(255, 255, 255, 0.25);
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
   display: flex;
-  gap: 4px;
   align-items: center;
+  gap: 4px;
+
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+
+  font-size: 12px;         /* angka lebih kecil */
+  font-weight: 600;
 }
 
 /* ============================================================
