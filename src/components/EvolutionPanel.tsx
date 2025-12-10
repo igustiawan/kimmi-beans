@@ -15,6 +15,14 @@ interface Props {
 
 const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
 
+// Solidity struct returned by getStats()
+type StatsStruct = {
+  xp: bigint;
+  level: bigint;
+  beans: bigint;
+  lastAction: bigint;
+};
+
 export default function EvolutionPanel({
   bean,
   wallet,
@@ -30,9 +38,9 @@ export default function EvolutionPanel({
   const [actionFee, setActionFee] = useState<bigint>(0n);
 
   // =====================================================
-  // 1. READ USER STATS
+  // 1. READ USER STATS FROM CONTRACT
   // =====================================================
-  const { data: userStats, refetch: refetchStats } = useReadContract({
+  const { data: userStatsRaw, refetch: refetchStats } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
     functionName: "getStats",
@@ -41,23 +49,24 @@ export default function EvolutionPanel({
   });
 
   useEffect(() => {
-    if (!userStats || !Array.isArray(userStats)) return;
+    if (!userStatsRaw) return;
 
-    const xpNum = Number(userStats[0]);
-    const levelNum = Number(userStats[1]);
-    const beansNum = Number(userStats[2]);
+    const stats = userStatsRaw as StatsStruct;
+
+    const xpNum = Number(stats.xp);
+    const levelNum = Number(stats.level);
+    const beansNum = Number(stats.beans);
 
     setXp(xpNum);
     setLevel(levelNum);
     setBeans(beansNum);
 
     if (onStatsUpdate) onStatsUpdate(xpNum, beansNum);
-
-  }, [userStats]);
+  }, [userStatsRaw]);
 
 
   // =====================================================
-  // 2. READ actionFee FROM CONTRACT (DYNAMIC FEE)
+  // 2. READ FEE FROM CONTRACT (DYNAMIC)
   // =====================================================
   const { data: feeRaw } = useReadContract({
     address: CONTRACT,
@@ -66,14 +75,12 @@ export default function EvolutionPanel({
   });
 
   useEffect(() => {
-    if (feeRaw) {
-      setActionFee(feeRaw as bigint);
-    }
+    if (feeRaw) setActionFee(feeRaw as bigint);
   }, [feeRaw]);
 
 
   // =====================================================
-  // 3. PERFORM ACTION → FEED / WATER / TRAIN
+  // 3. DO ACTION → FEED / WATER / TRAIN
   // =====================================================
   async function doAction(action: "feed" | "water" | "train") {
     if (!isConnected || !wallet) {
@@ -82,42 +89,44 @@ export default function EvolutionPanel({
     }
 
     try {
-      console.log("Using fee from contract:", actionFee.toString());
+      console.log("Using contract fee:", actionFee.toString());
 
       const tx = await writeContractAsync({
         address: CONTRACT,
         abi: careAbi,
         functionName: action,
-        value: actionFee,         // <-- DYNAMIC FEE
+        value: actionFee,
       });
 
       console.log("Tx submitted:", tx);
 
-      // Wait a bit & refresh on-chain stats
+      // Delay for block confirmation
       setTimeout(async () => {
         const updated = await refetchStats();
 
-        if (!updated.data || !Array.isArray(updated.data)) {
-          console.error("Invalid stats returned:", updated.data);
+        if (!updated.data) {
+          console.error("Stats returned null:", updated.data);
           return;
         }
 
-        const xpRaw = Number(updated.data[0]);
-        const levelRaw = Number(updated.data[1]);
-        const beansRaw = Number(updated.data[2]);
+        const stats = updated.data as StatsStruct;
 
-        // Save to Supabase
+        const xpNum = Number(stats.xp);
+        const levelNum = Number(stats.level);
+        const beansNum = Number(stats.beans);
+
+        // Push to Supabase
         await fetch("/api/updateStats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             wallet,
-            xp: xpRaw,
-            level: levelRaw,
-            beans: beansRaw
+            xp: xpNum,
+            level: levelNum,
+            beans: beansNum
           })
         });
-      }, 3000);
+      }, 2500);
 
     } catch (err) {
       console.error("Transaction failed:", err);
@@ -142,7 +151,7 @@ export default function EvolutionPanel({
       {/* LEVEL */}
       <div className="bean-level">Level {level}</div>
 
-      {/* XP BAR */}
+      {/* XP PROGRESS BAR */}
       <div className="xp-bar">
         <div
           className="xp-fill"
@@ -167,7 +176,6 @@ export default function EvolutionPanel({
         </button>
       </div>
 
-      {/* Debug Info */}
       <div style={{ fontSize: 11, color: "#999", marginTop: 10 }}>
         Action Fee: {Number(actionFee) / 1e18} ETH
       </div>
