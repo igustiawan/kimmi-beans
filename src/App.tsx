@@ -31,8 +31,8 @@ export default function App() {
   const { connect, connectors } = useConnect();
 
   // Header counters (dummy for now)
-  const [dailyBeans] = useState(0);
-  const [lifetimeXp] = useState(0);
+  const [dailyBeans, setDailyBeans] = useState(0);
+  const [lifetimeXp, setLifetimeXp] = useState(0);
 
   /* Load FID */
   useEffect(() => {
@@ -185,7 +185,11 @@ export default function App() {
       <EvolutionPanel
         wallet={wallet}
         isConnected={isConnected}
-        bean={mintResult}  // <-- KIRIM FULL OBJECT
+        bean={mintResult}
+        onStatsUpdate={(xp, beans) => {
+          setLifetimeXp(xp);
+          setDailyBeans(beans);
+        }}
       />
       ) : (
         <div className="card">This feature is not available.</div>
