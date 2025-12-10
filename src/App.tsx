@@ -163,11 +163,11 @@ export default function App() {
               </>
             )}
 
-            {wallet && (
+            {/* {wallet && (
               <div className="wallet-display">
                 Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
               </div>
-            )}
+            )} */}
           </div>
       );
     }
@@ -222,6 +222,12 @@ export default function App() {
         <div className="header-right">
           <div className="header-badge">🫘 {dailyBeans}</div>
           <div className="header-badge">⭐ {lifetimeXp}</div>
+
+           {wallet && (
+              <div className="wallet-badge">
+                {wallet.slice(0, 4)}...{wallet.slice(-3)}
+              </div>
+            )}
         </div>
       </div>
 
