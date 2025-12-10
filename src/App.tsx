@@ -333,30 +333,68 @@ export default function App() {
       return (
         <div className="content-bg faq-bg">
           <div className="faq-card">
-            <div className="title">FAQ</div>
 
-            <div style={{ fontSize: "15px", opacity: 0.9 }}>
+            <div className="faq-title">FAQ</div>
 
-              <p><b>What is Kimmi Beans?</b><br />
-              A fun Farcaster Mini App where you mint a Bean NFT and grow it daily.</p>
+            {/* ITEM 1 */}
+            <div className="faq-section">
+              <div className="faq-question">
+                <span className="faq-icon">🫘</span> What is Kimmi Beans?
+              </div>
+              <div className="faq-answer">
+                A fun Farcaster Mini App where you mint and grow your own Bean NFT.
+              </div>
+            </div>
 
-              <p><b>How do I earn XP & Beans?</b><br />
-              Perform daily actions: Feed, Water, and Train your Bean.</p>
+            {/* ITEM 2 */}
+            <div className="faq-section">
+              <div className="faq-question">
+                <span className="faq-icon">⚡</span> How do I earn XP & Beans?
+              </div>
+              <div className="faq-answer">
+                Take care of your Bean every day by feeding, watering, and training it.
+              </div>
+            </div>
 
-              <p><b>Which action gives the best reward?</b><br />
-                Train ＞ Water ＞ Feed<br />
-                Higher difficulty → Higher XP & Beans reward.
-              </p>
+            {/* ITEM 3 */}
+            <div className="faq-section">
+              <div className="faq-question">
+                <span className="faq-icon">📈</span> Which action gives the best reward?
+              </div>
+              <div className="faq-answer">
+                <b>Train ＞ Water ＞ Feed</b><br />
+                Higher difficulty → higher XP & Beans reward.
+              </div>
+            </div>
 
-              <p><b>What are Beans used for?</b><br />
-              More Beans = Higher leaderboard position + future rewards.</p>
+            {/* ITEM 4 */}
+            <div className="faq-section">
+              <div className="faq-question">
+                <span className="faq-icon">💰</span> What are Beans used for?
+              </div>
+              <div className="faq-answer">
+                Beans increase your leaderboard ranking and unlock future rewards.
+              </div>
+            </div>
 
-              <p><b>How many NFTs can I mint?</b><br />
-              Only 1 NFT per wallet. Keep it safe!</p>
+            {/* ITEM 5 */}
+            <div className="faq-section">
+              <div className="faq-question">
+                <span className="faq-icon">🔒</span> How many NFTs can I mint?
+              </div>
+              <div className="faq-answer">
+                Only 1 NFT per wallet — your Bean is unique and yours forever.
+              </div>
+            </div>
 
-              <p><b>Is this on Base?</b><br />
-              Yes! All minting and actions run on Base blockchain.</p>
-              
+            {/* ITEM 6 */}
+            <div className="faq-section">
+              <div className="faq-question">
+                <span className="faq-icon">🔵</span> Is this on Base?
+              </div>
+              <div className="faq-answer">
+                Yes! All minting and care actions run on Base blockchain.
+              </div>
             </div>
           </div>
         </div>
