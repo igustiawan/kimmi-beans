@@ -91,13 +91,10 @@ html, body {
 
   overflow-y: auto;
   overflow-x: hidden;
-
+  padding: 0;          /* FIX */
   box-sizing: border-box;
 
-  /* WAJIB: tinggi scrollable area */
-  min-height: calc(100vh - 70px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-
-  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  padding-bottom: 0;  /* HAPUS rumus aneh sebelumnya */
 }
 
 
@@ -105,7 +102,7 @@ html, body {
 .content-bg {
   background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
 
-  padding: 24px 16px 120px; /* ruang bawah BESAR */
+   padding: 24px 16px 140px;  /* AMAN dari bottom-nav */
 
   min-height: 100%;
   box-sizing: border-box;
@@ -125,7 +122,7 @@ html, body {
   max-width: 420px;
 
   padding: 28px 20px;
-  margin: 0 auto 60px;  /* MARGIN BOTTOM LEBIH BESAR */
+   margin: 0 auto 80px;   /* fixed, guaranteed */
   border-radius: 26px;
 
   background: rgba(255,255,255,0.22);
