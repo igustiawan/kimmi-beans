@@ -272,7 +272,7 @@ export default function App() {
     // ------------------ RANK ------------------
     if (tab === "rank") {
       return (
-        <div className="card leaderboard-card">
+        <div className="leaderboard-card">
 
           <div className="leader-title">
             🏆 Leaderboard
