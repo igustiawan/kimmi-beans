@@ -3,10 +3,14 @@ import React from "react";
 interface Props {
   wallet: string | undefined;
   isConnected: boolean;
-  mintRarity: string | null;
+  bean: {
+    id: number;
+    rarity: string;
+    image: string;
+  } | null;
 }
 
-export default function EvolutionPanel({ wallet, isConnected, mintRarity }: Props) {
+export default function EvolutionPanel({ wallet, isConnected, bean }: Props) {
   const level = 1;
   const xp = 30;
   const maxXp = 100;
@@ -19,13 +23,17 @@ export default function EvolutionPanel({ wallet, isConnected, mintRarity }: Prop
 
       {/* Bean Image */}
       <div className="image-container">
-        <img src="/bean.png" alt="Bean Evolution" />
+        {bean ? (
+          <img src={bean.image} alt="My Bean Evolution" />
+        ) : (
+          <img src="/bean.png" alt="Default Bean" />
+        )}
       </div>
 
-      {/* Rarity */}
-      {mintRarity && (
+      {/* Token + Rarity */}
+      {bean && (
         <div className="rarity-label">
-          Rarity: <b>{mintRarity}</b>
+          Token #{bean.id} — Rarity: <b>{bean.rarity}</b>
         </div>
       )}
 
@@ -50,11 +58,11 @@ export default function EvolutionPanel({ wallet, isConnected, mintRarity }: Prop
       </div>
 
       {/* Action Buttons */}
-        <div className="action-buttons">
+      <div className="action-buttons">
         <button className="action-btn">🍞 Feed</button>
         <button className="action-btn">💧 Water</button>
         <button className="action-btn">🏋️ Train</button>
-        </div>
+      </div>
 
     </div>
   );

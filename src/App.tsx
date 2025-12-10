@@ -175,11 +175,11 @@ export default function App() {
     // ------------------ MY BEAN TAB (DEV ONLY) ------------------
     if (tab === "bean") {
       return isDev ? (
-        <EvolutionPanel
-          wallet={wallet}
-          isConnected={isConnected}
-          mintRarity={mintResult?.rarity ?? null}
-        />
+      <EvolutionPanel
+        wallet={wallet}
+        isConnected={isConnected}
+        bean={mintResult}  // <-- KIRIM FULL OBJECT
+      />
       ) : (
         <div className="card">This feature is not available.</div>
       );
