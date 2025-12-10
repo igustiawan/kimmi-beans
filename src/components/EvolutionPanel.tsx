@@ -36,16 +36,21 @@ export default function EvolutionPanel({
   const [level, setLevel] = useState(1);
   const [beans, setBeans] = useState(0);
 
-  // 3 fees baru
+  // XP requirement (dinamis)
+  const [nextReq, setNextReq] = useState(100);
+
+  // Fees
   const [feedFee, setFeedFee] = useState<bigint>(0n);
   const [waterFee, setWaterFee] = useState<bigint>(0n);
   const [trainFee, setTrainFee] = useState<bigint>(0n);
 
-  // UI
+  // UI state
   const [loading, setLoading] = useState<"" | "feed" | "water" | "train">("");
   const [toast, setToast] = useState<string | null>(null);
 
-  // -------- GET STATS ----------
+  // ---------------------------------------------------------------
+  // LOAD STATS
+  // ---------------------------------------------------------------
   const { data: userStatsRaw, refetch: refetchStats } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
@@ -60,17 +65,34 @@ export default function EvolutionPanel({
     const stats = userStatsRaw as StatsStruct;
 
     const xpNum = Number(stats.xp);
-    const levelNum = Number(stats.level);
+    const lvlNum = Number(stats.level);
     const beansNum = Number(stats.beans);
 
     setXp(xpNum);
-    setLevel(levelNum);
+    setLevel(lvlNum);
     setBeans(beansNum);
 
     onStatsUpdate?.(xpNum, beansNum);
   }, [userStatsRaw]);
 
-  // -------- GET FEES FROM CONTRACT ----------
+  // ---------------------------------------------------------------
+  // LOAD XP REQUIREMENT FOR NEXT LEVEL
+  // ---------------------------------------------------------------
+  const { data: nextReqRaw } = useReadContract({
+    address: CONTRACT,
+    abi: careAbi,
+    functionName: "nextLevelRequirement",
+    args: [level],
+    query: { enabled: Boolean(wallet) }
+  });
+
+  useEffect(() => {
+    if (nextReqRaw) setNextReq(Number(nextReqRaw));
+  }, [nextReqRaw]);
+
+  // ---------------------------------------------------------------
+  // LOAD FEES
+  // ---------------------------------------------------------------
   const { data: feedFeeRaw } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
@@ -95,7 +117,9 @@ export default function EvolutionPanel({
     if (trainFeeRaw) setTrainFee(trainFeeRaw as bigint);
   }, [feedFeeRaw, waterFeeRaw, trainFeeRaw]);
 
-  // -------- DO ACTION ----------
+  // ---------------------------------------------------------------
+  // DO ACTION
+  // ---------------------------------------------------------------
   async function doAction(action: "feed" | "water" | "train") {
     if (!isConnected || !wallet) {
       alert("Connect wallet first");
@@ -138,6 +162,7 @@ export default function EvolutionPanel({
           setTimeout(() => setToast(null), 1800);
         }
 
+        // Sync ke Supabase
         await fetch("/api/updateStats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -160,6 +185,11 @@ export default function EvolutionPanel({
     }
   }
 
+  // ---------------------------------------------------------------
+  // PROGRESS BAR PROPERLY USING CONTRACT REQUIREMENT
+  // ---------------------------------------------------------------
+  const progress = Math.min((xp / nextReq) * 100, 100);
+
   return (
     <div className="card bean-panel">
 
@@ -173,16 +203,17 @@ export default function EvolutionPanel({
       <div className="bean-level">Level {level}</div>
 
       <div className="xp-bar">
-        <div className="xp-fill" style={{ width: `${(xp % 100)}%` }}></div>
+        <div className="xp-fill" style={{ width: `${progress}%` }}></div>
       </div>
 
-      <div className="xp-text">{xp % 100} / 100 XP</div>
+      <div className="xp-text">{xp} / {nextReq} XP</div>
 
       <div className="bean-actions">
 
+        {/* Semua button disable saat loading */}
         <button
           className="bean-btn"
-          disabled={loading === "feed"}
+          disabled={loading !== ""}
           onClick={() => doAction("feed")}
         >
           {loading === "feed" ? "Feeding..." : "🍞 Feed"}
@@ -190,7 +221,7 @@ export default function EvolutionPanel({
 
         <button
           className="bean-btn"
-          disabled={loading === "water"}
+          disabled={loading !== ""}
           onClick={() => doAction("water")}
         >
           {loading === "water" ? "Watering..." : "💧 Water"}
@@ -198,7 +229,7 @@ export default function EvolutionPanel({
 
         <button
           className="bean-btn"
-          disabled={loading === "train"}
+          disabled={loading !== ""}
           onClick={() => doAction("train")}
         >
           {loading === "train" ? "Training..." : "🏋️ Train"}
