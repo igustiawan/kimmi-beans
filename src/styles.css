@@ -1,3 +1,14 @@
+  :root {
+    --vh: 1vh;
+  }
+
+  /* Fix untuk WebView yang memotong height */
+  @supports (height: 100dvh) {
+    :root {
+      --vh: 1dvh;
+    }
+  }
+
 /* ============================================================
    RESET & ROOT LAYOUT
    ============================================================ */
@@ -83,6 +94,7 @@ html, body {
 /* ============================================================
    SCROLLABLE CONTENT WRAPPER
    ============================================================ */
+/* CONTAINER — area scroll */
 .container {
   width: 100%;
   max-width: 480px;
@@ -91,10 +103,13 @@ html, body {
 
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0;          /* FIX */
-  box-sizing: border-box;
 
-  padding-bottom: 0;  /* HAPUS rumus aneh sebelumnya */
+  box-sizing: border-box;
+  padding: 0;
+
+  /* FIX UTAMA */
+  height: calc(var(--vh) * 100 - 70px - env(safe-area-inset-top));
+  min-height: calc(var(--vh) * 100 - 70px - env(safe-area-inset-top));
 }
 
 
@@ -102,12 +117,18 @@ html, body {
 .content-bg {
   background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
 
-   padding: 24px 16px 140px;  /* AMAN dari bottom-nav */
-
+  width: 100%;
   min-height: 100%;
+  height: 100%;
+
+  padding: 24px 16px 40px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
   box-sizing: border-box;
 }
-
 
 /* Hide scrollbar */
 .container::-webkit-scrollbar {
@@ -284,4 +305,50 @@ html, body {
 /* FIX HORIZONTAL SHIFT */
 .app {
   overflow-x: hidden;
+}
+
+.wallet-badge {
+  background: rgba(255, 255, 255, 0.35);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.evolution-box {
+  width: 100%;
+  max-width: 300px;
+  aspect-ratio: 1/1;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.25);
+  overflow: hidden;
+  margin: 16px auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.evolution-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.action-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.15);
+  background: white;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
