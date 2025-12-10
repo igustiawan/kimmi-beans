@@ -11,13 +11,13 @@ interface Props {
     rarity: string;
     image: string;
   } | null;
-  onStatsUpdate?: (xp: number, beans: number) => void;
+  onStatsUpdate?: (xp: number, beans: number) => void; // TOTAL XP → header
 }
 
 const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
 
 type StatsStruct = {
-  xp: bigint;
+  xp: bigint;        // TOTAL XP
   level: bigint;
   beans: bigint;
   lastAction: bigint;
@@ -32,25 +32,24 @@ export default function EvolutionPanel({
 
   const { writeContractAsync } = useWriteContract();
 
-  const [xp, setXp] = useState(0);
+  // --- STATES ---
+  const [xp, setXp] = useState(0);          // TOTAL XP
   const [level, setLevel] = useState(1);
   const [beans, setBeans] = useState(0);
 
-  // XP requirement (dinamis)
   const [nextReq, setNextReq] = useState(100);
 
-  // Fees
   const [feedFee, setFeedFee] = useState<bigint>(0n);
   const [waterFee, setWaterFee] = useState<bigint>(0n);
   const [trainFee, setTrainFee] = useState<bigint>(0n);
 
-  // UI state
   const [loading, setLoading] = useState<"" | "feed" | "water" | "train">("");
   const [toast, setToast] = useState<string | null>(null);
 
-  // ---------------------------------------------------------------
-  // LOAD STATS
-  // ---------------------------------------------------------------
+
+  // ============================================================
+  // LOAD MAIN STATS (XP TOTAL)
+  // ============================================================
   const { data: userStatsRaw, refetch: refetchStats } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
@@ -64,21 +63,24 @@ export default function EvolutionPanel({
 
     const stats = userStatsRaw as StatsStruct;
 
-    const xpNum = Number(stats.xp);
+    const totalXpNum = Number(stats.xp);   // TOTAL XP
     const lvlNum = Number(stats.level);
     const beansNum = Number(stats.beans);
 
-    setXp(xpNum);
+    setXp(totalXpNum);
     setLevel(lvlNum);
     setBeans(beansNum);
 
-    onStatsUpdate?.(xpNum, beansNum);
+    // Kirim TOTAL XP ke header (App.tsx)
+    onStatsUpdate?.(totalXpNum, beansNum);
+
   }, [userStatsRaw]);
 
-  // ---------------------------------------------------------------
-  // LOAD XP REQUIREMENT FOR NEXT LEVEL
-  // ---------------------------------------------------------------
-  const { data: nextReqRaw } = useReadContract({
+
+  // ============================================================
+  // GET XP REQUIREMENT
+  // ============================================================
+  const { data: reqRaw } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
     functionName: "nextLevelRequirement",
@@ -87,12 +89,13 @@ export default function EvolutionPanel({
   });
 
   useEffect(() => {
-    if (nextReqRaw) setNextReq(Number(nextReqRaw));
-  }, [nextReqRaw]);
+    if (reqRaw) setNextReq(Number(reqRaw));
+  }, [reqRaw]);
 
-  // ---------------------------------------------------------------
-  // LOAD FEES
-  // ---------------------------------------------------------------
+
+  // ============================================================
+  // GET FEES
+  // ============================================================
   const { data: feedFeeRaw } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
@@ -117,41 +120,37 @@ export default function EvolutionPanel({
     if (trainFeeRaw) setTrainFee(trainFeeRaw as bigint);
   }, [feedFeeRaw, waterFeeRaw, trainFeeRaw]);
 
-  // ---------------------------------------------------------------
+
+  // ============================================================
   // DO ACTION
-  // ---------------------------------------------------------------
+  // ============================================================
   async function doAction(action: "feed" | "water" | "train") {
     if (!isConnected || !wallet) {
       alert("Connect wallet first");
       return;
     }
 
-    const fee =
-      action === "feed"
-        ? feedFee
-        : action === "water"
-        ? waterFee
-        : trainFee;
+    const fee = action === "feed" ? feedFee :
+                action === "water" ? waterFee : trainFee;
 
     try {
       setLoading(action);
 
-      const tx = await writeContractAsync({
+      await writeContractAsync({
         address: CONTRACT,
         abi: careAbi,
         functionName: action,
         value: fee,
       });
 
-      console.log("Tx sent:", tx);
-
+      // delay to ensure subgraph/node updates
       setTimeout(async () => {
         const updated = await refetchStats();
         if (!updated.data) return;
 
         const stats = updated.data as StatsStruct;
 
-        const newXp = Number(stats.xp);
+        const newXp = Number(stats.xp);        // TOTAL XP
         const newBeans = Number(stats.beans);
 
         const xpGain = newXp - xp;
@@ -162,17 +161,13 @@ export default function EvolutionPanel({
           setTimeout(() => setToast(null), 1800);
         }
 
-        // Sync ke Supabase
-        await fetch("/api/updateStats", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            wallet,
-            xp: newXp,
-            level: Number(stats.level),
-            beans: newBeans
-          })
-        });
+        // update local
+        setXp(newXp);
+        setBeans(newBeans);
+        setLevel(Number(stats.level));
+
+        // update header
+        onStatsUpdate?.(newXp, newBeans);
 
         setLoading("");
 
@@ -185,11 +180,17 @@ export default function EvolutionPanel({
     }
   }
 
-  // ---------------------------------------------------------------
-  // PROGRESS BAR PROPERLY USING CONTRACT REQUIREMENT
-  // ---------------------------------------------------------------
-  const progress = Math.min((xp / nextReq) * 100, 100);
 
+  // ============================================================
+  // PROGRESS BAR (XP UNTUK LEVEL INI)
+  // ============================================================
+  const xpForLevel = xp % nextReq;
+  const progress = Math.min((xpForLevel / nextReq) * 100, 100);
+
+
+  // ============================================================
+  // UI
+  // ============================================================
   return (
     <div className="card bean-panel">
 
@@ -206,11 +207,12 @@ export default function EvolutionPanel({
         <div className="xp-fill" style={{ width: `${progress}%` }}></div>
       </div>
 
-      <div className="xp-text">{xp} / {nextReq} XP</div>
+      <div className="xp-text">
+        {xpForLevel} / {nextReq} XP
+      </div>
 
       <div className="bean-actions">
 
-        {/* Semua button disable saat loading */}
         <button
           className="bean-btn"
           disabled={loading !== ""}
@@ -241,8 +243,7 @@ export default function EvolutionPanel({
         createPortal(
           <div className="toast-popup">{toast}</div>,
           document.getElementById("toast-root") as HTMLElement
-        )
-      }
+        )}
     </div>
   );
 }

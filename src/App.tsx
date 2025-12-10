@@ -32,9 +32,10 @@ export default function App() {
 
   const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
 
-  // Header values
+  // HEADER VALUES
   const [dailyBeans, setDailyBeans] = useState(0);
-  const [lifetimeXp, setLifetimeXp] = useState(0);
+  const [lifetimeXp, setLifetimeXp] = useState(0); // ← TOTAL XP ONLY from EvolutionPanel
+
 
   // ============================================================
   // Load FID
@@ -54,6 +55,7 @@ export default function App() {
 
     loadFID();
   }, []);
+
 
   // ============================================================
   // Check minted
@@ -76,8 +78,9 @@ export default function App() {
     checkMinted();
   }, [wallet]);
 
+
   // ============================================================
-  // Auto-load stats for header directly from CONTRACT
+  // Load beans ONLY for header (XP now handled by EvolutionPanel)
   // ============================================================
   type StatsStruct = {
     xp: bigint;
@@ -86,7 +89,7 @@ export default function App() {
     lastAction: bigint;
   };
 
-  const { data: headerStatsRaw, refetch: refetchHeaderStats } = useReadContract({
+  const { data: headerStatsRaw } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
     functionName: "getStats",
@@ -99,18 +102,20 @@ export default function App() {
 
     const stats = headerStatsRaw as StatsStruct;
 
-    setLifetimeXp(Number(stats.xp));
+    // XP TIDAK DISET DI SINI LAGI
     setDailyBeans(Number(stats.beans));
+
   }, [headerStatsRaw]);
 
-  // Function dipanggil EvolutionPanel untuk sync header
-  function handleStatsUpdate(newXp: number, newBeans: number) {
-    setLifetimeXp(newXp);
-    setDailyBeans(newBeans);
 
-    // Refresh header contract data juga
-    refetchHeaderStats();
+  // ============================================================
+  // Update XP & Beans from EvolutionPanel
+  // ============================================================
+  function handleStatsUpdate(newXp: number, newBeans: number) {
+    setLifetimeXp(newXp);   // ← TOTAL XP ACUMULATED
+    setDailyBeans(newBeans);
   }
+
 
   // ============================================================
   // Load supply
@@ -129,6 +134,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+
   // ============================================================
   // Share to Cast
   // ============================================================
@@ -144,8 +150,9 @@ export default function App() {
     });
   }
 
+
   // ============================================================
-  // Render content
+  // Render Content
   // ============================================================
   function renderContent() {
     if (tab === "mint") {
@@ -189,13 +196,10 @@ export default function App() {
                     userAddress={wallet}
                     fid={userFID ?? 0}
                     username={""}
-                      onMintSuccess={(d) => {
-                          setMintResult(d);
-                          setTotalMinted((prev) => prev + 1);
-                          setTimeout(() => {
-                            window.location.reload();
-                          }, 400);
-                        }}
+                    onMintSuccess={(d) => {
+                      setMintResult(d);
+                      setTotalMinted((prev) => prev + 1);
+                    }}
                   />
                 )
               )}
@@ -253,6 +257,7 @@ export default function App() {
     }
   }
 
+
   // ============================================================
   // UI Layout
   // ============================================================
@@ -274,7 +279,7 @@ export default function App() {
 
           {wallet && (
             <div className="wallet-badge">
-              {wallet.slice(0,4)}...{wallet.slice(-3)}
+              {wallet.slice(0, 4)}...{wallet.slice(-3)}
             </div>
           )}
         </div>
