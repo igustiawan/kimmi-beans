@@ -15,7 +15,6 @@ interface Props {
 
 const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
 
-// Sesuai struct Solidity
 type StatsStruct = {
   xp: bigint;
   level: bigint;
@@ -32,25 +31,22 @@ export default function EvolutionPanel({
 
   const { writeContractAsync } = useWriteContract();
 
-  // State asli
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
   const [beans, setBeans] = useState(0);
   const [actionFee, setActionFee] = useState<bigint>(0n);
 
-  // State tambahan baru (tidak ganggu logic)
+  // tambahan UI
   const [loading, setLoading] = useState<"" | "feed" | "water" | "train">("");
   const [toast, setToast] = useState<string | null>(null);
 
-  // =====================================================
-  // 1. READ USER STATS — versi kamu (VALID)
-  // =====================================================
+  // -------- GET STATS ----------
   const { data: userStatsRaw, refetch: refetchStats } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
     functionName: "getStats",
     args: wallet ? [wallet] : undefined,
-    query: { enabled: Boolean(wallet) },
+    query: { enabled: Boolean(wallet) }
   });
 
   useEffect(() => {
@@ -66,17 +62,15 @@ export default function EvolutionPanel({
     setLevel(levelNum);
     setBeans(beansNum);
 
-    if (onStatsUpdate) onStatsUpdate(xpNum, beansNum);
+    onStatsUpdate?.(xpNum, beansNum);
+
   }, [userStatsRaw]);
 
-
-  // =====================================================
-  // 2. READ ACTION_FEE — versi kamu (VALID)
-  // =====================================================
+  // -------- READ actionFee ----------
   const { data: feeRaw } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
-    functionName: "ACTION_FEE"
+    functionName: "actionFee", // <-- PENTING! lowercase
   });
 
   useEffect(() => {
@@ -84,9 +78,7 @@ export default function EvolutionPanel({
   }, [feeRaw]);
 
 
-  // =====================================================
-  // 3. ACTION (FEED/WATER/TRAIN) — versi kamu + toast fix
-  // =====================================================
+  // -------- DO ACTION ----------
   async function doAction(action: "feed" | "water" | "train") {
     if (!isConnected || !wallet) {
       alert("Connect wallet first");
@@ -100,58 +92,50 @@ export default function EvolutionPanel({
         address: CONTRACT,
         abi: careAbi,
         functionName: action,
-        value: actionFee,
+        value: actionFee, // FEE BENAR
       });
 
       console.log("Tx submitted:", tx);
 
       setTimeout(async () => {
         const updated = await refetchStats();
-
-        if (!updated.data) {
-          console.error("Stats returned null", updated.data);
-          setLoading("");
-          return;
-        }
+        if (!updated.data) return;
 
         const stats = updated.data as StatsStruct;
 
         const newXp = Number(stats.xp);
-        const newLevel = Number(stats.level);
         const newBeans = Number(stats.beans);
 
-        // Hitung gain
         const xpGain = newXp - xp;
         const beansGain = newBeans - beans;
 
-        // Munculkan toast jika ada perbedaan
         if (xpGain > 0 || beansGain > 0) {
           setToast(`+${xpGain} XP   +${beansGain} Beans`);
           setTimeout(() => setToast(null), 1800);
         }
 
-        // Push ke Supabase (kode kamu)
         await fetch("/api/updateStats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             wallet,
             xp: newXp,
-            level: newLevel,
+            level: Number(stats.level),
             beans: newBeans
           })
         });
 
         setLoading("");
 
-      }, 2200);
+      }, 2500);
 
     } catch (err) {
-      console.error("Transaction failed:", err);
-      alert("Transaction failed — check gas or fee.");
+      console.error(err);
+      alert("Transaction failed — check fee.");
       setLoading("");
     }
   }
+
 
   return (
     <div className="card bean-panel">
@@ -165,14 +149,12 @@ export default function EvolutionPanel({
 
       <div className="bean-level">Level {level}</div>
 
-      {/* XP BAR */}
       <div className="xp-bar">
         <div className="xp-fill" style={{ width: `${(xp % 100)}%` }}></div>
       </div>
 
       <div className="xp-text">{xp % 100} / 100 XP</div>
 
-      {/* ACTION BUTTONS */}
       <div className="bean-actions">
 
         <button
@@ -201,20 +183,8 @@ export default function EvolutionPanel({
 
       </div>
 
-      {/* TOAST */}
       {toast && (
-        <div
-          style={{
-            marginTop: 12,
-            padding: "7px 12px",
-            background: "#2ecc71",
-            borderRadius: 10,
-            fontSize: 13,
-            color: "white",
-            textAlign: "center",
-            animation: "fadeIn 0.25s"
-          }}
-        >
+        <div className="toast">
           {toast}
         </div>
       )}
