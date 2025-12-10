@@ -456,3 +456,13 @@ html, body {
 .bean-btn:active {
   transform: scale(0.94);
 }
+
+/* Pastikan konten tidak tertutup bottom-nav */
+.content-bg {
+  padding-bottom: 140px !important;
+}
+
+/* Beri jarak aman untuk setiap card */
+.card {
+  margin-bottom: 120px !important;
+}
