@@ -5,14 +5,10 @@ import MintButton from "./components/MintButton";
 import EvolutionPanel from "./components/EvolutionPanel";
 import careAbi from "./abi/kimmiBeansCare.json";
 
-const DEV_FID = 299929;
-
 export default function App() {
   const [tab, setTab] = useState<"mint" | "bean" | "rank" | "faq">("mint");
 
   const [userFID, setUserFID] = useState<number | null>(null);
-  const isDev = userFID === DEV_FID;
-
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [pfp, setPfp] = useState<string | null>(null);
 
@@ -41,7 +37,6 @@ export default function App() {
   // ============================================================
   useEffect(() => {
     sdk.actions.ready();
-
     async function loadFID() {
       const ctx = await sdk.context;
       const user = ctx?.user;
@@ -51,12 +46,11 @@ export default function App() {
         setPfp(user.pfpUrl || null);
       }
     }
-
     loadFID();
   }, []);
 
   // ============================================================
-  // Check minted
+  // Check minted NFT
   // ============================================================
   useEffect(() => {
     async function checkMinted() {
@@ -103,12 +97,9 @@ export default function App() {
     setDailyBeans(Number(stats.beans));
   }, [headerStatsRaw]);
 
-  // Function dipanggil EvolutionPanel untuk sync header
   function handleStatsUpdate(newXp: number, newBeans: number) {
     setLifetimeXp(newXp);
     setDailyBeans(newBeans);
-
-    // Refresh header contract data juga
     refetchHeaderStats();
   }
 
@@ -148,6 +139,7 @@ export default function App() {
   // Render content
   // ============================================================
   function renderContent() {
+    // ------------------ MINT TAB ------------------
     if (tab === "mint") {
       return (
         <div className="card">
@@ -188,14 +180,12 @@ export default function App() {
                   <MintButton
                     userAddress={wallet}
                     fid={userFID ?? 0}
-                    username={""}
-                      onMintSuccess={(d) => {
-                          setMintResult(d);
-                          setTotalMinted((prev) => prev + 1);
-                          setTimeout(() => {
-                            window.location.reload();
-                          }, 400);
-                        }}
+                    username={displayName || ""}
+                    onMintSuccess={(d) => {
+                      setMintResult(d);
+                      setTotalMinted((prev) => prev + 1);
+                      setTimeout(() => window.location.reload(), 400);
+                    }}
                   />
                 )
               )}
@@ -220,20 +210,45 @@ export default function App() {
       );
     }
 
-    // MY BEAN
+    // ------------------ MY BEAN TAB ------------------
     if (tab === "bean") {
-      return isDev ? (
+      if (!isConnected || !wallet) {
+        return (
+          <div className="card">
+            <div className="title">My Bean</div>
+            <p>Please connect your wallet first.</p>
+          </div>
+        );
+      }
+
+      // No NFT yet
+      if (!mintResult) {
+        return (
+          <div className="card">
+            <div className="title">My Bean</div>
+            <p>You don’t own a Kimmi Bean NFT yet.</p>
+            <button
+              className="main-btn"
+              onClick={() => setTab("mint")}
+            >
+              Mint Now 🫘
+            </button>
+          </div>
+        );
+      }
+
+      // NFT exists → show evolution panel
+      return (
         <EvolutionPanel
           wallet={wallet}
           isConnected={isConnected}
           bean={mintResult}
           onStatsUpdate={handleStatsUpdate}
         />
-      ) : (
-        <div className="card">This feature is not available.</div>
       );
     }
 
+    // ------------------ RANK ------------------
     if (tab === "rank") {
       return (
         <div className="card">
@@ -243,6 +258,7 @@ export default function App() {
       );
     }
 
+    // ------------------ FAQ ------------------
     if (tab === "faq") {
       return (
         <div className="card">
@@ -274,7 +290,7 @@ export default function App() {
 
           {wallet && (
             <div className="wallet-badge">
-              {wallet.slice(0,4)}...{wallet.slice(-3)}
+              {wallet.slice(0, 4)}...{wallet.slice(-3)}
             </div>
           )}
         </div>
@@ -296,14 +312,12 @@ export default function App() {
           🫘<span>Mint</span>
         </div>
 
-        {isDev && (
-          <div
-            className={`nav-item ${tab === "bean" ? "active" : ""}`}
-            onClick={() => setTab("bean")}
-          >
-            🌱<span>My Bean</span>
-          </div>
-        )}
+        <div
+          className={`nav-item ${tab === "bean" ? "active" : ""}`}
+          onClick={() => setTab("bean")}
+        >
+          🌱<span>My Bean</span>
+        </div>
 
         <div
           className={`nav-item ${tab === "rank" ? "active" : ""}`}
