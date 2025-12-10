@@ -7,12 +7,15 @@ const CARE_CONTRACT = import.meta.env.VITE_CARE_CONTRACT!;
 const ACTION_FEE = BigInt(import.meta.env.VITE_CARE_FEE!);
 
 interface Props {
+  wallet: string | undefined;
+  isConnected: boolean;
   bean: {
     id: number;
     rarity: string;
     image: string;
   } | null;
 }
+
 
 export default function EvolutionPanel({ bean }: Props) {
   const { address: wallet } = useAccount();
