@@ -32,29 +32,26 @@ export default function EvolutionPanel({
 
   const { writeContractAsync } = useWriteContract();
 
-  // TOTAL XP
-  const [totalXp, setTotalXp] = useState(0);
+  const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
   const [beans, setBeans] = useState(0);
 
-  // XP breakdown
+  // XP requirement (dinamis)
   const [nextReq, setNextReq] = useState(100);
-  const [prevReq, setPrevReq] = useState(0);
-  const [progressXp, setProgressXp] = useState(0);
 
   // Fees
   const [feedFee, setFeedFee] = useState<bigint>(0n);
   const [waterFee, setWaterFee] = useState<bigint>(0n);
   const [trainFee, setTrainFee] = useState<bigint>(0n);
 
-  // UI
+  // UI state
   const [loading, setLoading] = useState<"" | "feed" | "water" | "train">("");
   const [toast, setToast] = useState<string | null>(null);
 
-  // ============================================================
-  // GET TOTAL XP + LEVEL + BEANS
-  // ============================================================
-  const { data: rawStats, refetch: refetchStats } = useReadContract({
+  // ---------------------------------------------------------------
+  // LOAD STATS
+  // ---------------------------------------------------------------
+  const { data: userStatsRaw, refetch: refetchStats } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
     functionName: "getStats",
@@ -63,58 +60,56 @@ export default function EvolutionPanel({
   });
 
   useEffect(() => {
-    if (!rawStats) return;
+    if (!userStatsRaw) return;
 
-    const stats = rawStats as StatsStruct;
+    const stats = userStatsRaw as StatsStruct;
 
-    const tXp = Number(stats.xp);
-    const lvl = Number(stats.level);
-    const b = Number(stats.beans);
+    const xpNum = Number(stats.xp);
+    const lvlNum = Number(stats.level);
+    const beansNum = Number(stats.beans);
 
-    setTotalXp(tXp);
-    setLevel(lvl);
-    setBeans(b);
+    setXp(xpNum);
+    setLevel(lvlNum);
+    setBeans(beansNum);
 
-    // SEND TOTAL XP TO HEADER
-    onStatsUpdate?.(tXp, b);
-  }, [rawStats]);
+    onStatsUpdate?.(xpNum, beansNum);
+  }, [userStatsRaw]);
 
-  // ============================================================
-  // XP REQUIREMENT
-  // ============================================================
+  // ---------------------------------------------------------------
+  // LOAD XP REQUIREMENT FOR NEXT LEVEL
+  // ---------------------------------------------------------------
   const { data: nextReqRaw } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
     functionName: "nextLevelRequirement",
     args: [level],
-  });
-
-  const { data: prevReqRaw } = useReadContract({
-    address: CONTRACT,
-    abi: careAbi,
-    functionName: "nextLevelRequirement",
-    args: [Math.max(level - 1, 0)],
+    query: { enabled: Boolean(wallet) }
   });
 
   useEffect(() => {
     if (nextReqRaw) setNextReq(Number(nextReqRaw));
-    if (prevReqRaw) setPrevReq(Number(prevReqRaw));
-  }, [nextReqRaw, prevReqRaw]);
+  }, [nextReqRaw]);
 
-  useEffect(() => {
-    // Hitung XP untuk level berjalan
-    const base = prevReq;
-    const prog = Math.max(0, totalXp - base);
-
-    setProgressXp(prog);
-  }, [totalXp, prevReq, nextReq]);
-
-  // ============================================================
+  // ---------------------------------------------------------------
   // LOAD FEES
-  // ============================================================
-  const { data: feedFeeRaw } = useReadContract({ address: CONTRACT, abi: careAbi, functionName: "feedFee" });
-  const { data: waterFeeRaw } = useReadContract({ address: CONTRACT, abi: careAbi, functionName: "waterFee" });
-  const { data: trainFeeRaw } = useReadContract({ address: CONTRACT, abi: careAbi, functionName: "trainFee" });
+  // ---------------------------------------------------------------
+  const { data: feedFeeRaw } = useReadContract({
+    address: CONTRACT,
+    abi: careAbi,
+    functionName: "feedFee",
+  });
+
+  const { data: waterFeeRaw } = useReadContract({
+    address: CONTRACT,
+    abi: careAbi,
+    functionName: "waterFee",
+  });
+
+  const { data: trainFeeRaw } = useReadContract({
+    address: CONTRACT,
+    abi: careAbi,
+    functionName: "trainFee",
+  });
 
   useEffect(() => {
     if (feedFeeRaw) setFeedFee(feedFeeRaw as bigint);
@@ -122,9 +117,9 @@ export default function EvolutionPanel({
     if (trainFeeRaw) setTrainFee(trainFeeRaw as bigint);
   }, [feedFeeRaw, waterFeeRaw, trainFeeRaw]);
 
-  // ============================================================
+  // ---------------------------------------------------------------
   // DO ACTION
-  // ============================================================
+  // ---------------------------------------------------------------
   async function doAction(action: "feed" | "water" | "train") {
     if (!isConnected || !wallet) {
       alert("Connect wallet first");
@@ -132,8 +127,11 @@ export default function EvolutionPanel({
     }
 
     const fee =
-      action === "feed" ? feedFee :
-      action === "water" ? waterFee : trainFee;
+      action === "feed"
+        ? feedFee
+        : action === "water"
+        ? waterFee
+        : trainFee;
 
     try {
       setLoading(action);
@@ -156,7 +154,7 @@ export default function EvolutionPanel({
         const newXp = Number(stats.xp);
         const newBeans = Number(stats.beans);
 
-        const xpGain = newXp - totalXp;
+        const xpGain = newXp - xp;
         const beansGain = newBeans - beans;
 
         if (xpGain > 0 || beansGain > 0) {
@@ -164,6 +162,7 @@ export default function EvolutionPanel({
           setTimeout(() => setToast(null), 1800);
         }
 
+        // Sync ke Supabase
         await fetch("/api/updateStats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -178,6 +177,7 @@ export default function EvolutionPanel({
         setLoading("");
 
       }, 2500);
+
     } catch (err) {
       console.error(err);
       alert("Transaction failed — check fee.");
@@ -185,10 +185,10 @@ export default function EvolutionPanel({
     }
   }
 
-  // ============================================================
-  // RENDER
-  // ============================================================
-  const progressPct = Math.min((progressXp / (nextReq - prevReq)) * 100, 100);
+  // ---------------------------------------------------------------
+  // PROGRESS BAR PROPERLY USING CONTRACT REQUIREMENT
+  // ---------------------------------------------------------------
+  const progress = Math.min((xp / nextReq) * 100, 100);
 
   return (
     <div className="card bean-panel">
@@ -203,32 +203,46 @@ export default function EvolutionPanel({
       <div className="bean-level">Level {level}</div>
 
       <div className="xp-bar">
-        <div className="xp-fill" style={{ width: `${progressPct}%` }}></div>
+        <div className="xp-fill" style={{ width: `${progress}%` }}></div>
       </div>
 
-      <div className="xp-text">
-        {progressXp} / {nextReq - prevReq} XP
-      </div>
+      <div className="xp-text">{xp} / {nextReq} XP</div>
 
       <div className="bean-actions">
-        <button className="bean-btn" disabled={loading !== ""} onClick={() => doAction("feed")}>
+
+        {/* Semua button disable saat loading */}
+        <button
+          className="bean-btn"
+          disabled={loading !== ""}
+          onClick={() => doAction("feed")}
+        >
           {loading === "feed" ? "Feeding..." : "🍞 Feed"}
         </button>
 
-        <button className="bean-btn" disabled={loading !== ""} onClick={() => doAction("water")}>
+        <button
+          className="bean-btn"
+          disabled={loading !== ""}
+          onClick={() => doAction("water")}
+        >
           {loading === "water" ? "Watering..." : "💧 Water"}
         </button>
 
-        <button className="bean-btn" disabled={loading !== ""} onClick={() => doAction("train")}>
+        <button
+          className="bean-btn"
+          disabled={loading !== ""}
+          onClick={() => doAction("train")}
+        >
           {loading === "train" ? "Training..." : "🏋️ Train"}
         </button>
+
       </div>
 
       {toast &&
         createPortal(
           <div className="toast-popup">{toast}</div>,
           document.getElementById("toast-root") as HTMLElement
-        )}
+        )
+      }
     </div>
   );
 }

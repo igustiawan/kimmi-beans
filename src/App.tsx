@@ -105,11 +105,12 @@ export default function App() {
 
   // Function dipanggil EvolutionPanel untuk sync header
   function handleStatsUpdate(newXp: number, newBeans: number) {
-    setLifetimeXp(newXp);   // ← total XP
+    setLifetimeXp(newXp);
     setDailyBeans(newBeans);
+
+    // Refresh header contract data juga
     refetchHeaderStats();
   }
-
 
   // ============================================================
   // Load supply
@@ -188,7 +189,7 @@ export default function App() {
                     userAddress={wallet}
                     fid={userFID ?? 0}
                     username={""}
-                        onMintSuccess={(d) => {
+                      onMintSuccess={(d) => {
                           setMintResult(d);
                           setTotalMinted((prev) => prev + 1);
                           setTimeout(() => {
