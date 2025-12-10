@@ -360,3 +360,99 @@ html, body {
   object-fit: cover;
   border: 2px solid #fff;
 }
+
+/* PANEL WRAP */
+.bean-panel {
+  padding-bottom: 32px;
+}
+
+/* IMAGE */
+.bean-image-wrap {
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 1/1;
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.28);
+  margin: 14px auto 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bean-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* TOKEN + RARITY */
+.bean-meta {
+  text-align: center;
+  margin-top: 6px;
+  font-size: 15px;
+  opacity: 0.95;
+}
+
+.bean-meta .token {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.bean-meta .rarity b {
+  text-transform: lowercase;
+  color: #ff7f2e;
+}
+
+/* LEVEL */
+.bean-level {
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 12px;
+}
+
+/* XP BAR */
+.xp-bar {
+  width: 100%;
+  max-width: 260px;
+  height: 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.35);
+  margin: 10px auto 6px;
+  overflow: hidden;
+}
+
+.xp-fill {
+  height: 100%;
+  background: #ff7f2e;
+  border-radius: 10px;
+  transition: width 0.25s;
+}
+
+.xp-text {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+/* ACTION BUTTONS */
+.bean-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.bean-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  background: white;
+  color: #333;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.10);
+  transition: transform .15s;
+}
+
+.bean-btn:active {
+  transform: scale(0.94);
+}

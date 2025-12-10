@@ -10,58 +10,55 @@ interface Props {
   } | null;
 }
 
-export default function EvolutionPanel({ wallet, isConnected, bean }: Props) {
+export default function EvolutionPanel({ bean }: Props) {
+  // sementara hardcoded (nanti akan diambil dari DB)
   const level = 1;
   const xp = 30;
   const maxXp = 100;
 
   return (
-    <div className="card">
+    <div className="card bean-panel">
 
+      {/* Title */}
       <div className="title">My Bean</div>
       <div className="subtitle">Care for your Bean to earn BEANS & XP!</div>
 
       {/* Bean Image */}
-      <div className="image-container">
-        {bean ? (
-          <img src={bean.image} alt="My Bean Evolution" />
-        ) : (
-          <img src="/bean.png" alt="Default Bean" />
-        )}
+      <div className="bean-image-wrap">
+        <img
+          src={bean?.image || "/bean.png"}
+          className="bean-image"
+          alt="Bean Evolution"
+        />
       </div>
 
       {/* Token + Rarity */}
       {bean && (
-        <div className="rarity-label">
-          Token #{bean.id} — Rarity: <b>{bean.rarity}</b>
+        <div className="bean-meta">
+          <span className="token">Token #{bean.id}</span>
+          <span className="rarity">
+            Rarity: <b>{bean.rarity}</b>
+          </span>
         </div>
       )}
 
       {/* Level */}
-      <div className="section">
-        <div style={{ fontSize: 16, fontWeight: 700 }}>
-          Level {level}
-        </div>
-      </div>
+      <div className="bean-level">Level {level}</div>
 
-      {/* XP Progress Bar */}
-      <div className="progress-wrapper">
-        <div className="progress-bar">
-          <div
-            className="progress-fill"
-            style={{ width: `${(xp / maxXp) * 100}%` }}
-          ></div>
-        </div>
-        <div className="progress-text">
-          {xp} / {maxXp} XP
-        </div>
+      {/* XP BAR */}
+      <div className="xp-bar">
+        <div
+          className="xp-fill"
+          style={{ width: `${(xp / maxXp) * 100}%` }}
+        ></div>
       </div>
+      <div className="xp-text">{xp} / {maxXp} XP</div>
 
-      {/* Action Buttons */}
-      <div className="action-buttons">
-        <button className="action-btn">🍞 Feed</button>
-        <button className="action-btn">💧 Water</button>
-        <button className="action-btn">🏋️ Train</button>
+      {/* ACTION BUTTONS */}
+      <div className="bean-actions">
+        <button className="bean-btn">🍞 Feed</button>
+        <button className="bean-btn">💧 Water</button>
+        <button className="bean-btn">🏋️ Train</button>
       </div>
 
     </div>
