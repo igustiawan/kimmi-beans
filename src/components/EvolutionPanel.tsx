@@ -183,16 +183,11 @@ export default function EvolutionPanel({
 
       </div>
 
-      {toast && (
-        <div className="toast">
-          {toast}
+        {toast && (
+        <div className="toast-popup">
+            {toast}
         </div>
-      )}
-
-      <div style={{ fontSize: 11, color: "#999", marginTop: 10 }}>
-        Action Fee: {Number(actionFee) / 1e18} ETH
-      </div>
-
+        )}
     </div>
   );
 }
