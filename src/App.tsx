@@ -270,14 +270,16 @@ type StatsStruct = {
         </div>
 
         <div className="header-right">
-          <div className="header-badge">🫘 {dailyBeans}</div>
-          <div className="header-badge">⭐ {lifetimeXp}</div>
+          <div className="header-stats">
+            <div className="header-badge">🫘 {dailyBeans}</div>
+            <div className="header-badge">⭐ {lifetimeXp}</div>
+          </div>
 
-           {wallet && (
-              <div className="wallet-badge">
-                {wallet.slice(0, 4)}...{wallet.slice(-3)}
-              </div>
-            )}
+          {wallet && (
+            <div className="wallet-badge">
+              {wallet.slice(0,4)}...{wallet.slice(-3)}
+            </div>
+          )}
         </div>
       </div>
 

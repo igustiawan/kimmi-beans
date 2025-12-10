@@ -68,12 +68,18 @@ html, body {
 }
 
 /* RIGHT SIDE — BEANS + XP + WALLET */
+.header-stats {
+  display: flex;
+  align-items: center;
+  gap: 4px;   /* beans + xp */
+}
+
 .header-right {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-left: auto;       /* paksa ke kanan */
+  gap: 10px;  /* jarak ke wallet */
 }
+
 
 .header-badge {
   display: flex;
