@@ -5,6 +5,11 @@
 				"internalType": "address",
 				"name": "initialOwner",
 				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "initialFee",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "nonpayable",
@@ -109,6 +114,19 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newFee",
+				"type": "uint256"
+			}
+		],
+		"name": "setActionFee",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "train",
 		"outputs": [],
@@ -152,7 +170,7 @@
 	},
 	{
 		"inputs": [],
-		"name": "ACTION_FEE",
+		"name": "actionFee",
 		"outputs": [
 			{
 				"internalType": "uint256",
