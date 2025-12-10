@@ -19,7 +19,7 @@ export default function EvolutionPanel({ wallet, isConnected, mintRarity }: Prop
 
       {/* Bean Image */}
       <div className="image-container">
-        <img src="/bean_idle.png" alt="Bean Evolution" />
+        <img src="/bean.png" alt="Bean Evolution" />
       </div>
 
       {/* Rarity */}
@@ -50,18 +50,11 @@ export default function EvolutionPanel({ wallet, isConnected, mintRarity }: Prop
       </div>
 
       {/* Action Buttons */}
-      <div className="evo-btn-group">
-        <button className="evo-btn">🍞 Feed</button>
-        <button className="evo-btn">💧 Water</button>
-        <button className="evo-btn">🏋️ Train</button>
-      </div>
-
-      {/* Wallet */}
-      {wallet && (
-        <div className="wallet-display" style={{ marginTop: 20 }}>
-          Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
+        <div className="action-buttons">
+        <button className="action-btn">🍞 Feed</button>
+        <button className="action-btn">💧 Water</button>
+        <button className="action-btn">🏋️ Train</button>
         </div>
-      )}
 
     </div>
   );
