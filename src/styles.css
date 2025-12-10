@@ -102,9 +102,7 @@ html, body {
 /* Background gradient for whole content */
 .content-bg {
   background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
-  padding: 20px 16px calc(140px + env(safe-area-inset-bottom));
-  /*                ↑ aman untuk card paling panjang (minted) */
-
+  padding: 24px 16px 40px;
   min-height: auto;
   height: auto;
   display: block;
