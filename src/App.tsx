@@ -349,8 +349,8 @@ export default function App() {
       </div>
 
       {/* CONTENT */}
-      <div className="container">
-        <div className="content-bg">{renderContent()}</div>
+      <div className={`content-bg ${tab === "rank" ? "leader-mode" : ""}`}>
+        {renderContent()}
       </div>
 
       <div id="toast-root"></div>
