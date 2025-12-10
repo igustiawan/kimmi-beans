@@ -15,7 +15,7 @@ interface Props {
 
 const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
 
-// Solidity struct returned by getStats()
+// Sesuai struct Solidity
 type StatsStruct = {
   xp: bigint;
   level: bigint;
@@ -32,24 +32,25 @@ export default function EvolutionPanel({
 
   const { writeContractAsync } = useWriteContract();
 
+  // State asli
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
   const [beans, setBeans] = useState(0);
   const [actionFee, setActionFee] = useState<bigint>(0n);
 
-  // NEW STATES
+  // State tambahan baru (tidak ganggu logic)
   const [loading, setLoading] = useState<"" | "feed" | "water" | "train">("");
   const [toast, setToast] = useState<string | null>(null);
 
   // =====================================================
-  // 1. READ USER STATS FROM CONTRACT
+  // 1. READ USER STATS — versi kamu (VALID)
   // =====================================================
   const { data: userStatsRaw, refetch: refetchStats } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
     functionName: "getStats",
     args: wallet ? [wallet] : undefined,
-    query: { enabled: Boolean(wallet) }
+    query: { enabled: Boolean(wallet) },
   });
 
   useEffect(() => {
@@ -68,21 +69,23 @@ export default function EvolutionPanel({
     if (onStatsUpdate) onStatsUpdate(xpNum, beansNum);
   }, [userStatsRaw]);
 
+
   // =====================================================
-  // 2. READ ACTION_FEE FROM CONTRACT
+  // 2. READ ACTION_FEE — versi kamu (VALID)
   // =====================================================
   const { data: feeRaw } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
-    functionName: "ACTION_FEE",
+    functionName: "ACTION_FEE"
   });
 
   useEffect(() => {
     if (feeRaw) setActionFee(feeRaw as bigint);
   }, [feeRaw]);
 
+
   // =====================================================
-  // 3. PERFORM ACTION → FEED / WATER / TRAIN
+  // 3. ACTION (FEED/WATER/TRAIN) — versi kamu + toast fix
   // =====================================================
   async function doAction(action: "feed" | "water" | "train") {
     if (!isConnected || !wallet) {
@@ -102,12 +105,11 @@ export default function EvolutionPanel({
 
       console.log("Tx submitted:", tx);
 
-      // Delay for block confirmation
       setTimeout(async () => {
         const updated = await refetchStats();
 
         if (!updated.data) {
-          console.error("Stats returned null:", updated.data);
+          console.error("Stats returned null", updated.data);
           setLoading("");
           return;
         }
@@ -118,17 +120,17 @@ export default function EvolutionPanel({
         const newLevel = Number(stats.level);
         const newBeans = Number(stats.beans);
 
-        // HITUNG SELISIH XP + BEANS
+        // Hitung gain
         const xpGain = newXp - xp;
         const beansGain = newBeans - beans;
 
-        // TAMPILKAN TOAST
+        // Munculkan toast jika ada perbedaan
         if (xpGain > 0 || beansGain > 0) {
           setToast(`+${xpGain} XP   +${beansGain} Beans`);
-          setTimeout(() => setToast(null), 2000);
+          setTimeout(() => setToast(null), 1800);
         }
 
-        // SAVE SUPABASE
+        // Push ke Supabase (kode kamu)
         await fetch("/api/updateStats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -142,7 +144,7 @@ export default function EvolutionPanel({
 
         setLoading("");
 
-      }, 2500);
+      }, 2200);
 
     } catch (err) {
       console.error("Transaction failed:", err);
@@ -151,9 +153,6 @@ export default function EvolutionPanel({
     }
   }
 
-  // =====================================================
-  // UI
-  // =====================================================
   return (
     <div className="card bean-panel">
 
@@ -161,13 +160,9 @@ export default function EvolutionPanel({
       <div className="subtitle">Care for your Bean to earn BEANS & XP!</div>
 
       <div className="bean-image-wrap">
-        <img
-          src={bean?.image || "/bean.png"}
-          className="bean-image"
-        />
+        <img src={bean?.image || "/bean.png"} className="bean-image" />
       </div>
 
-      {/* LEVEL */}
       <div className="bean-level">Level {level}</div>
 
       {/* XP BAR */}
@@ -179,6 +174,7 @@ export default function EvolutionPanel({
 
       {/* ACTION BUTTONS */}
       <div className="bean-actions">
+
         <button
           className="bean-btn"
           disabled={loading === "feed"}
@@ -202,25 +198,30 @@ export default function EvolutionPanel({
         >
           {loading === "train" ? "Training..." : "🏋️ Train"}
         </button>
+
       </div>
 
-      {/* TOAST SMALL */}
+      {/* TOAST */}
       {toast && (
         <div
           style={{
-            marginTop: 10,
-            padding: "6px 12px",
+            marginTop: 12,
+            padding: "7px 12px",
             background: "#2ecc71",
-            color: "white",
-            borderRadius: 8,
+            borderRadius: 10,
             fontSize: 13,
+            color: "white",
             textAlign: "center",
-            animation: "fadeIn 0.2s"
+            animation: "fadeIn 0.25s"
           }}
         >
           {toast}
         </div>
       )}
+
+      <div style={{ fontSize: 11, color: "#999", marginTop: 10 }}>
+        Action Fee: {Number(actionFee) / 1e18} ETH
+      </div>
 
     </div>
   );
