@@ -106,8 +106,7 @@ html, body {
   /*                ↑ aman untuk card paling panjang (minted) */
 
   min-height: 100%;
-  display: flex;
-  flex-direction: column;
+  display: block;
   box-sizing: border-box;
 }
 
@@ -304,6 +303,7 @@ html, body {
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 20px 0 40px; /* memberi ruang atas & bawah agar card tidak kepotong */
-  box-sizing: border-box;
+  padding-top: 0;  
+  padding-bottom: 0;
 }
+
