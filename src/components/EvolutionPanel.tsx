@@ -32,16 +32,6 @@ export default function EvolutionPanel({ bean }: Props) {
         />
       </div>
 
-      {/* Token + Rarity */}
-      {bean && (
-        <div className="bean-meta">
-          <span className="token">Token #{bean.id}</span>
-          <span className="rarity">
-            Rarity: <b>{bean.rarity}</b>
-          </span>
-        </div>
-      )}
-
       {/* Level */}
       <div className="bean-level">Level {level}</div>
 
