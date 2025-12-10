@@ -12,6 +12,8 @@ export default function App() {
 
   const [userFID, setUserFID] = useState<number | null>(null);
   const isDev = userFID === DEV_FID;
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [pfp, setPfp] = useState<string | null>(null);
 
   // Mint state
   const [mintResult, setMintResult] = useState<{
@@ -39,7 +41,12 @@ export default function App() {
     async function loadFID() {
       const ctx = await sdk.context;
       const user = ctx?.user;
-      if (user) setUserFID(user.fid);
+
+      if (user) {
+        setUserFID(user.fid);
+        setDisplayName(user.displayName || null);
+        setPfp(user.pfpUrl || null);
+      }
     }
 
     loadFID();
@@ -215,8 +222,13 @@ export default function App() {
       {/* -------- HEADER -------- */}
       <div className="header">
         <div className="header-left">
-          <img src="/icon.png" className="app-icon" />
-          <span className="app-name">Kimmi Beans</span>
+          {pfp ? (
+            <img src={pfp} className="user-pfp" />
+          ) : (
+            <img src="/icon.png" className="user-pfp" />
+          )}
+
+          <span className="app-name">{displayName || "Guest"}</span>
         </div>
 
         <div className="header-right">

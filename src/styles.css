@@ -352,3 +352,11 @@ html, body {
   align-items: center;
   gap: 6px;
 }
+
+.user-pfp {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+}
