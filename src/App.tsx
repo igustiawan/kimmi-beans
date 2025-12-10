@@ -272,31 +272,36 @@ export default function App() {
     // ------------------ RANK ------------------
     if (tab === "rank") {
       return (
-        <div className="card">
-          <div className="title">🏆 Leaderboard</div>
+        <div className="card leaderboard-card">
+
+          <div className="leader-title">
+            🏆 Leaderboard
+          </div>
 
           {loadingRank ? (
-            <p>Loading...</p>
+            <p className="leader-loading">Loading...</p>
           ) : leaderboard.length === 0 ? (
-            <p>No players yet.</p>
+            <p className="leader-loading">No players yet.</p>
           ) : (
-            <div className="leaderboard">
+            <div className="leader-list">
               {leaderboard.map((p, index) => (
-                <div key={p.wallet} className="rank-row">
-                  <div className="rank-left">
-                    <div className="rank-number">{index + 1}</div>
-                    <div className="rank-user">
-                      <b>{p.username || p.wallet.slice(0, 6)}</b>
-                      <span className="rank-wallet">
-                        {p.wallet.slice(0, 4)}...{p.wallet.slice(-3)}
-                      </span>
+                <div className="leader-item" key={p.wallet}>
+
+                  <div className="leader-left">
+                    <div className="rank-num">{index + 1}</div>
+                    <div className="leader-info">
+                      <div className="leader-name">{p.username}</div>
+                      <div className="leader-wallet">
+                        {p.wallet.slice(0, 5)}...{p.wallet.slice(-3)}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="rank-right">
-                    <div className="rank-stat">Lvl {p.level}</div>
-                    <div className="rank-stat">🫘 {p.beans}</div>
+                  <div className="leader-right">
+                    <span className="leader-stat">Lvl {p.level}</span>
+                    <span className="leader-stat">🫘 {p.beans}</span>
                   </div>
+
                 </div>
               ))}
             </div>
@@ -304,7 +309,6 @@ export default function App() {
         </div>
       );
     }
-
 
     // ------------------ FAQ ------------------
     if (tab === "faq") {
