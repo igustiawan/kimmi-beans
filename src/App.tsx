@@ -254,6 +254,8 @@ export default function App() {
         </div>
       </div>
 
+      <div id="toast-root"></div>  {/* <--- DO HERE */}
+
       {/* -------- BOTTOM NAV -------- */}
       <div className="bottom-nav">
         <div

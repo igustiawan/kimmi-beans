@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useWriteContract, useReadContract } from "wagmi";
 import careAbi from "../abi/kimmiBeansCare.json";
+import { createPortal } from "react-dom";
 
 interface Props {
   wallet: string | undefined;
@@ -183,11 +184,12 @@ export default function EvolutionPanel({
 
       </div>
 
-        {toast && (
-        <div className="toast-popup">
-            {toast}
-        </div>
-        )}
+        {toast &&
+        createPortal(
+            <div className="toast-popup">{toast}</div>,
+            document.getElementById("toast-root") as HTMLElement
+        )
+        }
     </div>
   );
 }
