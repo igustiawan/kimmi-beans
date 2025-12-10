@@ -466,3 +466,37 @@ html, body {
 .card {
   margin-bottom: 120px !important;
 }
+
+.toast-popup {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 12px 20px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ff7f2e;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  animation: toast-in 0.3s ease-out, toast-out 0.4s ease-in 2.4s forwards;
+  z-index: 9999;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+}
