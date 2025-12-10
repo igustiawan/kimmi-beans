@@ -639,68 +639,53 @@ html, body {
   font-weight: 700;
 }
 
-/* FAQ card behave like leaderboard card */
-.faq-card {
-  width: 100% !important;
-  max-width: 100% !important;
-  padding: 20px 16px !important;
-  border-radius: 18px;
-
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(12px);
-  margin: 0 auto 40px !important;
-
-  text-align: center;
-}
-
-/* Ensure orange background always fills to bottom */
-.content-bg.faq-bg {
-  min-height: calc(100vh - 70px);
-  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
-  padding-bottom: 140px !important;
-}
-
-/* FAQ CARD NEW STYLE */
-.faq-card {
+/* FAQ FULL ORANGE BACKGROUND + SCROLL LAYOUT */
+.faq-wrapper {
   width: 100%;
-  max-width: 440px;
-  padding: 22px 20px;
-  border-radius: 20px;
-
-  background: rgba(255,255,255,0.22);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-
-  margin: 0 auto 40px;
+  height: calc(var(--vh) * 100 - 70px); /* tidak ketutup bottom-nav */
+  overflow-y: auto;
+  padding: 24px 18px 120px;
+  background: linear-gradient(180deg, #ff9f52 0%, #ffa856 100%);
+  box-sizing: border-box;
 }
 
+/* TITLE */
 .faq-title {
   font-size: 28px;
   font-weight: 800;
   text-align: center;
-  margin-bottom: 18px;
+  margin-bottom: 22px;
 }
 
-.faq-section {
+/* SECTION */
+.faq-block {
   margin-bottom: 20px;
 }
 
-.faq-question {
-  font-size: 16px;
+/* QUESTION */
+.faq-q {
   font-weight: 700;
+  font-size: 16px;
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-bottom: 4px;
 }
 
-.faq-answer {
-  margin-top: 4px;
-  font-size: 14px;
-  line-height: 1.5;
-  opacity: 0.85;
-}
-
-/* Make icons soft */
+/* ICON */
 .faq-icon {
   font-size: 18px;
+}
+
+/* ANSWER */
+.faq-a {
+  font-size: 14px;
+  opacity: 0.9;
+  line-height: 1.45;
+  margin-left: 24px; /* agar sejajar secara estetis */
+}
+
+/* SMOOTH SCROLL */
+.faq-wrapper::-webkit-scrollbar {
+  width: 0;
 }

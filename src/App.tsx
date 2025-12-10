@@ -331,72 +331,65 @@ export default function App() {
     // ------------------ FAQ ------------------
     if (tab === "faq") {
       return (
-        <div className="content-bg faq-bg">
-          <div className="faq-card">
+        <div className="faq-wrapper">
 
-            <div className="faq-title">FAQ</div>
+          <div className="faq-title">FAQ</div>
 
-            {/* ITEM 1 */}
-            <div className="faq-section">
-              <div className="faq-question">
-                <span className="faq-icon">🫘</span> What is Kimmi Beans?
-              </div>
-              <div className="faq-answer">
-                A fun Farcaster Mini App where you mint and grow your own Bean NFT.
-              </div>
+          <div className="faq-block">
+            <div className="faq-q">
+              <span className="faq-icon">🫘</span> What is Kimmi Beans?
             </div>
-
-            {/* ITEM 2 */}
-            <div className="faq-section">
-              <div className="faq-question">
-                <span className="faq-icon">⚡</span> How do I earn XP & Beans?
-              </div>
-              <div className="faq-answer">
-                Take care of your Bean every day by feeding, watering, and training it.
-              </div>
-            </div>
-
-            {/* ITEM 3 */}
-            <div className="faq-section">
-              <div className="faq-question">
-                <span className="faq-icon">📈</span> Which action gives the best reward?
-              </div>
-              <div className="faq-answer">
-                <b>Train ＞ Water ＞ Feed</b><br />
-                Higher difficulty → higher XP & Beans reward.
-              </div>
-            </div>
-
-            {/* ITEM 4 */}
-            <div className="faq-section">
-              <div className="faq-question">
-                <span className="faq-icon">💰</span> What are Beans used for?
-              </div>
-              <div className="faq-answer">
-                Beans increase your leaderboard ranking and unlock future rewards.
-              </div>
-            </div>
-
-            {/* ITEM 5 */}
-            <div className="faq-section">
-              <div className="faq-question">
-                <span className="faq-icon">🔒</span> How many NFTs can I mint?
-              </div>
-              <div className="faq-answer">
-                Only 1 NFT per wallet — your Bean is unique and yours forever.
-              </div>
-            </div>
-
-            {/* ITEM 6 */}
-            <div className="faq-section">
-              <div className="faq-question">
-                <span className="faq-icon">🔵</span> Is this on Base?
-              </div>
-              <div className="faq-answer">
-                Yes! All minting and care actions run on Base blockchain.
-              </div>
+            <div className="faq-a">
+              A fun Farcaster Mini App where you mint and grow your own Bean NFT.
             </div>
           </div>
+
+          <div className="faq-block">
+            <div className="faq-q">
+              <span className="faq-icon">⚡</span> How do I earn XP & Beans?
+            </div>
+            <div className="faq-a">
+              Take care of your Bean every day by feeding, watering, and training it.
+            </div>
+          </div>
+
+          <div className="faq-block">
+            <div className="faq-q">
+              <span className="faq-icon">📈</span> Which action gives the best reward?
+            </div>
+            <div className="faq-a">
+              <b>Train ＞ Water ＞ Feed</b><br />
+              Higher difficulty → higher XP & Beans reward.
+            </div>
+          </div>
+
+          <div className="faq-block">
+            <div className="faq-q">
+              <span className="faq-icon">💰</span> What are Beans used for?
+            </div>
+            <div className="faq-a">
+              Beans increase leaderboard ranking and unlock future rewards.
+            </div>
+          </div>
+
+          <div className="faq-block">
+            <div className="faq-q">
+              <span className="faq-icon">🔒</span> How many NFTs can I mint?
+            </div>
+            <div className="faq-a">
+              Only 1 NFT per wallet — your Bean is unique and yours forever.
+            </div>
+          </div>
+
+          <div className="faq-block">
+            <div className="faq-q">
+              <span className="faq-icon">🔵</span> Is this on Base?
+            </div>
+            <div className="faq-a">
+              Yes! All minting and actions run on Base blockchain.
+            </div>
+          </div>
+
         </div>
       );
     }
