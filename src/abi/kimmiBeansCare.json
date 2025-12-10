@@ -8,7 +8,17 @@
 			},
 			{
 				"internalType": "uint256",
-				"name": "initialFee",
+				"name": "_feedFee",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_waterFee",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_trainFee",
 				"type": "uint256"
 			}
 		],
@@ -73,6 +83,12 @@
 			{
 				"indexed": false,
 				"internalType": "uint256",
+				"name": "newLevel",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
 				"name": "newBeans",
 				"type": "uint256"
 			}
@@ -121,7 +137,33 @@
 				"type": "uint256"
 			}
 		],
-		"name": "setActionFee",
+		"name": "setFeedFee",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newFee",
+				"type": "uint256"
+			}
+		],
+		"name": "setTrainFee",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newFee",
+				"type": "uint256"
+			}
+		],
+		"name": "setWaterFee",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -170,7 +212,7 @@
 	},
 	{
 		"inputs": [],
-		"name": "actionFee",
+		"name": "feedFee",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -223,6 +265,25 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "level",
+				"type": "uint256"
+			}
+		],
+		"name": "nextLevelRequirement",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "owner",
 		"outputs": [
@@ -263,6 +324,32 @@
 			{
 				"internalType": "uint256",
 				"name": "lastAction",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "trainFee",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "waterFee",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
 				"type": "uint256"
 			}
 		],

@@ -32,16 +32,22 @@ export default function EvolutionPanel({
 
   const { writeContractAsync } = useWriteContract();
 
+  // LOCAL STATES
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
   const [beans, setBeans] = useState(0);
-  const [actionFee, setActionFee] = useState<bigint>(0n);
 
-  // tambahan UI
+  const [feedFee, setFeedFee] = useState<bigint>(0n);
+  const [waterFee, setWaterFee] = useState<bigint>(0n);
+  const [trainFee, setTrainFee] = useState<bigint>(0n);
+
   const [loading, setLoading] = useState<"" | "feed" | "water" | "train">("");
   const [toast, setToast] = useState<string | null>(null);
 
-  // -------- GET STATS ----------
+
+  // ======================================================
+  // 1. LOAD USER STATS
+  // ======================================================
   const { data: userStatsRaw, refetch: refetchStats } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
@@ -67,19 +73,44 @@ export default function EvolutionPanel({
 
   }, [userStatsRaw]);
 
-  // -------- READ actionFee ----------
-  const { data: feeRaw } = useReadContract({
+
+  // ======================================================
+  // 2. READ FEES FROM CONTRACT
+  // ======================================================
+  const { data: feedFeeRaw } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
-    functionName: "actionFee", // <-- PENTING! lowercase
+    functionName: "feedFee",
+  });
+
+  const { data: waterFeeRaw } = useReadContract({
+    address: CONTRACT,
+    abi: careAbi,
+    functionName: "waterFee",
+  });
+
+  const { data: trainFeeRaw } = useReadContract({
+    address: CONTRACT,
+    abi: careAbi,
+    functionName: "trainFee",
   });
 
   useEffect(() => {
-    if (feeRaw) setActionFee(feeRaw as bigint);
-  }, [feeRaw]);
+    if (feedFeeRaw) setFeedFee(feedFeeRaw as bigint);
+    if (waterFeeRaw) setWaterFee(waterFeeRaw as bigint);
+    if (trainFeeRaw) setTrainFee(trainFeeRaw as bigint);
+  }, [feedFeeRaw, waterFeeRaw, trainFeeRaw]);
 
 
-  // -------- DO ACTION ----------
+  // ======================================================
+  // 3. DO ACTION (FEED / WATER / TRAIN)
+  // ======================================================
+  function getActionFee(action: "feed" | "water" | "train") {
+    if (action === "feed") return feedFee;
+    if (action === "water") return waterFee;
+    return trainFee;
+  }
+
   async function doAction(action: "feed" | "water" | "train") {
     if (!isConnected || !wallet) {
       alert("Connect wallet first");
@@ -93,12 +124,14 @@ export default function EvolutionPanel({
         address: CONTRACT,
         abi: careAbi,
         functionName: action,
-        value: actionFee, // FEE BENAR
+        value: getActionFee(action),
       });
 
       console.log("Tx submitted:", tx);
 
+      // wait for chain update
       setTimeout(async () => {
+
         const updated = await refetchStats();
         if (!updated.data) return;
 
@@ -110,11 +143,13 @@ export default function EvolutionPanel({
         const xpGain = newXp - xp;
         const beansGain = newBeans - beans;
 
+        // SHOW TOAST
         if (xpGain > 0 || beansGain > 0) {
           setToast(`+${xpGain} XP   +${beansGain} Beans`);
           setTimeout(() => setToast(null), 1800);
         }
 
+        // UPDATE SUPABASE
         await fetch("/api/updateStats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -122,13 +157,13 @@ export default function EvolutionPanel({
             wallet,
             xp: newXp,
             level: Number(stats.level),
-            beans: newBeans
-          })
+            beans: newBeans,
+          }),
         });
 
         setLoading("");
 
-      }, 2500);
+      }, 2000);
 
     } catch (err) {
       console.error(err);
@@ -138,9 +173,11 @@ export default function EvolutionPanel({
   }
 
 
+  // ======================================================
+  // RENDER UI
+  // ======================================================
   return (
     <div className="card bean-panel">
-
       <div className="title">My Bean</div>
       <div className="subtitle">Care for your Bean to earn BEANS & XP!</div>
 
@@ -151,10 +188,10 @@ export default function EvolutionPanel({
       <div className="bean-level">Level {level}</div>
 
       <div className="xp-bar">
-        <div className="xp-fill" style={{ width: `${(xp % 100)}%` }}></div>
+        <div className="xp-fill" style={{ width: `${xp}%` }}></div>
       </div>
 
-      <div className="xp-text">{xp % 100} / 100 XP</div>
+      <div className="xp-text">{xp} XP</div>
 
       <div className="bean-actions">
 
@@ -163,7 +200,7 @@ export default function EvolutionPanel({
           disabled={loading === "feed"}
           onClick={() => doAction("feed")}
         >
-          {loading === "feed" ? "Feeding..." : "🍞 Feed"}
+          {loading === "feed" ? "Feeding..." : `🍞 Feed (${Number(feedFee) / 1e18} ETH)`}
         </button>
 
         <button
@@ -171,7 +208,7 @@ export default function EvolutionPanel({
           disabled={loading === "water"}
           onClick={() => doAction("water")}
         >
-          {loading === "water" ? "Watering..." : "💧 Water"}
+          {loading === "water" ? "Watering..." : `💧 Water (${Number(waterFee) / 1e18} ETH)`}
         </button>
 
         <button
@@ -179,17 +216,18 @@ export default function EvolutionPanel({
           disabled={loading === "train"}
           onClick={() => doAction("train")}
         >
-          {loading === "train" ? "Training..." : "🏋️ Train"}
+          {loading === "train" ? "Training..." : `🏋️ Train (${Number(trainFee) / 1e18} ETH)`}
         </button>
 
       </div>
 
-        {toast &&
+      {/* TOAST */}
+      {toast &&
         createPortal(
-            <div className="toast-popup">{toast}</div>,
-            document.getElementById("toast-root") as HTMLElement
+          <div className="toast-popup">{toast}</div>,
+          document.getElementById("toast-root") as HTMLElement
         )
-        }
+      }
     </div>
   );
 }
