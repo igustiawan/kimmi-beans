@@ -6,17 +6,16 @@ import EvolutionPanel from "./components/EvolutionPanel";
 import careAbi from "./abi/kimmiBeansCare.json";
 
 const DEV_FID = 299929;
-const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
 
 export default function App() {
   const [tab, setTab] = useState<"mint" | "bean" | "rank" | "faq">("mint");
 
   const [userFID, setUserFID] = useState<number | null>(null);
   const isDev = userFID === DEV_FID;
+
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [pfp, setPfp] = useState<string | null>(null);
 
-  // Mint state
   const [mintResult, setMintResult] = useState<{
     id: number;
     rarity: string;
@@ -25,26 +24,27 @@ export default function App() {
 
   const [soldOut, setSoldOut] = useState(false);
   const [totalMinted, setTotalMinted] = useState(0);
+
   const MAX_SUPPLY = 10000;
 
-  // Wallet
   const { isConnected, address: wallet } = useAccount();
   const { connect, connectors } = useConnect();
 
-  // Header counters (REAL from contract)
+  const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
+
+  // Header values
   const [dailyBeans, setDailyBeans] = useState(0);
   const [lifetimeXp, setLifetimeXp] = useState(0);
 
-  /* ---------------------------------------------------------
-     LOAD FID
-  ---------------------------------------------------------- */
+  // ============================================================
+  // Load FID
+  // ============================================================
   useEffect(() => {
     sdk.actions.ready();
 
     async function loadFID() {
       const ctx = await sdk.context;
       const user = ctx?.user;
-
       if (user) {
         setUserFID(user.fid);
         setDisplayName(user.displayName || null);
@@ -55,33 +55,9 @@ export default function App() {
     loadFID();
   }, []);
 
-  /* ---------------------------------------------------------
-     DIRECTLY READ STATS FROM CONTRACT (header always sync)
-  ---------------------------------------------------------- */
-  const { data: statsRaw } = useReadContract({
-    address: CONTRACT,
-    abi: careAbi,
-    functionName: "getStats",
-    args: wallet ? [wallet] : undefined,
-    query: { enabled: Boolean(wallet) }
-  });
-
-  useEffect(() => {
-    if (!statsRaw) return;
-
-    const s = statsRaw as any;
-
-    const xp = Number(s.xp);
-    const beans = Number(s.beans);
-
-    setLifetimeXp(xp);
-    setDailyBeans(beans);
-
-  }, [statsRaw]);
-
-  /* ---------------------------------------------------------
-     CHECK MINTED
-  ---------------------------------------------------------- */
+  // ============================================================
+  // Check minted
+  // ============================================================
   useEffect(() => {
     async function checkMinted() {
       if (!wallet) return;
@@ -93,17 +69,52 @@ export default function App() {
         setMintResult({
           id: data.tokenId,
           rarity: data.rarity,
-          image: data.image,
+          image: data.image
         });
       }
     }
-
     checkMinted();
   }, [wallet]);
 
-  /* ---------------------------------------------------------
-     SUPPLY
-  ---------------------------------------------------------- */
+  // ============================================================
+  // Auto-load stats for header directly from CONTRACT
+  // ============================================================
+  type StatsStruct = {
+    xp: bigint;
+    level: bigint;
+    beans: bigint;
+    lastAction: bigint;
+  };
+
+  const { data: headerStatsRaw, refetch: refetchHeaderStats } = useReadContract({
+    address: CONTRACT,
+    abi: careAbi,
+    functionName: "getStats",
+    args: wallet ? [wallet] : undefined,
+    query: { enabled: Boolean(wallet) }
+  });
+
+  useEffect(() => {
+    if (!headerStatsRaw) return;
+
+    const stats = headerStatsRaw as StatsStruct;
+
+    setLifetimeXp(Number(stats.xp));
+    setDailyBeans(Number(stats.beans));
+  }, [headerStatsRaw]);
+
+  // Function dipanggil EvolutionPanel untuk sync header
+  function handleStatsUpdate(newXp: number, newBeans: number) {
+    setLifetimeXp(newXp);
+    setDailyBeans(newBeans);
+
+    // Refresh header contract data juga
+    refetchHeaderStats();
+  }
+
+  // ============================================================
+  // Load supply
+  // ============================================================
   useEffect(() => {
     async function loadSupply() {
       const res = await fetch("/api/checkSupply");
@@ -118,11 +129,12 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  /* ---------------------------------------------------------
-     SHARE AFTER MINT
-  ---------------------------------------------------------- */
+  // ============================================================
+  // Share to Cast
+  // ============================================================
   async function shareToCast(tokenId: number, rarity: string) {
-    const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+    const miniAppURL =
+      "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
     const msg = `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨`;
 
     await sdk.actions.openUrl({
@@ -132,11 +144,10 @@ export default function App() {
     });
   }
 
-  /* ---------------------------------------------------------
-     RENDER CONTENT
-  ---------------------------------------------------------- */
+  // ============================================================
+  // Render content
+  // ============================================================
   function renderContent() {
-    // ------------------ MINT TAB ------------------
     if (tab === "mint") {
       return (
         <div className="card">
@@ -178,8 +189,8 @@ export default function App() {
                     userAddress={wallet}
                     fid={userFID ?? 0}
                     username={""}
-                    onMintSuccess={(data) => {
-                      setMintResult(data);
+                    onMintSuccess={(d) => {
+                      setMintResult(d);
                       setTotalMinted((prev) => prev + 1);
                     }}
                   />
@@ -206,25 +217,20 @@ export default function App() {
       );
     }
 
-    // ------------------ MY BEAN TAB ------------------
+    // MY BEAN
     if (tab === "bean") {
       return isDev ? (
         <EvolutionPanel
           wallet={wallet}
           isConnected={isConnected}
           bean={mintResult}
-          // masih boleh update header, tapi bukan satu-satunya sumber
-          onStatsUpdate={(xp, beans) => {
-            setLifetimeXp(xp);
-            setDailyBeans(beans);
-          }}
+          onStatsUpdate={handleStatsUpdate}
         />
       ) : (
         <div className="card">This feature is not available.</div>
       );
     }
 
-    // ------------------ RANK ------------------
     if (tab === "rank") {
       return (
         <div className="card">
@@ -234,7 +240,6 @@ export default function App() {
       );
     }
 
-    // ------------------ FAQ ------------------
     if (tab === "faq") {
       return (
         <div className="card">
@@ -245,53 +250,47 @@ export default function App() {
     }
   }
 
-  /* ---------------------------------------------------------
-     FINAL RENDER
-  ---------------------------------------------------------- */
+  // ============================================================
+  // UI Layout
+  // ============================================================
   return (
     <div className="app">
 
       {/* HEADER */}
       <div className="header">
         <div className="header-left">
-          {pfp ? (
-            <img src={pfp} className="user-pfp" />
-          ) : (
-            <img src="/icon.png" className="user-pfp" />
-          )}
-
+          <img src={pfp || "/icon.png"} className="user-pfp" />
           <span className="app-name">{displayName || "Guest"}</span>
         </div>
 
         <div className="header-right">
-          <div className="header-badge">🫘 {dailyBeans}</div>
-          <div className="header-badge">⭐ {lifetimeXp}</div>
+          <div className="header-stats">
+            <div className="header-badge">🫘 {dailyBeans}</div>
+            <div className="header-badge">⭐ {lifetimeXp}</div>
+          </div>
 
           {wallet && (
             <div className="wallet-badge">
-              {wallet.slice(0, 4)}...{wallet.slice(-3)}
+              {wallet.slice(0,4)}...{wallet.slice(-3)}
             </div>
           )}
         </div>
       </div>
 
-      {/* SCROLL CONTENT */}
+      {/* CONTENT */}
       <div className="container">
-        <div className="content-bg">
-          {renderContent()}
-        </div>
+        <div className="content-bg">{renderContent()}</div>
       </div>
 
       <div id="toast-root"></div>
 
-      {/* BOTTOM NAV */}
+      {/* NAV */}
       <div className="bottom-nav">
         <div
           className={`nav-item ${tab === "mint" ? "active" : ""}`}
           onClick={() => setTab("mint")}
         >
-          🫘
-          <span>Mint</span>
+          🫘<span>Mint</span>
         </div>
 
         {isDev && (
@@ -299,8 +298,7 @@ export default function App() {
             className={`nav-item ${tab === "bean" ? "active" : ""}`}
             onClick={() => setTab("bean")}
           >
-            🌱
-            <span>My Bean</span>
+            🌱<span>My Bean</span>
           </div>
         )}
 
@@ -308,16 +306,14 @@ export default function App() {
           className={`nav-item ${tab === "rank" ? "active" : ""}`}
           onClick={() => setTab("rank")}
         >
-          🏆
-          <span>Rank</span>
+          🏆<span>Rank</span>
         </div>
 
         <div
           className={`nav-item ${tab === "faq" ? "active" : ""}`}
           onClick={() => setTab("faq")}
         >
-          ❓
-          <span>FAQ</span>
+          ❓<span>FAQ</span>
         </div>
       </div>
 
