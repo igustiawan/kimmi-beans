@@ -43,9 +43,8 @@ export default function MintButton({
         const tokenId = parseInt(rawId, 16);
 
         /** Ambil metadata server */
-        const meta = await fetch(`/api/metadata/${tokenId}`).then((r) => r.json());
-        const rarity = meta.attributes?.[0]?.value || "common";
-        const image = meta.image;
+        const { rarity, image } = await fetch(`/api/generateRarity?tokenId=${tokenId}`)
+          .then(r => r.json());
 
         /** Simpan ke Supabase */
         await fetch("/api/saveMetadata", {
