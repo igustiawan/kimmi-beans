@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useWriteContract, useReadContract } from "wagmi";
-import careAbi from "../abi/kimmiBeansCare.json";
 import { createPortal } from "react-dom";
+import careAbi from "../abi/kimmiBeansCare.json";
 
 interface Props {
   wallet: string | undefined;
@@ -32,23 +32,22 @@ export default function EvolutionPanel({
 
   const { writeContractAsync } = useWriteContract();
 
-  // LOCAL STATES
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
   const [beans, setBeans] = useState(0);
 
-  const [feedFee, setFeedFee] = useState<bigint>(0n);
-  const [waterFee, setWaterFee] = useState<bigint>(0n);
-  const [trainFee, setTrainFee] = useState<bigint>(0n);
+  // 3 fee berbeda
+  const [feeFeed, setFeeFeed] = useState<bigint>(0n);
+  const [feeWater, setFeeWater] = useState<bigint>(0n);
+  const [feeTrain, setFeeTrain] = useState<bigint>(0n);
 
   const [loading, setLoading] = useState<"" | "feed" | "water" | "train">("");
   const [toast, setToast] = useState<string | null>(null);
 
-
-  // ======================================================
-  // 1. LOAD USER STATS
-  // ======================================================
-  const { data: userStatsRaw, refetch: refetchStats } = useReadContract({
+  // ==========================================================
+  // GET STATS
+  // ==========================================================
+  const { data: statsRaw, refetch: refetchStats } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
     functionName: "getStats",
@@ -57,65 +56,70 @@ export default function EvolutionPanel({
   });
 
   useEffect(() => {
-    if (!userStatsRaw) return;
+    if (!statsRaw) return;
 
-    const stats = userStatsRaw as StatsStruct;
-
-    const xpNum = Number(stats.xp);
-    const levelNum = Number(stats.level);
-    const beansNum = Number(stats.beans);
+    const s = statsRaw as StatsStruct;
+    const xpNum = Number(s.xp);
+    const lvlNum = Number(s.level);
+    const beansNum = Number(s.beans);
 
     setXp(xpNum);
-    setLevel(levelNum);
+    setLevel(lvlNum);
     setBeans(beansNum);
 
     onStatsUpdate?.(xpNum, beansNum);
+  }, [statsRaw]);
 
-  }, [userStatsRaw]);
 
-
-  // ======================================================
-  // 2. READ FEES FROM CONTRACT
-  // ======================================================
-  const { data: feedFeeRaw } = useReadContract({
+  // ==========================================================
+  // GET 3 FEE VALUES
+  // ==========================================================
+  const { data: feeFeedRaw } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
     functionName: "feedFee",
   });
-
-  const { data: waterFeeRaw } = useReadContract({
+  const { data: feeWaterRaw } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
     functionName: "waterFee",
   });
-
-  const { data: trainFeeRaw } = useReadContract({
+  const { data: feeTrainRaw } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
     functionName: "trainFee",
   });
 
   useEffect(() => {
-    if (feedFeeRaw) setFeedFee(feedFeeRaw as bigint);
-    if (waterFeeRaw) setWaterFee(waterFeeRaw as bigint);
-    if (trainFeeRaw) setTrainFee(trainFeeRaw as bigint);
-  }, [feedFeeRaw, waterFeeRaw, trainFeeRaw]);
+    if (feeFeedRaw) setFeeFeed(feeFeedRaw as bigint);
+    if (feeWaterRaw) setFeeWater(feeWaterRaw as bigint);
+    if (feeTrainRaw) setFeeTrain(feeTrainRaw as bigint);
+  }, [feeFeedRaw, feeWaterRaw, feeTrainRaw]);
 
 
-  // ======================================================
-  // 3. DO ACTION (FEED / WATER / TRAIN)
-  // ======================================================
-  function getActionFee(action: "feed" | "water" | "train") {
-    if (action === "feed") return feedFee;
-    if (action === "water") return waterFee;
-    return trainFee;
-  }
+  // ==========================================================
+  // DYNAMIC XP — Level scaling
+  // nextLevelXP = (level + 1) * 100
+  // xp progress = xp - (level * 100)
+  // ==========================================================
+  const maxXp = (level + 1) * 100;
+  const currentXp = xp - level * 100;
+  const xpPercent = Math.min(100, (currentXp / (maxXp - level * 100)) * 100);
 
+
+  // ==========================================================
+  // DO ACTION
+  // ==========================================================
   async function doAction(action: "feed" | "water" | "train") {
     if (!isConnected || !wallet) {
       alert("Connect wallet first");
       return;
     }
+
+    const fee =
+      action === "feed" ? feeFeed :
+      action === "water" ? feeWater :
+      feeTrain;
 
     try {
       setLoading(action);
@@ -124,60 +128,59 @@ export default function EvolutionPanel({
         address: CONTRACT,
         abi: careAbi,
         functionName: action,
-        value: getActionFee(action),
+        value: fee
       });
 
-      console.log("Tx submitted:", tx);
+      console.log("Tx sent:", tx);
 
-      // wait for chain update
+      // tunggu block
       setTimeout(async () => {
-
         const updated = await refetchStats();
         if (!updated.data) return;
 
-        const stats = updated.data as StatsStruct;
+        const s = updated.data as StatsStruct;
 
-        const newXp = Number(stats.xp);
-        const newBeans = Number(stats.beans);
+        const newXp = Number(s.xp);
+        const newBeans = Number(s.beans);
 
         const xpGain = newXp - xp;
         const beansGain = newBeans - beans;
 
-        // SHOW TOAST
         if (xpGain > 0 || beansGain > 0) {
-          setToast(`+${xpGain} XP   +${beansGain} Beans`);
+          setToast(`+${xpGain} XP  +${beansGain} Beans`);
           setTimeout(() => setToast(null), 1800);
         }
 
-        // UPDATE SUPABASE
+        // Update Supabase
         await fetch("/api/updateStats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             wallet,
             xp: newXp,
-            level: Number(stats.level),
-            beans: newBeans,
-          }),
+            level: Number(s.level),
+            beans: newBeans
+          })
         });
 
         setLoading("");
 
-      }, 2000);
+      }, 2500);
 
     } catch (err) {
       console.error(err);
-      alert("Transaction failed — check fee.");
+      alert("Transaction failed.");
       setLoading("");
     }
   }
 
 
-  // ======================================================
+  // ==========================================================
   // RENDER UI
-  // ======================================================
+  // ==========================================================
   return (
     <div className="card bean-panel">
+
       <div className="title">My Bean</div>
       <div className="subtitle">Care for your Bean to earn BEANS & XP!</div>
 
@@ -188,19 +191,20 @@ export default function EvolutionPanel({
       <div className="bean-level">Level {level}</div>
 
       <div className="xp-bar">
-        <div className="xp-fill" style={{ width: `${xp}%` }}></div>
+        <div className="xp-fill" style={{ width: `${xpPercent}%` }}></div>
       </div>
 
-      <div className="xp-text">{xp} XP</div>
+      <div className="xp-text">
+        {currentXp} / {maxXp - level * 100} XP
+      </div>
 
       <div className="bean-actions">
-
         <button
           className="bean-btn"
           disabled={loading === "feed"}
           onClick={() => doAction("feed")}
         >
-          {loading === "feed" ? "Feeding..." : `🍞 Feed (${Number(feedFee) / 1e18} ETH)`}
+          {loading === "feed" ? "Feeding..." : `🍞 Feed (${Number(feeFeed)/1e18} ETH)`}
         </button>
 
         <button
@@ -208,7 +212,7 @@ export default function EvolutionPanel({
           disabled={loading === "water"}
           onClick={() => doAction("water")}
         >
-          {loading === "water" ? "Watering..." : `💧 Water (${Number(waterFee) / 1e18} ETH)`}
+          {loading === "water" ? "Watering..." : `💧 Water (${Number(feeWater)/1e18} ETH)`}
         </button>
 
         <button
@@ -216,12 +220,10 @@ export default function EvolutionPanel({
           disabled={loading === "train"}
           onClick={() => doAction("train")}
         >
-          {loading === "train" ? "Training..." : `🏋️ Train (${Number(trainFee) / 1e18} ETH)`}
+          {loading === "train" ? "Training..." : `🏋️ Train (${Number(feeTrain)/1e18} ETH)`}
         </button>
-
       </div>
 
-      {/* TOAST */}
       {toast &&
         createPortal(
           <div className="toast-popup">{toast}</div>,

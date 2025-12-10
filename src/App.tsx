@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
-import { useAccount, useConnect } from "wagmi";
+import { useAccount, useConnect, useReadContract } from "wagmi";
 import MintButton from "./components/MintButton";
 import EvolutionPanel from "./components/EvolutionPanel";
-import { useReadContract } from "wagmi";
 import careAbi from "./abi/kimmiBeansCare.json";
 
-// Only you can see My Bean tab
 const DEV_FID = 299929;
+const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
 
 export default function App() {
   const [tab, setTab] = useState<"mint" | "bean" | "rank" | "faq">("mint");
@@ -24,29 +23,21 @@ export default function App() {
     image: string;
   } | null>(null);
 
-type StatsStruct = {
-  xp: bigint;
-  level: bigint;
-  beans: bigint;
-  lastAction: bigint;
-};
-
   const [soldOut, setSoldOut] = useState(false);
   const [totalMinted, setTotalMinted] = useState(0);
   const MAX_SUPPLY = 10000;
 
   // Wallet
   const { isConnected, address: wallet } = useAccount();
-  const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
-
-
   const { connect, connectors } = useConnect();
 
-  // Header counters (dummy for now)
+  // Header counters (REAL from contract)
   const [dailyBeans, setDailyBeans] = useState(0);
   const [lifetimeXp, setLifetimeXp] = useState(0);
 
-  /* Load FID */
+  /* ---------------------------------------------------------
+     LOAD FID
+  ---------------------------------------------------------- */
   useEffect(() => {
     sdk.actions.ready();
 
@@ -64,7 +55,33 @@ type StatsStruct = {
     loadFID();
   }, []);
 
-  /* Check if wallet has minted */
+  /* ---------------------------------------------------------
+     DIRECTLY READ STATS FROM CONTRACT (header always sync)
+  ---------------------------------------------------------- */
+  const { data: statsRaw } = useReadContract({
+    address: CONTRACT,
+    abi: careAbi,
+    functionName: "getStats",
+    args: wallet ? [wallet] : undefined,
+    query: { enabled: Boolean(wallet) }
+  });
+
+  useEffect(() => {
+    if (!statsRaw) return;
+
+    const s = statsRaw as any;
+
+    const xp = Number(s.xp);
+    const beans = Number(s.beans);
+
+    setLifetimeXp(xp);
+    setDailyBeans(beans);
+
+  }, [statsRaw]);
+
+  /* ---------------------------------------------------------
+     CHECK MINTED
+  ---------------------------------------------------------- */
   useEffect(() => {
     async function checkMinted() {
       if (!wallet) return;
@@ -84,29 +101,9 @@ type StatsStruct = {
     checkMinted();
   }, [wallet]);
 
-  /* Auto-load bean stats from contract for header */
-  const { data: headerStatsRaw } = useReadContract({
-    address: CONTRACT,
-    abi: careAbi,
-    functionName: "getStats",
-    args: wallet ? [wallet] : undefined,
-    query: { enabled: Boolean(wallet) }
-  });
-
-  useEffect(() => {
-    if (!headerStatsRaw) return;
-
-    const stats = headerStatsRaw as StatsStruct;
-
-    const xp = Number(stats.xp);
-    const beans = Number(stats.beans);
-
-    setLifetimeXp(xp);
-    setDailyBeans(beans);
-
-  }, [headerStatsRaw]);
-
-  /* Load supply */
+  /* ---------------------------------------------------------
+     SUPPLY
+  ---------------------------------------------------------- */
   useEffect(() => {
     async function loadSupply() {
       const res = await fetch("/api/checkSupply");
@@ -121,7 +118,9 @@ type StatsStruct = {
     return () => clearInterval(interval);
   }, []);
 
-  /* Share after mint */
+  /* ---------------------------------------------------------
+     SHARE AFTER MINT
+  ---------------------------------------------------------- */
   async function shareToCast(tokenId: number, rarity: string) {
     const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
     const msg = `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨`;
@@ -133,98 +132,93 @@ type StatsStruct = {
     });
   }
 
-  // ============================================================
-  // CONTENT RENDERING
-  // ============================================================
+  /* ---------------------------------------------------------
+     RENDER CONTENT
+  ---------------------------------------------------------- */
   function renderContent() {
     // ------------------ MINT TAB ------------------
     if (tab === "mint") {
       return (
-          <div className="card">
-            <div className="title">Kimmi Beans</div>
-            <div className="subtitle">Mint cute, unique beans every day!</div>
+        <div className="card">
+          <div className="title">Kimmi Beans</div>
+          <div className="subtitle">Mint cute, unique beans every day!</div>
 
-            <div className="counter">
-              {soldOut ? (
-                <b>🎉 Sold Out — 10000 / 10000</b>
-              ) : (
-                <b>{totalMinted} / {MAX_SUPPLY} Minted</b>
-              )}
-            </div>
-
-            <div className="image-container">
-              {mintResult ? (
-                <img src={mintResult.image} alt="Minted Bean" />
-              ) : (
-                <img src="/bean.gif" alt="Bean" />
-              )}
-            </div>
-
-            {!mintResult && (
-              <>
-                {!isConnected && (
-                  <button
-                    className="main-btn"
-                    onClick={() => connect({ connector: connectors[0] })}
-                  >
-                    Connect Wallet
-                  </button>
-                )}
-
-                {isConnected && wallet && (
-                  soldOut ? (
-                    <button className="main-btn disabled">Sold Out 🎉</button>
-                  ) : (
-                    <MintButton
-                      userAddress={wallet}
-                      fid={userFID ?? 0}
-                      username={""}
-                      onMintSuccess={(data) => {
-                        setMintResult(data);
-                        setTotalMinted((prev) => prev + 1);
-                      }}
-                    />
-                  )
-                )}
-              </>
+          <div className="counter">
+            {soldOut ? (
+              <b>🎉 Sold Out — 10000 / 10000</b>
+            ) : (
+              <b>{totalMinted} / {MAX_SUPPLY} Minted</b>
             )}
-
-            {mintResult && (
-              <>
-                <div className="mint-info">
-                  Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
-                </div>
-
-                <button
-                  className="share-btn"
-                  onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
-                >
-                  Share to Cast 🚀
-                </button>
-              </>
-            )}
-
-            {/* {wallet && (
-              <div className="wallet-display">
-                Wallet: {wallet.slice(0, 6)}...{wallet.slice(-4)}
-              </div>
-            )} */}
           </div>
+
+          <div className="image-container">
+            {mintResult ? (
+              <img src={mintResult.image} alt="Minted Bean" />
+            ) : (
+              <img src="/bean.gif" alt="Bean" />
+            )}
+          </div>
+
+          {!mintResult && (
+            <>
+              {!isConnected && (
+                <button
+                  className="main-btn"
+                  onClick={() => connect({ connector: connectors[0] })}
+                >
+                  Connect Wallet
+                </button>
+              )}
+
+              {isConnected && wallet && (
+                soldOut ? (
+                  <button className="main-btn disabled">Sold Out 🎉</button>
+                ) : (
+                  <MintButton
+                    userAddress={wallet}
+                    fid={userFID ?? 0}
+                    username={""}
+                    onMintSuccess={(data) => {
+                      setMintResult(data);
+                      setTotalMinted((prev) => prev + 1);
+                    }}
+                  />
+                )
+              )}
+            </>
+          )}
+
+          {mintResult && (
+            <>
+              <div className="mint-info">
+                Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
+              </div>
+
+              <button
+                className="share-btn"
+                onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
+              >
+                Share to Cast 🚀
+              </button>
+            </>
+          )}
+        </div>
       );
     }
 
-    // ------------------ MY BEAN TAB (DEV ONLY) ------------------
+    // ------------------ MY BEAN TAB ------------------
     if (tab === "bean") {
       return isDev ? (
-      <EvolutionPanel
-        wallet={wallet}
-        isConnected={isConnected}
-        bean={mintResult}
-        onStatsUpdate={(xp, beans) => {
-          setLifetimeXp(xp);
-          setDailyBeans(beans);
-        }}
-      />
+        <EvolutionPanel
+          wallet={wallet}
+          isConnected={isConnected}
+          bean={mintResult}
+          // masih boleh update header, tapi bukan satu-satunya sumber
+          onStatsUpdate={(xp, beans) => {
+            setLifetimeXp(xp);
+            setDailyBeans(beans);
+          }}
+        />
       ) : (
         <div className="card">This feature is not available.</div>
       );
@@ -251,13 +245,13 @@ type StatsStruct = {
     }
   }
 
-  // ============================================================
-  // FINAL STRUCTURE — matches CSS layout
-  // ============================================================
+  /* ---------------------------------------------------------
+     FINAL RENDER
+  ---------------------------------------------------------- */
   return (
     <div className="app">
 
-      {/* -------- HEADER -------- */}
+      {/* HEADER */}
       <div className="header">
         <div className="header-left">
           {pfp ? (
@@ -270,29 +264,27 @@ type StatsStruct = {
         </div>
 
         <div className="header-right">
-          <div className="header-stats">
-            <div className="header-badge">🫘 {dailyBeans}</div>
-            <div className="header-badge">⭐ {lifetimeXp}</div>
-          </div>
+          <div className="header-badge">🫘 {dailyBeans}</div>
+          <div className="header-badge">⭐ {lifetimeXp}</div>
 
           {wallet && (
             <div className="wallet-badge">
-              {wallet.slice(0,4)}...{wallet.slice(-3)}
+              {wallet.slice(0, 4)}...{wallet.slice(-3)}
             </div>
           )}
         </div>
       </div>
 
-      {/* -------- SCROLLABLE CONTENT -------- */}
+      {/* SCROLL CONTENT */}
       <div className="container">
         <div className="content-bg">
           {renderContent()}
         </div>
       </div>
 
-      <div id="toast-root"></div>  {/* <--- DO HERE */}
+      <div id="toast-root"></div>
 
-      {/* -------- BOTTOM NAV -------- */}
+      {/* BOTTOM NAV */}
       <div className="bottom-nav">
         <div
           className={`nav-item ${tab === "mint" ? "active" : ""}`}
