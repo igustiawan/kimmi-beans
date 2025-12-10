@@ -32,10 +32,9 @@ export default function App() {
 
   const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
 
-  // HEADER VALUES
+  // Header values
   const [dailyBeans, setDailyBeans] = useState(0);
-  const [lifetimeXp, setLifetimeXp] = useState(0); // ← TOTAL XP ONLY from EvolutionPanel
-
+  const [lifetimeXp, setLifetimeXp] = useState(0);
 
   // ============================================================
   // Load FID
@@ -55,7 +54,6 @@ export default function App() {
 
     loadFID();
   }, []);
-
 
   // ============================================================
   // Check minted
@@ -78,9 +76,8 @@ export default function App() {
     checkMinted();
   }, [wallet]);
 
-
   // ============================================================
-  // Load beans ONLY for header (XP now handled by EvolutionPanel)
+  // Auto-load stats for header directly from CONTRACT
   // ============================================================
   type StatsStruct = {
     xp: bigint;
@@ -89,7 +86,7 @@ export default function App() {
     lastAction: bigint;
   };
 
-  const { data: headerStatsRaw } = useReadContract({
+  const { data: headerStatsRaw, refetch: refetchHeaderStats } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
     functionName: "getStats",
@@ -102,20 +99,18 @@ export default function App() {
 
     const stats = headerStatsRaw as StatsStruct;
 
-    // XP TIDAK DISET DI SINI LAGI
+    setLifetimeXp(Number(stats.xp));
     setDailyBeans(Number(stats.beans));
-
   }, [headerStatsRaw]);
 
-
-  // ============================================================
-  // Update XP & Beans from EvolutionPanel
-  // ============================================================
+  // Function dipanggil EvolutionPanel untuk sync header
   function handleStatsUpdate(newXp: number, newBeans: number) {
-    setLifetimeXp(newXp);   // ← TOTAL XP ACUMULATED
+    setLifetimeXp(newXp);
     setDailyBeans(newBeans);
-  }
 
+    // Refresh header contract data juga
+    refetchHeaderStats();
+  }
 
   // ============================================================
   // Load supply
@@ -134,7 +129,6 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-
   // ============================================================
   // Share to Cast
   // ============================================================
@@ -150,9 +144,8 @@ export default function App() {
     });
   }
 
-
   // ============================================================
-  // Render Content
+  // Render content
   // ============================================================
   function renderContent() {
     if (tab === "mint") {
@@ -196,10 +189,13 @@ export default function App() {
                     userAddress={wallet}
                     fid={userFID ?? 0}
                     username={""}
-                    onMintSuccess={(d) => {
-                      setMintResult(d);
-                      setTotalMinted((prev) => prev + 1);
-                    }}
+                      onMintSuccess={(d) => {
+                          setMintResult(d);
+                          setTotalMinted((prev) => prev + 1);
+                          setTimeout(() => {
+                            window.location.reload();
+                          }, 400);
+                        }}
                   />
                 )
               )}
@@ -257,7 +253,6 @@ export default function App() {
     }
   }
 
-
   // ============================================================
   // UI Layout
   // ============================================================
@@ -279,7 +274,7 @@ export default function App() {
 
           {wallet && (
             <div className="wallet-badge">
-              {wallet.slice(0, 4)}...{wallet.slice(-3)}
+              {wallet.slice(0,4)}...{wallet.slice(-3)}
             </div>
           )}
         </div>
