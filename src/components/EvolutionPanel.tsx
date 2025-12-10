@@ -13,7 +13,7 @@ interface Props {
 }
 
 const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
-const ACTION_FEE = BigInt(1000000000000); // 0.000001 ETH
+const ACTION_FEE = BigInt(import.meta.env.VITE_ACTION_FEE);
 
 export default function EvolutionPanel({ bean, wallet, isConnected }: Props) {
 
