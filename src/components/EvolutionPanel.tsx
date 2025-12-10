@@ -24,18 +24,13 @@ export default function EvolutionPanel({
 
   const { writeContractAsync } = useWriteContract();
 
+  // LOCAL UI STATES
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
   const [beans, setBeans] = useState(0);
+
   const [actionFee, setActionFee] = useState<bigint>(0n);
-
-  const [loadingAction, setLoadingAction] = useState<null | string>(null);
-  const [toast, setToast] = useState<string | null>(null);
-
-  function showToast(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
-  }
+  const [loadingAction, setLoadingAction] = useState<"" | "feed" | "water" | "train">("");
 
   // =====================================================
   // 1. READ USER STATS
@@ -60,16 +55,17 @@ export default function EvolutionPanel({
     setBeans(beansNum);
 
     if (onStatsUpdate) onStatsUpdate(xpNum, beansNum);
+
   }, [userStats]);
 
 
   // =====================================================
-  // 2. READ actionFee FROM CONTRACT
+  // 2. READ actionFee FROM CONTRACT (DYNAMIC)
   // =====================================================
   const { data: feeRaw } = useReadContract({
     address: CONTRACT,
     abi: careAbi,
-    functionName: "actionFee",
+    functionName: "actionFee"
   });
 
   useEffect(() => {
@@ -78,7 +74,7 @@ export default function EvolutionPanel({
 
 
   // =====================================================
-  // 3. PERFORM ACTION (FEED / WATER / TRAIN)
+  // 3. PERFORM ACTION → FEED / WATER / TRAIN
   // =====================================================
   async function doAction(action: "feed" | "water" | "train") {
     if (!isConnected || !wallet) {
@@ -88,7 +84,6 @@ export default function EvolutionPanel({
 
     try {
       setLoadingAction(action);
-      console.log("Using contract fee:", actionFee.toString());
 
       const tx = await writeContractAsync({
         address: CONTRACT,
@@ -97,63 +92,53 @@ export default function EvolutionPanel({
         value: actionFee,
       });
 
-      console.log("Tx sent:", tx);
+      console.log("Tx submitted:", tx);
 
-      // Wait then refresh
       setTimeout(async () => {
         const updated = await refetchStats();
 
         if (!updated.data || !Array.isArray(updated.data)) {
           console.error("Invalid stats returned:", updated.data);
-          setLoadingAction(null);
+          setLoadingAction("");
           return;
         }
 
-        const newXp = Number(updated.data[0]);
-        const newLevel = Number(updated.data[1]);
-        const newBeans = Number(updated.data[2]);
+        const xpRaw = Number(updated.data[0]);
+        const levelRaw = Number(updated.data[1]);
+        const beansRaw = Number(updated.data[2]);
 
-        // Calculate gain
-        const xpGain = newXp - xp;
-        const beansGain = newBeans - beans;
-
-        if (xpGain > 0 || beansGain > 0) {
-          showToast(`+${xpGain} XP   +${beansGain} Beans`);
-        }
-
-        // Update UI instantly
-        setXp(newXp);
-        setLevel(newLevel);
-        setBeans(newBeans);
-
-        if (onStatsUpdate) onStatsUpdate(newXp, newBeans);
-
-        // Save to DB
         await fetch("/api/updateStats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             wallet,
-            xp: newXp,
-            level: newLevel,
-            beans: newBeans
+            xp: xpRaw,
+            level: levelRaw,
+            beans: beansRaw
           })
         });
 
-        setLoadingAction(null);
+        setLoadingAction("");
 
-      }, 2500);
+      }, 3000);
 
     } catch (err) {
       console.error("Transaction failed:", err);
       alert("Transaction failed — check gas or fee.");
-      setLoadingAction(null);
+      setLoadingAction("");
     }
   }
 
 
   // =====================================================
-  // UI
+  // XP BAR CALCULATION (CORRECTED)
+  // =====================================================
+  const currentXp = xp - level * 100;
+  const xpPercent = Math.min(100, (currentXp / 100) * 100);
+
+
+  // =====================================================
+  // UI RENDERING
   // =====================================================
   return (
     <div className="card bean-panel">
@@ -170,13 +155,10 @@ export default function EvolutionPanel({
 
       {/* XP BAR */}
       <div className="xp-bar">
-        <div
-          className="xp-fill"
-          style={{ width: `${(xp % 100)}%` }}
-        ></div>
+        <div className="xp-fill" style={{ width: `${xpPercent}%` }}></div>
       </div>
 
-      <div className="xp-text">{xp % 100} / 100 XP</div>
+      <div className="xp-text">{currentXp} / 100 XP</div>
 
       {/* ACTION BUTTONS */}
       <div className="bean-actions">
@@ -205,12 +187,11 @@ export default function EvolutionPanel({
         </button>
       </div>
 
-      {/* TOAST */}
-      {toast && (
-        <div className="toast-popup">
-          {toast}
-        </div>
-      )}
+      {/* Debug Fee Display */}
+      <div style={{ fontSize: 11, color: "#999", marginTop: 10 }}>
+        Action Fee: {Number(actionFee) / 1e18} ETH
+      </div>
+
     </div>
   );
 }
