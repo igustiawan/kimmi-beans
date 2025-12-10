@@ -99,7 +99,6 @@ export default function App() {
     // ------------------ MINT TAB ------------------
     if (tab === "mint") {
       return (
-        <div className="page-section">
           <div className="card">
             <div className="title">Kimmi Beans</div>
             <div className="subtitle">Mint cute, unique beans every day!</div>
@@ -170,7 +169,6 @@ export default function App() {
               </div>
             )}
           </div>
-        </div>
       );
     }
 

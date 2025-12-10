@@ -125,19 +125,18 @@ html, body {
   max-width: 420px;
 
   padding: 28px 20px;
-  margin: 0 auto;
-  margin-bottom: 40px;
-
+  margin: 0 auto 60px;  /* MARGIN BOTTOM LEBIH BESAR */
   border-radius: 26px;
+
   background: rgba(255,255,255,0.22);
   backdrop-filter: blur(14px);
-
   box-shadow: 0 10px 28px rgba(0,0,0,0.15);
 
   display: flex;
   flex-direction: column;
   align-items: center;
 }
+
 
 
 
@@ -289,13 +288,3 @@ html, body {
 .app {
   overflow-x: hidden;
 }
-
-/* FIX PADDING PARENT YANG BIKIN KEPOTONG */
-.page-section {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding-top: 0;  
-  padding-bottom: 0;
-}
-
