@@ -243,6 +243,8 @@ export default function App() {
           wallet={wallet}
           isConnected={isConnected}
           bean={mintResult}
+          fid={userFID}
+          username={displayName}
           onStatsUpdate={handleStatsUpdate}
         />
       );

@@ -6,11 +6,9 @@ import { createPortal } from "react-dom";
 interface Props {
   wallet: string | undefined;
   isConnected: boolean;
-  bean: {
-    id: number;
-    rarity: string;
-    image: string;
-  } | null;
+  bean: { id: number; rarity: string; image: string } | null;
+  fid: number | null;
+  username: string | null;
   onStatsUpdate?: (xp: number, beans: number) => void;
 }
 
@@ -27,6 +25,8 @@ export default function EvolutionPanel({
   bean,
   wallet,
   isConnected,
+  fid,
+  username,
   onStatsUpdate
 }: Props) {
 
@@ -166,12 +166,14 @@ export default function EvolutionPanel({
         await fetch("/api/updateStats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+            body: JSON.stringify({
             wallet,
+            fid,
+            username,
             xp: newXp,
             level: Number(stats.level),
-            beans: newBeans
-          })
+            beans: newBeans,
+            })
         });
 
         setLoading("");
