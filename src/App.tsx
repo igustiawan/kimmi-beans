@@ -331,9 +331,34 @@ export default function App() {
     // ------------------ FAQ ------------------
     if (tab === "faq") {
       return (
-        <div className="card">
-          <div className="title">FAQ</div>
-          <p>Common questions will be shown here.</p>
+        <div className="content-bg faq-bg">
+          <div className="faq-card">
+            <div className="title">FAQ</div>
+
+            <div style={{ fontSize: "15px", opacity: 0.9 }}>
+
+              <p><b>What is Kimmi Beans?</b><br />
+              A fun Farcaster Mini App where you mint a Bean NFT and grow it daily.</p>
+
+              <p><b>How do I earn XP & Beans?</b><br />
+              Perform daily actions: Feed, Water, and Train your Bean.</p>
+
+              <p><b>Which action gives the best reward?</b><br />
+                Train ＞ Water ＞ Feed<br />
+                Higher difficulty → Higher XP & Beans reward.
+              </p>
+
+              <p><b>What are Beans used for?</b><br />
+              More Beans = Higher leaderboard position + future rewards.</p>
+
+              <p><b>How many NFTs can I mint?</b><br />
+              Only 1 NFT per wallet. Keep it safe!</p>
+
+              <p><b>Is this on Base?</b><br />
+              Yes! All minting and actions run on Base blockchain.</p>
+              
+            </div>
+          </div>
         </div>
       );
     }
