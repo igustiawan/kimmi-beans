@@ -72,6 +72,7 @@ export default function App() {
     checkMinted();
   }, [wallet]);
 
+  
   /* Load supply */
   useEffect(() => {
     async function loadSupply() {
