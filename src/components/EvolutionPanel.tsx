@@ -43,9 +43,12 @@ export default function EvolutionPanel({
   });
 
 useEffect(() => {
-  if (!userStats || !Array.isArray(userStats)) return;
+   if (!userStats || !Array.isArray(userStats)) return;
 
-  const [xpRaw, levelRaw, beansRaw] = userStats;
+    const xpRaw = userStats[0];
+    const levelRaw = userStats[1];
+    const beansRaw = userStats[2];
+
   const xpNum = Number(xpRaw);
   const levelNum = Number(levelRaw);
   const beansNum = Number(beansRaw);
@@ -79,24 +82,26 @@ useEffect(() => {
       console.log("Tx sent:", tx);
 
       // Auto refresh stats after tx confirmation delay
-        setTimeout(async () => {
+     setTimeout(async () => {
         const updated = await refetch();
 
         if (!updated.data || !Array.isArray(updated.data)) {
-            console.warn("Invalid stats returned:", updated.data);
+            console.error("Invalid stats format:", updated.data);
             return;
         }
 
-        const [xpRaw, levelRaw, beansRaw] = updated.data as [bigint, bigint, bigint];
+        const xpRaw = updated.data[0];
+        const levelRaw = updated.data[1];
+        const beansRaw = updated.data[2];
 
         await fetch("/api/updateStats", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                wallet,
-                xp: Number(xpRaw),
-                level: Number(levelRaw),
-                beans: Number(beansRaw)
+            wallet,
+            xp: Number(xpRaw),
+            level: Number(levelRaw),
+            beans: Number(beansRaw)
             })
         });
         }, 3000);
