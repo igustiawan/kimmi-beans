@@ -3,6 +3,8 @@ import { sdk } from "@farcaster/miniapp-sdk";
 import { useAccount, useConnect } from "wagmi";
 import MintButton from "./components/MintButton";
 import EvolutionPanel from "./components/EvolutionPanel";
+import { useReadContract } from "wagmi";
+import careAbi from "./abi/kimmiBeansCare.json";
 
 // Only you can see My Bean tab
 const DEV_FID = 299929;
@@ -22,12 +24,22 @@ export default function App() {
     image: string;
   } | null>(null);
 
+type StatsStruct = {
+  xp: bigint;
+  level: bigint;
+  beans: bigint;
+  lastAction: bigint;
+};
+
   const [soldOut, setSoldOut] = useState(false);
   const [totalMinted, setTotalMinted] = useState(0);
   const MAX_SUPPLY = 10000;
 
   // Wallet
   const { isConnected, address: wallet } = useAccount();
+  const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
+
+
   const { connect, connectors } = useConnect();
 
   // Header counters (dummy for now)
@@ -72,7 +84,28 @@ export default function App() {
     checkMinted();
   }, [wallet]);
 
-  
+  /* Auto-load bean stats from contract for header */
+  const { data: headerStatsRaw } = useReadContract({
+    address: CONTRACT,
+    abi: careAbi,
+    functionName: "getStats",
+    args: wallet ? [wallet] : undefined,
+    query: { enabled: Boolean(wallet) }
+  });
+
+  useEffect(() => {
+    if (!headerStatsRaw) return;
+
+    const stats = headerStatsRaw as StatsStruct;
+
+    const xp = Number(stats.xp);
+    const beans = Number(stats.beans);
+
+    setLifetimeXp(xp);
+    setDailyBeans(beans);
+
+  }, [headerStatsRaw]);
+
   /* Load supply */
   useEffect(() => {
     async function loadSupply() {
