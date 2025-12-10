@@ -125,6 +125,7 @@ html, body {
   max-width: 420px;
   padding: 28px 20px;
   margin: 20px auto 40px;  /* ruang aman bawah */
+  margin-bottom: calc(80px + env(safe-area-inset-bottom));
   border-radius: 26px;
   background: rgba(255,255,255,0.22);
   backdrop-filter: blur(14px);
