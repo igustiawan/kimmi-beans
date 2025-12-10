@@ -32,6 +32,25 @@ export default function App() {
   const [dailyBeans, setDailyBeans] = useState(0);
   const [lifetimeXp, setLifetimeXp] = useState(0);
 
+  // STATE UNTUK LEADERBOARD
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [loadingRank, setLoadingRank] = useState(false);
+
+  // LOAD LEADERBOARD
+  useEffect(() => {
+    if (tab !== "rank") return;
+
+    async function loadRank() {
+      setLoadingRank(true);
+      const res = await fetch("/api/leaderboard");
+      const data = await res.json();
+      setLeaderboard(data.leaderboard || []);
+      setLoadingRank(false);
+    }
+
+    loadRank();
+  }, [tab]);
+
   // ============================================================
   // Load FID
   // ============================================================
@@ -254,11 +273,38 @@ export default function App() {
     if (tab === "rank") {
       return (
         <div className="card">
-          <div className="title">Leaderboard</div>
-          <p>Coming soon!</p>
+          <div className="title">🏆 Leaderboard</div>
+
+          {loadingRank ? (
+            <p>Loading...</p>
+          ) : leaderboard.length === 0 ? (
+            <p>No players yet.</p>
+          ) : (
+            <div className="leaderboard">
+              {leaderboard.map((p, index) => (
+                <div key={p.wallet} className="rank-row">
+                  <div className="rank-left">
+                    <div className="rank-number">{index + 1}</div>
+                    <div className="rank-user">
+                      <b>{p.username || p.wallet.slice(0, 6)}</b>
+                      <span className="rank-wallet">
+                        {p.wallet.slice(0, 4)}...{p.wallet.slice(-3)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="rank-right">
+                    <div className="rank-stat">Lvl {p.level}</div>
+                    <div className="rank-stat">🫘 {p.beans}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       );
     }
+
 
     // ------------------ FAQ ------------------
     if (tab === "faq") {

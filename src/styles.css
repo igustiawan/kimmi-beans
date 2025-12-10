@@ -490,3 +490,48 @@ html, body {
   80% { opacity: 1; }
   100% { opacity: 0; transform: translate(-50%, 20px); }
 }
+
+.leaderboard {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rank-row {
+  background: #ffffffdd;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rank-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rank-number {
+  font-size: 20px;
+  font-weight: bold;
+  color: #ff9800;
+  width: 30px;
+}
+
+.rank-user {
+  display: flex;
+  flex-direction: column;
+}
+
+.rank-wallet {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.rank-right {
+  display: flex;
+  gap: 12px;
+  font-weight: bold;
+}
