@@ -35,23 +35,17 @@ export default function App() {
   // Header values
   const [dailyBeans, setDailyBeans] = useState(0);
   const [lifetimeXp, setLifetimeXp] = useState(0);
+  const [lifetimeLevel, setLifetimeLevel] = useState(0); // added to show level in daily share
 
   // STATE UNTUK LEADERBOARD
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loadingRank, setLoadingRank] = useState(false);
 
-  // DAILY / MISSIONS STATE
-  const [dailyStatus, setDailyStatus] = useState({
-    feed: false,
-    water: false,
-    train: false,
-    share: false,
-  });
-  const [streak, setStreak] = useState(0);
-  const [dailyLoading, setDailyLoading] = useState(false);
+  // DAILY STATE (minimal)
   const [dailyToast, setDailyToast] = useState<string | null>(null);
+  const [dailyLoading, setDailyLoading] = useState(false);
 
-  // LOAD LEADERBOARD (top 100)
+  // LOAD LEADERBOARD (top 100) when rank tab is opened; also used by daily
   useEffect(() => {
     if (tab !== "rank") return;
 
@@ -141,6 +135,7 @@ export default function App() {
 
     setLifetimeXp(Number(stats.xp));
     setDailyBeans(Number(stats.beans));
+    setLifetimeLevel(Number(stats.level));
   }, [headerStatsRaw]);
 
   function handleStatsUpdate(newXp: number, newBeans: number) {
@@ -173,10 +168,11 @@ export default function App() {
   // ============================================================
   // Share to Cast (used by mint flow and daily share)
   // ============================================================
-  async function shareToCast(tokenId: number, rarity: string, extraMsg?: string) {
-    const miniAppURL =
-      "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
-    const msg = `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨${extraMsg ? " — " + extraMsg : ""}`;
+  async function shareToCast(tokenId: number | null, rarity: string | null, extraMsg?: string) {
+    const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+    const msg = tokenId
+      ? `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨${extraMsg ? " — " + extraMsg : ""}`
+      : `My Kimmi Bean — Lvl ${lifetimeLevel} — 🫘 ${dailyBeans}${extraMsg ? " — " + extraMsg : ""}`;
 
     await sdk.actions.openUrl({
       url:
@@ -186,24 +182,22 @@ export default function App() {
   }
 
   // ============================================================
-  // DAILY / MISSIONS: fetch status from backend (if exists)
+  // DAILY: when opening daily, fetch leaderboard (to compute rank)
   // ============================================================
-  async function fetchDailyStatus() {
-    if (!wallet) {
-      setDailyStatus({ feed: false, water: false, train: false, share: false });
-      setStreak(0);
-      return;
-    }
-
-    setDailyLoading(true);
+  async function fetchDailyAssets() {
+    // fetch leaderboard top100 to compute rank
     try {
-      const res = await fetch(`/api/dailyStatus?wallet=${wallet}`);
-      if (!res.ok) throw new Error("no daily API");
-      const data = await res.json();
-      setDailyStatus(data.tasks || { feed: false, water: false, train: false, share: false });
-      setStreak(data.streak || 0);
+      setDailyLoading(true);
+      const res = await fetch("/api/leaderboard");
+      if (res.ok) {
+        const data = await res.json();
+        setLeaderboard(data.leaderboard || []);
+      } else {
+        setLeaderboard([]);
+      }
     } catch (err) {
-      console.warn("dailyStatus fetch failed, using local state", err);
+      console.warn("fetchDailyAssets failed", err);
+      setLeaderboard([]);
     } finally {
       setDailyLoading(false);
     }
@@ -218,11 +212,18 @@ export default function App() {
       setTab("mint");
       return;
     }
-    fetchDailyStatus();
+    fetchDailyAssets();
   }, [tab, wallet, userFID]);
 
+  // compute user's rank if present in leaderboard
+  function userRankFromLeaderboard(): number | null {
+    if (!wallet || !leaderboard || leaderboard.length === 0) return null;
+    const idx = leaderboard.findIndex((p) => p.wallet.toLowerCase() === wallet?.toLowerCase());
+    return idx === -1 ? null : idx + 1;
+  }
+
   // ============================================================
-  // Handle share + claim
+  // Handle share from Daily
   // ============================================================
   async function handleShareProgress() {
     if (!wallet) {
@@ -231,12 +232,18 @@ export default function App() {
       return;
     }
 
+    // Compose share message containing level, beans, rank
+    const rank = userRankFromLeaderboard();
+    const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+    const msg = `My Kimmi Bean — Lvl ${lifetimeLevel} — 🫘 ${dailyBeans}${rank ? ` — Rank #${rank}` : ""}`;
+
     await sdk.actions.openUrl({
-      url: `https://warpcast.com/~/compose?text=${encodeURIComponent(
-        `My Kimmi Bean — Lvl ${lifetimeXp} — come play! 🫘`
-      )}`
+      url:
+        `https://warpcast.com/~/compose?text=${encodeURIComponent(msg)}` +
+        `&embeds[]=${encodeURIComponent(miniAppURL)}`
     });
 
+    // Optionally inform backend to grant share reward (if implemented)
     try {
       const res = await fetch("/api/claimDailyShare", {
         method: "POST",
@@ -245,9 +252,8 @@ export default function App() {
       });
 
       if (!res.ok) {
-        setDailyStatus(s => ({ ...s, share: true }));
         setDailyToast("Shared! (no backend reward)");
-        setTimeout(() => setDailyToast(null), 2000);
+        setTimeout(() => setDailyToast(null), 1800);
         return;
       }
 
@@ -258,19 +264,12 @@ export default function App() {
       } else {
         setDailyToast("Shared!");
       }
-      setStreak(data.streak ?? streak);
-      setDailyStatus(s => ({ ...s, share: true }));
-      setTimeout(() => setDailyToast(null), 2000);
+      setTimeout(() => setDailyToast(null), 1800);
     } catch (err) {
-      console.error("claimDailyShare error", err);
-      setDailyStatus(s => ({ ...s, share: true }));
+      // backend fail is not blocking the share UX
       setDailyToast("Shared!");
-      setTimeout(() => setDailyToast(null), 2000);
+      setTimeout(() => setDailyToast(null), 1400);
     }
-  }
-
-  function markTaskDone(task: "feed" | "water" | "train") {
-    setDailyStatus(s => ({ ...s, [task]: true }));
   }
 
   // safeTabSetter: prevents non-dev from going to daily
@@ -287,7 +286,7 @@ export default function App() {
   // RENDER content per tab
   // ============================================================
   function renderContent() {
-    // MINT
+    // MINT (unchanged)
     if (tab === "mint") {
       return (
         <div className="card">
@@ -352,7 +351,7 @@ export default function App() {
       );
     }
 
-    // MY BEAN
+    // MY BEAN (unchanged)
     if (tab === "bean") {
       if (!isConnected || !wallet) {
         return (
@@ -382,14 +381,13 @@ export default function App() {
           username={displayName}
           onStatsUpdate={(xp, beans) => {
             handleStatsUpdate(xp, beans);
-            markTaskDone("feed"); // minimal heuristic
-            fetchDailyStatus();
+            fetchDailyAssets();
           }}
         />
       );
     }
 
-    // RANK
+    // RANK (unchanged)
     if (tab === "rank") {
       const userRank = leaderboard.findIndex(
         (p) => p.wallet.toLowerCase() === wallet?.toLowerCase()
@@ -439,81 +437,44 @@ export default function App() {
       );
     }
 
-    // DAILY - guarded by useEffect and safeSetTab; this block only renders when allowed
+    // DAILY - simplified per request: no streak, no feed/water/train, only share progress
     if (tab === "daily") {
+      const userRank = userRankFromLeaderboard();
       return (
         <div className="card" style={{ alignItems: "stretch" }}>
           <div style={{ textAlign: "center", width: "100%" }}>
-            <div className="title">Daily Missions</div>
+            <div className="title">Daily Progress</div>
             <div style={{ marginTop: 6, marginBottom: 8 }} className="subtitle">
-              Complete tasks to earn XP & Beans — streaks grant bonuses.
+              Share your current progress — others will see your level, beans, and rank.
             </div>
           </div>
 
-          <div style={{ width: "100%", maxWidth: 420 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>Streak</div>
-              <div style={{ fontSize: 14 }}>🔥 {streak} days</div>
-            </div>
-
+          <div style={{ width: "100%", maxWidth: 420, marginTop: 6 }}>
             <div style={{ display: "grid", gap: 10 }}>
-              <div className="leader-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ fontWeight: 700 }}>Feed your Bean</div>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>Small XP & Beans</div>
+              <div style={{ padding: 12, borderRadius: 12, background: "rgba(255,255,255,0.06)" }}>
+                <div style={{ fontWeight: 700, marginBottom: 6 }}>
+                  Your Progress
                 </div>
-                <div>
-                  <button className="bean-btn" disabled={!isConnected || dailyStatus.feed} onClick={() => { markTaskDone("feed"); setDailyToast("Feed done — +XP"); setTimeout(()=>setDailyToast(null),1400); }}>
-                    {dailyStatus.feed ? "Done" : "Do"}
-                  </button>
+
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                  <div style={{ opacity: 0.9 }}>Level</div>
+                  <div style={{ fontWeight: 700 }}>Lvl {lifetimeLevel}</div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                  <div style={{ opacity: 0.9 }}>Beans</div>
+                  <div style={{ fontWeight: 700 }}>🫘 {dailyBeans}</div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <div style={{ opacity: 0.9 }}>Rank (Top 100)</div>
+                  <div style={{ fontWeight: 700 }}>{userRank ? `#${userRank}` : "Not in Top 100"}</div>
                 </div>
               </div>
 
-              <div className="leader-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ fontWeight: 700 }}>Water your Bean</div>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>Medium XP & Beans</div>
-                </div>
-                <div>
-                  <button className="bean-btn" disabled={!isConnected || dailyStatus.water} onClick={() => { markTaskDone("water"); setDailyToast("Water done — +XP"); setTimeout(()=>setDailyToast(null),1400); }}>
-                    {dailyStatus.water ? "Done" : "Do"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="leader-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ fontWeight: 700 }}>Train your Bean</div>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>Highest XP & Beans</div>
-                </div>
-                <div>
-                  <button className="bean-btn" disabled={!isConnected || dailyStatus.train} onClick={() => { markTaskDone("train"); setDailyToast("Train done — +XP"); setTimeout(()=>setDailyToast(null),1400); }}>
-                    {dailyStatus.train ? "Done" : "Do"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="leader-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ fontWeight: 700 }}>Share your progress</div>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>Share to Warpcast — get bonus</div>
-                </div>
-                <div>
-                  <button className="bean-btn" disabled={!isConnected || dailyStatus.share || dailyLoading} onClick={() => handleShareProgress()}>
-                    {dailyLoading ? "Sharing..." : dailyStatus.share ? "Shared" : "Share"}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginTop: 12, textAlign: "center" }}>
-              <div style={{ fontSize: 13, opacity: 0.9 }}>
-                Complete tasks daily — Train &gt; Water &gt; Feed for reward scaling.
-              </div>
-
-              <div style={{ marginTop: 12 }}>
-                <button className="share-btn" onClick={() => handleShareProgress()}>
-                  Share Daily Progress 🚀
+              <div style={{ textAlign: "center", marginTop: 6 }}>
+                <button className="share-btn" onClick={() => handleShareProgress()} disabled={dailyLoading}>
+                  {dailyLoading ? "Opening..." : "Share Progress 🚀"}
                 </button>
               </div>
             </div>
