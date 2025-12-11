@@ -1,3 +1,4 @@
+// src/App.tsx
 import { useEffect, useState } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { useAccount, useConnect, useReadContract } from "wagmi";
@@ -5,8 +6,11 @@ import MintButton from "./components/MintButton";
 import EvolutionPanel from "./components/EvolutionPanel";
 import careAbi from "./abi/kimmiBeansCare.json";
 
+type Tab = "mint" | "bean" | "rank" | "faq" | "daily";
+const DEV_FID = 299929; // only this FID can access Daily for now
+
 export default function App() {
-  const [tab, setTab] = useState<"mint" | "bean" | "rank" | "faq">("mint");
+  const [tab, setTab] = useState<Tab>("mint");
 
   const [userFID, setUserFID] = useState<number | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -36,16 +40,33 @@ export default function App() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loadingRank, setLoadingRank] = useState(false);
 
-  // LOAD LEADERBOARD
+  // DAILY / MISSIONS STATE
+  const [dailyStatus, setDailyStatus] = useState({
+    feed: false,
+    water: false,
+    train: false,
+    share: false,
+  });
+  const [streak, setStreak] = useState(0);
+  const [dailyLoading, setDailyLoading] = useState(false);
+  const [dailyToast, setDailyToast] = useState<string | null>(null);
+
+  // LOAD LEADERBOARD (top 100)
   useEffect(() => {
     if (tab !== "rank") return;
 
     async function loadRank() {
       setLoadingRank(true);
-      const res = await fetch("/api/leaderboard");
-      const data = await res.json();
-      setLeaderboard(data.leaderboard || []);
-      setLoadingRank(false);
+      try {
+        const res = await fetch("/api/leaderboard");
+        const data = await res.json();
+        setLeaderboard(data.leaderboard || []);
+      } catch (err) {
+        console.error("Failed to load leaderboard", err);
+        setLeaderboard([]);
+      } finally {
+        setLoadingRank(false);
+      }
     }
 
     loadRank();
@@ -75,15 +96,21 @@ export default function App() {
     async function checkMinted() {
       if (!wallet) return;
 
-      const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
-      const data = await res.json();
+      try {
+        const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
+        const data = await res.json();
 
-      if (data.minted) {
-        setMintResult({
-          id: data.tokenId,
-          rarity: data.rarity,
-          image: data.image
-        });
+        if (data.minted) {
+          setMintResult({
+            id: data.tokenId,
+            rarity: data.rarity,
+            image: data.image
+          });
+        } else {
+          setMintResult(null);
+        }
+      } catch (err) {
+        console.error("checkMinted error", err);
       }
     }
     checkMinted();
@@ -127,11 +154,15 @@ export default function App() {
   // ============================================================
   useEffect(() => {
     async function loadSupply() {
-      const res = await fetch("/api/checkSupply");
-      const data = await res.json();
+      try {
+        const res = await fetch("/api/checkSupply");
+        const data = await res.json();
 
-      setTotalMinted(data.totalMinted);
-      setSoldOut(data.soldOut);
+        setTotalMinted(data.totalMinted);
+        setSoldOut(data.soldOut);
+      } catch (err) {
+        console.error("loadSupply error", err);
+      }
     }
 
     loadSupply();
@@ -140,12 +171,12 @@ export default function App() {
   }, []);
 
   // ============================================================
-  // Share to Cast
+  // Share to Cast (used by mint flow and daily share)
   // ============================================================
-  async function shareToCast(tokenId: number, rarity: string) {
+  async function shareToCast(tokenId: number, rarity: string, extraMsg?: string) {
     const miniAppURL =
       "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
-    const msg = `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨`;
+    const msg = `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨${extraMsg ? " — " + extraMsg : ""}`;
 
     await sdk.actions.openUrl({
       url:
@@ -155,10 +186,108 @@ export default function App() {
   }
 
   // ============================================================
-  // Render content
+  // DAILY / MISSIONS: fetch status from backend (if exists)
+  // ============================================================
+  async function fetchDailyStatus() {
+    if (!wallet) {
+      setDailyStatus({ feed: false, water: false, train: false, share: false });
+      setStreak(0);
+      return;
+    }
+
+    setDailyLoading(true);
+    try {
+      const res = await fetch(`/api/dailyStatus?wallet=${wallet}`);
+      if (!res.ok) throw new Error("no daily API");
+      const data = await res.json();
+      setDailyStatus(data.tasks || { feed: false, water: false, train: false, share: false });
+      setStreak(data.streak || 0);
+    } catch (err) {
+      console.warn("dailyStatus fetch failed, using local state", err);
+    } finally {
+      setDailyLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (tab !== "daily") return;
+    // guard - only allow DEV_FID
+    if (userFID !== DEV_FID) {
+      setDailyToast("Daily tab is currently for tester FID only.");
+      setTimeout(() => setDailyToast(null), 2000);
+      setTab("mint");
+      return;
+    }
+    fetchDailyStatus();
+  }, [tab, wallet, userFID]);
+
+  // ============================================================
+  // Handle share + claim
+  // ============================================================
+  async function handleShareProgress() {
+    if (!wallet) {
+      setDailyToast("Connect wallet first");
+      setTimeout(() => setDailyToast(null), 2000);
+      return;
+    }
+
+    await sdk.actions.openUrl({
+      url: `https://warpcast.com/~/compose?text=${encodeURIComponent(
+        `My Kimmi Bean — Lvl ${lifetimeXp} — come play! 🫘`
+      )}`
+    });
+
+    try {
+      const res = await fetch("/api/claimDailyShare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallet })
+      });
+
+      if (!res.ok) {
+        setDailyStatus(s => ({ ...s, share: true }));
+        setDailyToast("Shared! (no backend reward)");
+        setTimeout(() => setDailyToast(null), 2000);
+        return;
+      }
+
+      const data = await res.json();
+      if (data.xpEarned || data.beansEarned) {
+        setDailyToast(`+${data.xpEarned ?? 0} XP  +${data.beansEarned ?? 0} Beans`);
+        handleStatsUpdate((lifetimeXp || 0) + (data.xpEarned ?? 0), (dailyBeans || 0) + (data.beansEarned ?? 0));
+      } else {
+        setDailyToast("Shared!");
+      }
+      setStreak(data.streak ?? streak);
+      setDailyStatus(s => ({ ...s, share: true }));
+      setTimeout(() => setDailyToast(null), 2000);
+    } catch (err) {
+      console.error("claimDailyShare error", err);
+      setDailyStatus(s => ({ ...s, share: true }));
+      setDailyToast("Shared!");
+      setTimeout(() => setDailyToast(null), 2000);
+    }
+  }
+
+  function markTaskDone(task: "feed" | "water" | "train") {
+    setDailyStatus(s => ({ ...s, [task]: true }));
+  }
+
+  // safeTabSetter: prevents non-dev from going to daily
+  function safeSetTab(t: Tab) {
+    if (t === "daily" && userFID !== DEV_FID) {
+      setDailyToast("Daily is for tester FID only.");
+      setTimeout(() => setDailyToast(null), 1800);
+      return;
+    }
+    setTab(t);
+  }
+
+  // ============================================================
+  // RENDER content per tab
   // ============================================================
   function renderContent() {
-    // ------------------ MINT TAB ------------------
+    // MINT
     if (tab === "mint") {
       return (
         <div className="card">
@@ -184,10 +313,7 @@ export default function App() {
           {!mintResult && (
             <>
               {!isConnected && (
-                <button
-                  className="main-btn"
-                  onClick={() => connect({ connector: connectors[0] })}
-                >
+                <button className="main-btn" onClick={() => connect({ connector: connectors[0] })}>
                   Connect Wallet
                 </button>
               )}
@@ -217,10 +343,7 @@ export default function App() {
                 Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
               </div>
 
-              <button
-                className="share-btn"
-                onClick={() => shareToCast(mintResult.id, mintResult.rarity)}
-              >
+              <button className="share-btn" onClick={() => shareToCast(mintResult.id, mintResult.rarity)}>
                 Share to Cast 🚀
               </button>
             </>
@@ -229,7 +352,7 @@ export default function App() {
       );
     }
 
-    // ------------------ MY BEAN TAB ------------------
+    // MY BEAN
     if (tab === "bean") {
       if (!isConnected || !wallet) {
         return (
@@ -240,23 +363,16 @@ export default function App() {
         );
       }
 
-      // No NFT yet
       if (!mintResult) {
         return (
           <div className="card">
             <div className="title">My Bean</div>
             <p>You don’t own a Kimmi Bean NFT yet.</p>
-            <button
-              className="main-btn"
-              onClick={() => setTab("mint")}
-            >
-              Mint Now 🫘
-            </button>
+            <button className="main-btn" onClick={() => setTab("mint")}>Mint Now 🫘</button>
           </div>
         );
       }
 
-      // NFT exists → show evolution panel
       return (
         <EvolutionPanel
           wallet={wallet}
@@ -264,12 +380,16 @@ export default function App() {
           bean={mintResult}
           fid={userFID}
           username={displayName}
-          onStatsUpdate={handleStatsUpdate}
+          onStatsUpdate={(xp, beans) => {
+            handleStatsUpdate(xp, beans);
+            markTaskDone("feed"); // minimal heuristic
+            fetchDailyStatus();
+          }}
         />
       );
     }
 
-    // ------------------ RANK ------------------
+    // RANK
     if (tab === "rank") {
       const userRank = leaderboard.findIndex(
         (p) => p.wallet.toLowerCase() === wallet?.toLowerCase()
@@ -285,22 +405,17 @@ export default function App() {
             <p className="leader-loading">No players yet.</p>
           ) : (
             <>
-              {/* SCROLLABLE LIST */}
-              <div className="leader-scroll">
+              <div style={{ width: "100%", overflowY: "auto", padding: "8px 0", maxHeight: "56vh" }}>
                 <div className="leader-list">
-                  {leaderboard.map((p, index) => (
+                  {leaderboard.slice(0, 100).map((p, index) => (
                     <div className="leader-item" key={p.wallet}>
                       <div className="leader-left">
                         <div className="rank-num">{index + 1}</div>
-
                         <div className="leader-info">
-                          <div className="leader-name">{p.username}</div>
-                          <div className="leader-wallet">
-                            {p.wallet.slice(0, 5)}...{p.wallet.slice(-3)}
-                          </div>
+                          <div className="leader-name">{p.username || p.wallet}</div>
+                          <div className="leader-wallet">{p.wallet.slice(0, 5)}...{p.wallet.slice(-3)}</div>
                         </div>
                       </div>
-
                       <div className="leader-right">
                         <span className="leader-stat">Lvl {p.level}</span>
                         <span className="leader-stat">🫘 {p.beans}</span>
@@ -310,14 +425,10 @@ export default function App() {
                 </div>
               </div>
 
-              {/* USER PERSONAL RANK */}
               {wallet && (
-                <div className="user-rank-box">
-                  <span className="user-rank-label">
-                    Your Rank
-                  </span>
-
-                  <span className="user-rank-value">
+                <div className="user-rank-box" style={{ marginTop: 12 }}>
+                  <span className="user-rank-label">Your Rank</span>
+                  <span className="user-rank-value" style={{ marginLeft: 8 }}>
                     {userRank > 0 ? `#${userRank}` : "Not in Top 100"}
                   </span>
                 </div>
@@ -328,68 +439,125 @@ export default function App() {
       );
     }
 
-    // ------------------ FAQ ------------------
+    // DAILY - guarded by useEffect and safeSetTab; this block only renders when allowed
+    if (tab === "daily") {
+      return (
+        <div className="card" style={{ alignItems: "stretch" }}>
+          <div style={{ textAlign: "center", width: "100%" }}>
+            <div className="title">Daily Missions</div>
+            <div style={{ marginTop: 6, marginBottom: 8 }} className="subtitle">
+              Complete tasks to earn XP & Beans — streaks grant bonuses.
+            </div>
+          </div>
+
+          <div style={{ width: "100%", maxWidth: 420 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>Streak</div>
+              <div style={{ fontSize: 14 }}>🔥 {streak} days</div>
+            </div>
+
+            <div style={{ display: "grid", gap: 10 }}>
+              <div className="leader-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 700 }}>Feed your Bean</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>Small XP & Beans</div>
+                </div>
+                <div>
+                  <button className="bean-btn" disabled={!isConnected || dailyStatus.feed} onClick={() => { markTaskDone("feed"); setDailyToast("Feed done — +XP"); setTimeout(()=>setDailyToast(null),1400); }}>
+                    {dailyStatus.feed ? "Done" : "Do"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="leader-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 700 }}>Water your Bean</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>Medium XP & Beans</div>
+                </div>
+                <div>
+                  <button className="bean-btn" disabled={!isConnected || dailyStatus.water} onClick={() => { markTaskDone("water"); setDailyToast("Water done — +XP"); setTimeout(()=>setDailyToast(null),1400); }}>
+                    {dailyStatus.water ? "Done" : "Do"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="leader-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 700 }}>Train your Bean</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>Highest XP & Beans</div>
+                </div>
+                <div>
+                  <button className="bean-btn" disabled={!isConnected || dailyStatus.train} onClick={() => { markTaskDone("train"); setDailyToast("Train done — +XP"); setTimeout(()=>setDailyToast(null),1400); }}>
+                    {dailyStatus.train ? "Done" : "Do"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="leader-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 700 }}>Share your progress</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>Share to Warpcast — get bonus</div>
+                </div>
+                <div>
+                  <button className="bean-btn" disabled={!isConnected || dailyStatus.share || dailyLoading} onClick={() => handleShareProgress()}>
+                    {dailyLoading ? "Sharing..." : dailyStatus.share ? "Shared" : "Share"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 12, textAlign: "center" }}>
+              <div style={{ fontSize: 13, opacity: 0.9 }}>
+                Complete tasks daily — Train &gt; Water &gt; Feed for reward scaling.
+              </div>
+
+              <div style={{ marginTop: 12 }}>
+                <button className="share-btn" onClick={() => handleShareProgress()}>
+                  Share Daily Progress 🚀
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // FAQ
     if (tab === "faq") {
       return (
-        <div className="faq-wrapper">
-
-          <div className="faq-title">FAQ</div>
-
-          <div className="faq-block">
-            <div className="faq-q">
-              <span className="faq-icon">🫘</span> What is Kimmi Beans?
+        <div className="card">
+          <div className="title">FAQ</div>
+          <div style={{ textAlign: "left", width: "100%", maxWidth: 420 }}>
+            <div style={{ marginBottom: 12 }}>
+              <b>🫘 What is Kimmi Beans?</b>
+              <div style={{ opacity: 0.9 }}>A fun Farcaster Mini App where you mint and grow your own Bean NFT.</div>
             </div>
-            <div className="faq-a">
-              A fun Farcaster Mini App where you mint and grow your own Bean NFT.
+
+            <div style={{ marginBottom: 12 }}>
+              <b>⚡ How do I earn XP & Beans?</b>
+              <div style={{ opacity: 0.9 }}>Take care of your Bean every day by feeding, watering, and training it.</div>
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <b>📈 Which action gives the best reward?</b>
+              <div style={{ opacity: 0.9 }}>Train &gt; Water &gt; Feed — higher difficulty = higher XP & Beans reward.</div>
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <b>💰 What are Beans used for?</b>
+              <div style={{ opacity: 0.9 }}>Beans increase leaderboard ranking and unlock future rewards.</div>
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <b>🔒 How many NFTs can I mint?</b>
+              <div style={{ opacity: 0.9 }}>Only 1 NFT per wallet — your Bean is unique and yours forever.</div>
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <b>🔵 Is this on Base?</b>
+              <div style={{ opacity: 0.9 }}>Yes! All minting and actions run on Base blockchain.</div>
             </div>
           </div>
-
-          <div className="faq-block">
-            <div className="faq-q">
-              <span className="faq-icon">⚡</span> How do I earn XP & Beans?
-            </div>
-            <div className="faq-a">
-              Take care of your Bean every day by feeding, watering, and training it.
-            </div>
-          </div>
-
-          <div className="faq-block">
-            <div className="faq-q">
-              <span className="faq-icon">📈</span> Which action gives the best reward?
-            </div>
-            <div className="faq-a">
-              <b>Train ＞ Water ＞ Feed</b><br />
-              Higher difficulty → higher XP & Beans reward.
-            </div>
-          </div>
-
-          <div className="faq-block">
-            <div className="faq-q">
-              <span className="faq-icon">💰</span> What are Beans used for?
-            </div>
-            <div className="faq-a">
-              Beans increase leaderboard ranking and unlock future rewards.
-            </div>
-          </div>
-
-          <div className="faq-block">
-            <div className="faq-q">
-              <span className="faq-icon">🔒</span> How many NFTs can I mint?
-            </div>
-            <div className="faq-a">
-              Only 1 NFT per wallet — your Bean is unique and yours forever.
-            </div>
-          </div>
-
-          <div className="faq-block">
-            <div className="faq-q">
-              <span className="faq-icon">🔵</span> Is this on Base?
-            </div>
-            <div className="faq-a">
-              Yes! All minting and actions run on Base blockchain.
-            </div>
-          </div>
-
         </div>
       );
     }
@@ -400,7 +568,6 @@ export default function App() {
   // ============================================================
   return (
     <div className="app">
-
       {/* HEADER */}
       <div className="header">
         <div className="header-left">
@@ -431,35 +598,34 @@ export default function App() {
 
       {/* NAV */}
       <div className="bottom-nav">
-        <div
-          className={`nav-item ${tab === "mint" ? "active" : ""}`}
-          onClick={() => setTab("mint")}
-        >
+        <div className={`nav-item ${tab === "mint" ? "active" : ""}`} onClick={() => safeSetTab("mint")}>
           🫘<span>Mint</span>
         </div>
 
-        <div
-          className={`nav-item ${tab === "bean" ? "active" : ""}`}
-          onClick={() => setTab("bean")}
-        >
+        <div className={`nav-item ${tab === "bean" ? "active" : ""}`} onClick={() => safeSetTab("bean")}>
           🌱<span>My Bean</span>
         </div>
 
-        <div
-          className={`nav-item ${tab === "rank" ? "active" : ""}`}
-          onClick={() => setTab("rank")}
-        >
+        <div className={`nav-item ${tab === "rank" ? "active" : ""}`} onClick={() => safeSetTab("rank")}>
           🏆<span>Rank</span>
         </div>
 
-        <div
-          className={`nav-item ${tab === "faq" ? "active" : ""}`}
-          onClick={() => setTab("faq")}
-        >
+        {/* show daily nav only for DEV_FID (tester) */}
+        {userFID === DEV_FID && (
+          <div className={`nav-item ${tab === "daily" ? "active" : ""}`} onClick={() => safeSetTab("daily")}>
+            🚀<span>Daily</span>
+          </div>
+        )}
+
+        <div className={`nav-item ${tab === "faq" ? "active" : ""}`} onClick={() => safeSetTab("faq")}>
           ❓<span>FAQ</span>
         </div>
       </div>
 
+      {/* daily toast */}
+      {dailyToast && (
+        <div className="toast-popup">{dailyToast}</div>
+      )}
     </div>
   );
 }
