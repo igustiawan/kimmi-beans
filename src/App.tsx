@@ -11,6 +11,7 @@ import RankTab from "./components/tabs/RankTab";
 import DailyTab from "./components/tabs/DailyTab";
 import FaqTab from "./components/tabs/FaqTab";
 
+
 type Tab = "mint" | "bean" | "rank" | "faq" | "daily";
 const DEV_FID = 299929;
 const MINI_APP_URL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
