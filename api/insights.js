@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     }
 
     const RPC_URL = process.env.RPC_URL;
-    const CONTRACT_ADDR = (process.env.BEAN_CONTRACT || process.env.VITE_BEAN_CONTRACT);
+    const CONTRACT_ADDR = process.env.VITE_BEAN_CONTRACT;
     const FROM_BLOCK = Number(process.env.INSIGHTS_FROM_BLOCK || 0);
 
     if (!RPC_URL) return res.status(500).json({ error: "RPC_URL not configured on server" });
