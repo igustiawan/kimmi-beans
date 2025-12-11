@@ -6,10 +6,12 @@ import MintButton from "./components/MintButton";
 import EvolutionPanel from "./components/EvolutionPanel";
 import careAbi from "./abi/kimmiBeansCare.json";
 
-type Tab = "mint" | "bean" | "rank" | "faq";
+type Tab = "mint" | "bean" | "insights" | "faq";
+type InsightsSub = "leaderboard" | "stats";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("mint");
+  const [insightsSub, setInsightsSub] = useState<InsightsSub>("leaderboard");
 
   const [userFID, setUserFID] = useState<number | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -31,42 +33,26 @@ export default function App() {
 
   const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
 
-  // Header values
+  // Header values (on-chain)
   const [dailyBeans, setDailyBeans] = useState(0);
   const [lifetimeXp, setLifetimeXp] = useState(0);
-  const [lifetimeLevel, setLifetimeLevel] = useState(0); // show level in leaderboard share
+  const [lifetimeLevel, setLifetimeLevel] = useState(0);
 
-  // STATE UNTUK LEADERBOARD
+  // Leaderboard
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
-  const [loadingRank, setLoadingRank] = useState(false);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
 
-  // small toast root (keperluan ringan)
+  // Insights (stats)
+  const [insightsStats, setInsightsStats] = useState<any>({});
+  const [loadingInsightsStats, setLoadingInsightsStats] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
+
+  // small toast
   const [toast, setToast] = useState<string | null>(null);
 
-  // LOAD LEADERBOARD (top 100) when rank tab is opened; also used for share
-  useEffect(() => {
-    if (tab !== "rank") return;
-
-    async function loadRank() {
-      setLoadingRank(true);
-      try {
-        const res = await fetch("/api/leaderboard");
-        const data = await res.json();
-        setLeaderboard(data.leaderboard || []);
-      } catch (err) {
-        console.error("Failed to load leaderboard", err);
-        setLeaderboard([]);
-      } finally {
-        setLoadingRank(false);
-      }
-    }
-
-    loadRank();
-  }, [tab]);
-
-  // ============================================================
-  // Load FID (still read for display, but no dev-only logic)
-  // ============================================================
+  // ===========================
+  // FID load
+  // ===========================
   useEffect(() => {
     sdk.actions.ready();
     async function loadFID() {
@@ -81,23 +67,17 @@ export default function App() {
     loadFID();
   }, []);
 
-  // ============================================================
-  // Check minted NFT
-  // ============================================================
+  // ===========================
+  // Check minted
+  // ===========================
   useEffect(() => {
     async function checkMinted() {
       if (!wallet) return;
-
       try {
         const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
         const data = await res.json();
-
         if (data.minted) {
-          setMintResult({
-            id: data.tokenId,
-            rarity: data.rarity,
-            image: data.image
-          });
+          setMintResult({ id: data.tokenId, rarity: data.rarity, image: data.image });
         } else {
           setMintResult(null);
         }
@@ -108,15 +88,10 @@ export default function App() {
     checkMinted();
   }, [wallet]);
 
-  // ============================================================
-  // Auto-load stats for header directly from CONTRACT
-  // ============================================================
-  type StatsStruct = {
-    xp: bigint;
-    level: bigint;
-    beans: bigint;
-    lastAction: bigint;
-  };
+  // ===========================
+  // Header stats from contract (getStats)
+  // ===========================
+  type StatsStruct = { xp: bigint; level: bigint; beans: bigint; lastAction: bigint };
 
   const { data: headerStatsRaw, refetch: refetchHeaderStats } = useReadContract({
     address: CONTRACT,
@@ -128,12 +103,10 @@ export default function App() {
 
   useEffect(() => {
     if (!headerStatsRaw) return;
-
-    const stats = headerStatsRaw as StatsStruct;
-
-    setLifetimeXp(Number(stats.xp));
-    setDailyBeans(Number(stats.beans));
-    setLifetimeLevel(Number(stats.level));
+    const s = headerStatsRaw as StatsStruct;
+    setLifetimeXp(Number(s.xp));
+    setDailyBeans(Number(s.beans));
+    setLifetimeLevel(Number(s.level));
   }, [headerStatsRaw]);
 
   function handleStatsUpdate(newXp: number, newBeans: number) {
@@ -142,73 +115,47 @@ export default function App() {
     refetchHeaderStats();
   }
 
-  // ============================================================
+  // ===========================
   // Load supply
-  // ============================================================
+  // ===========================
   useEffect(() => {
     async function loadSupply() {
       try {
         const res = await fetch("/api/checkSupply");
         const data = await res.json();
-
         setTotalMinted(data.totalMinted);
         setSoldOut(data.soldOut);
       } catch (err) {
         console.error("loadSupply error", err);
       }
     }
-
     loadSupply();
-    const interval = setInterval(loadSupply, 10000);
-    return () => clearInterval(interval);
+    const iv = setInterval(loadSupply, 10000);
+    return () => clearInterval(iv);
   }, []);
 
-  // ============================================================
-  // Share to Cast helper (used by leaderboard small share button)
-  // ============================================================
+  // ===========================
+  // Share helper
+  // ===========================
   async function shareProgressFromLeaderboard(rank?: number | null) {
-  const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
-
-  // raw lines (no leading newline, start immediately)
-  const lines = [
-    `My Kimmi Bean is growing strong! 🌱`,
-    `Lvl ${lifetimeLevel} — ${dailyBeans} Beans${rank ? ` — Rank #${rank}` : ""}`,
-    "",
-    `Come join the Kimmi Beans mini-game on Farcaster!`,
-    `Mint your own Bean, level it up, climb the leaderboard,`,
-    `and flex your progress with the community!`,
-    "",
-    `Let’s grow together`
-  ];
-
-  // sanitize: remove BOM / zero-width chars, normalize newlines, trim lines
-  function sanitizeLine(s: string) {
-    // Remove BOM and zero-width spaces / non-printing chars
-    const noZW = s.replace(/[\u200B-\u200F\uFEFF]/g, "");
-    // Trim spaces on both ends
-    return noZW.trim();
-  }
-
-  const cleanedLines = lines.map(sanitizeLine);
-
-  // Remove accidental empty leading lines
-  while (cleanedLines.length && cleanedLines[0] === "") cleanedLines.shift();
-  // Remove trailing empty lines
-  while (cleanedLines.length && cleanedLines[cleanedLines.length - 1] === "") cleanedLines.pop();
-
-  // Join with single blank line between paragraphs where there's an empty string in the array
-  // (we already have "" in lines to show paragraph breaks)
-  const finalText = cleanedLines.join("\n");
-
-  try {
-    const url =
-      `https://warpcast.com/~/compose?text=${encodeURIComponent(finalText)}` +
-      `&embeds[]=${encodeURIComponent(miniAppURL)}`;
-
-    // debug: you can console.log(url) to inspect the encoded text if needed
-    // console.log("Share URL:", url);
-
-    await sdk.actions.openUrl({ url });
+    const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+    const lines = [
+      `My Kimmi Bean is growing strong! 🌱`,
+      `Lvl ${lifetimeLevel} — 🫘 ${dailyBeans} Beans${rank ? ` — Rank #${rank}` : ""}`,
+      "",
+      `Come join the Kimmi Beans mini-game on Farcaster!`,
+      `Mint your own Bean, level it up, climb the leaderboard,`,
+      `and flex your progress with the community!`,
+      "",
+      `Let’s grow together 🫘✨`
+    ];
+    const cleaned = lines.map(l => l.replace(/[\u200B-\u200F\uFEFF]/g, "").trim())
+                         .filter((l, i) => !(i===0 && l === ""));
+    const finalText = cleaned.join("\n");
+    try {
+      const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(finalText)}` +
+                  `&embeds[]=${encodeURIComponent(miniAppURL)}`;
+      await sdk.actions.openUrl({ url });
     } catch (err) {
       console.warn("openUrl failed", err);
       setToast("Unable to open compose");
@@ -216,13 +163,60 @@ export default function App() {
     }
   }
 
-  // safeSetTab simplified (no daily guard)
-  function safeSetTab(t: Tab) {
-    setTab(t);
+  // ===========================
+  // Leaderboard fetch
+  // ===========================
+  async function fetchLeaderboardNow() {
+    setLoadingLeaderboard(true);
+    try {
+      const res = await fetch("/api/leaderboard");
+      const data = await res.json();
+      setLeaderboard(data.leaderboard || []);
+    } catch (err) {
+      console.warn("fetchLeaderboardNow failed", err);
+      setLeaderboard([]);
+    } finally {
+      setLoadingLeaderboard(false);
+    }
   }
 
+  // ===========================
+  // Insights stats fetch (on-chain via /api/insights)
+  // ===========================
+  async function fetchInsightsStats() {
+    if (!wallet) {
+      setInsightsStats({});
+      return;
+    }
+    setLoadingInsightsStats(true);
+    setInsightsError(null);
+    try {
+      const res = await fetch(`/api/insights?wallet=${wallet}`);
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setInsightsStats(data || {});
+    } catch (err: any) {
+      console.warn("fetchInsightsStats failed", err);
+      setInsightsStats({});
+      setInsightsError(err?.message || "Failed to load insights");
+    } finally {
+      setLoadingInsightsStats(false);
+    }
+  }
+
+  // Load appropriate data when insights tab/sub changes
+  useEffect(() => {
+    if (tab !== "insights") return;
+    if (insightsSub === "leaderboard") fetchLeaderboardNow();
+    else fetchInsightsStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, insightsSub, wallet]);
+
+  // safe tab setter
+  function safeSetTab(t: Tab) { setTab(t); }
+
   // ============================================================
-  // RENDER content per tab
+  // RENDER CONTENT
   // ============================================================
   function renderContent() {
     // MINT
@@ -233,19 +227,11 @@ export default function App() {
           <div className="subtitle">Mint cute, unique beans every day!</div>
 
           <div className="image-container">
-            {mintResult ? (
-              <img src={mintResult.image} alt="Minted Bean" />
-            ) : (
-              <img src="/bean.gif" alt="Bean" />
-            )}
+            {mintResult ? <img src={mintResult.image} alt="Minted Bean" /> : <img src="/bean.gif" alt="Bean" />}
           </div>
 
           <div className="counter">
-            {soldOut ? (
-              <b>🎉 Sold Out — 10000 / 10000</b>
-            ) : (
-              <b>{totalMinted} / {MAX_SUPPLY} Minted</b>
-            )}
+            {soldOut ? <b>🎉 Sold Out — 10000 / 10000</b> : <b>{totalMinted} / {MAX_SUPPLY} Minted</b>}
           </div>
 
           {!mintResult && (
@@ -266,7 +252,7 @@ export default function App() {
                     username={displayName || ""}
                     onMintSuccess={(d) => {
                       setMintResult(d);
-                      setTotalMinted((prev) => prev + 1);
+                      setTotalMinted(prev => prev + 1);
                       setTimeout(() => window.location.reload(), 400);
                     }}
                   />
@@ -277,13 +263,8 @@ export default function App() {
 
           {mintResult && (
             <>
-              <div className="mint-info">
-                Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
-              </div>
-
-              <button className="share-btn" onClick={() => shareProgressFromLeaderboard(null)}>
-                Share to Cast 🚀
-              </button>
+              <div className="mint-info">Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b></div>
+              <button className="share-btn" onClick={() => shareProgressFromLeaderboard(null)}>Share to Cast 🚀</button>
             </>
           )}
         </div>
@@ -321,81 +302,189 @@ export default function App() {
           onStatsUpdate={(xp, beans) => {
             handleStatsUpdate(xp, beans);
             // refresh leaderboard when stats change so rank is accurate
-            if (tab === "bean" || tab === "rank") {
-              fetchLeaderboardNow();
-            }
+            fetchLeaderboardNow();
           }}
+          //refreshLeaderboard={fetchLeaderboardNow} // optional prop (EvolutionPanel supports it)
         />
       );
     }
 
-    // RANK (Leaderboard) — now includes small share button next to Your Rank
-    if (tab === "rank") {
-      const userRank = leaderboard.findIndex(
-        (p) => p.wallet.toLowerCase() === wallet?.toLowerCase()
-      ) + 1;
+    // INSIGHTS (segmented: leaderboard | stats)
+    if (tab === "insights") {
+      const userRank = leaderboard.findIndex(p => p.wallet.toLowerCase() === wallet?.toLowerCase()) + 1;
 
       return (
-        <div className="leaderboard-card">
-          <div className="leader-title">🏆 Leaderboard</div>
+        <div className="card" style={{ alignItems: "stretch" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
+            <div style={{ display: "flex", gap: 8, background: "rgba(0,0,0,0.04)", padding: 6, borderRadius: 999 }}>
+              <button
+                onClick={() => setInsightsSub("leaderboard")}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 999,
+                  background: insightsSub === "leaderboard" ? "#fff" : "transparent",
+                  fontWeight: 700,
+                  border: "none",
+                  cursor: "pointer"
+                }}
+              >
+                🏆 Leaderboard
+              </button>
 
-          {loadingRank ? (
-            <p className="leader-loading">Loading...</p>
-          ) : leaderboard.length === 0 ? (
-            <p className="leader-loading">No players yet.</p>
-          ) : (
+              <button
+                onClick={() => setInsightsSub("stats")}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 999,
+                  background: insightsSub === "stats" ? "#fff" : "transparent",
+                  fontWeight: 700,
+                  border: "none",
+                  cursor: "pointer"
+                }}
+              >
+                📈 My Stats
+              </button>
+            </div>
+          </div>
+
+          {insightsSub === "leaderboard" && (
             <>
-              <div style={{ width: "100%", overflowY: "auto", padding: "8px 0", maxHeight: "56vh" }}>
-                <div className="leader-list">
-                  {leaderboard.slice(0, 100).map((p, index) => (
-                    <div className="leader-item" key={p.wallet}>
-                      <div className="leader-left">
-                        <div className="rank-num">{index + 1}</div>
-                        <div className="leader-info">
-                          <div className="leader-name">{p.username || p.wallet}</div>
-                          <div className="leader-wallet">{p.wallet.slice(0, 5)}...{p.wallet.slice(-3)}</div>
-                        </div>
-                      </div>
-                      <div className="leader-right">
-                        <span className="leader-stat">Lvl {p.level}</span>
-                        <span className="leader-stat">🫘 {p.beans}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <div className="leader-title">🏆 Leaderboard</div>
 
-              {wallet && (
-                <div className="user-rank-box" style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <span className="user-rank-label">Your Rank</span>
-                    <span className="user-rank-value" style={{ marginLeft: 8 }}>
-                      {userRank > 0 ? `#${userRank}` : "Not in Top 100"}
-                    </span>
+              {loadingLeaderboard ? (
+                <p className="leader-loading">Loading...</p>
+              ) : leaderboard.length === 0 ? (
+                <p className="leader-loading">No players yet.</p>
+              ) : (
+                <>
+                  <div style={{ width: "100%", overflowY: "auto", padding: "8px 0", maxHeight: "46vh" }}>
+                    <div className="leader-list">
+                      {leaderboard.slice(0, 100).map((p, index) => (
+                        <div className="leader-item" key={p.wallet}>
+                          <div className="leader-left">
+                            <div className="rank-num">{index + 1}</div>
+                            <div className="leader-info">
+                              <div className="leader-name">{p.username || p.wallet}</div>
+                              <div className="leader-wallet">{p.wallet.slice(0, 5)}...{p.wallet.slice(-3)}</div>
+                            </div>
+                          </div>
+                          <div className="leader-right">
+                            <span className="leader-stat">Lvl {p.level}</span>
+                            <span className="leader-stat">🫘 {p.beans}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  {/* Small share button placed to the right of Your Rank */}
-                  <div style={{ display: "flex", gap: 8 }}>
+                  {wallet && (
+                    <div className="user-rank-box" style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <span className="user-rank-label">Your Rank</span>
+                        <span className="user-rank-value" style={{ marginLeft: 8 }}>
+                          {userRank > 0 ? `#${userRank}` : "Not in Top 100"}
+                        </span>
+                      </div>
+
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          onClick={() => shareProgressFromLeaderboard(userRank > 0 ? userRank : null)}
+                          style={{
+                            padding: "8px 14px",
+                            borderRadius: "20px",
+                            background: "#ff9548",
+                            color: "white",
+                            border: "none",
+                            fontWeight: 700,
+                            fontSize: "14px",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
+                          }}
+                        >
+                          🚀 Share Progress
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {insightsSub === "stats" && (
+            <div style={{ width: "100%", maxWidth: 520, margin: "0 auto" }}>
+              <div style={{ fontWeight: 800, fontSize: 20, marginBottom: 8 }}>📈 My Stats</div>
+
+              {loadingInsightsStats ? (
+                <div style={{ padding: 12 }}>Loading stats...</div>
+              ) : insightsError ? (
+                <div style={{ padding: 12, color: "salmon" }}>Error loading stats: {insightsError}</div>
+              ) : (
+                <div style={{ display: "grid", gap: 10 }}>
+                  <div style={{ padding: 12, borderRadius: 12, background: "rgba(255,255,255,0.06)" }}>
+                    <div style={{ fontWeight: 700, marginBottom: 8 }}>Today</div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <div>Feed</div>
+                      <div>{insightsStats.daily?.feed ?? 0}</div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <div>Water</div>
+                      <div>{insightsStats.daily?.water ?? 0}</div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <div>Train</div>
+                      <div>{insightsStats.daily?.train ?? 0}</div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                      <div>🫘 Beans earned</div>
+                      <div>{insightsStats.daily?.beans ?? 0}</div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <div>⭐ XP gained</div>
+                      <div>{insightsStats.daily?.xp ?? 0}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: 12, borderRadius: 12, background: "rgba(255,255,255,0.06)" }}>
+                    <div style={{ fontWeight: 700, marginBottom: 8 }}>Lifetime</div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <div>Total Feed</div>
+                      <div>{insightsStats.total?.feed ?? 0}</div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <div>Total Water</div>
+                      <div>{insightsStats.total?.water ?? 0}</div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <div>Total Train</div>
+                      <div>{insightsStats.total?.train ?? 0}</div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                      <div>🫘 Total Beans</div>
+                      <div>{insightsStats.total?.beans ?? dailyBeans}</div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <div>⭐ Total XP</div>
+                      <div>{insightsStats.total?.xp ?? lifetimeXp}</div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <div>🏷 Level</div>
+                      <div>{insightsStats.total?.level ?? lifetimeLevel}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: "center" }}>
                     <button
-                      onClick={() => shareProgressFromLeaderboard(userRank > 0 ? userRank : null)}
-                      style={{
-                        padding: "8px 14px",
-                        borderRadius: "20px",
-                        background: "#ff9548",
-                        color: "white",
-                        border: "none",
-                        fontWeight: 700,
-                        fontSize: "14px",
-                        cursor: "pointer",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
-                      }}
+                      className="share-btn"
+                      onClick={() => shareProgressFromLeaderboard(null)}
+                      style={{ padding: "10px 16px", borderRadius: 12, background: "#ff9548", color: "#fff", border: "none", fontWeight: 700, cursor: "pointer" }}
                     >
-                      🚀 Share Progress
+                      🚀 Share My Progress
                     </button>
                   </div>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       );
@@ -442,20 +531,9 @@ export default function App() {
     }
   }
 
-  // helper to refresh leaderboard on demand
-  async function fetchLeaderboardNow() {
-    try {
-      const res = await fetch("/api/leaderboard");
-      const data = await res.json();
-      setLeaderboard(data.leaderboard || []);
-    } catch (err) {
-      console.warn("fetchLeaderboardNow failed", err);
-    }
-  }
-
-  // ============================================================
-  // UI Layout
-  // ============================================================
+  // ===========================
+  // UI layout
+  // ===========================
   return (
     <div className="app">
       {/* HEADER */}
@@ -471,16 +549,12 @@ export default function App() {
             <div className="header-badge">⭐ {lifetimeXp}</div>
           </div>
 
-          {wallet && (
-            <div className="wallet-badge">
-              {wallet.slice(0, 4)}...{wallet.slice(-3)}
-            </div>
-          )}
+          {wallet && <div className="wallet-badge">{wallet.slice(0, 4)}...{wallet.slice(-3)}</div>}
         </div>
       </div>
 
       {/* CONTENT */}
-      <div className={`content-bg ${tab === "rank" ? "leader-mode" : ""}`}>
+      <div className={`content-bg ${tab === "insights" ? "leader-mode" : ""}`}>
         {renderContent()}
       </div>
 
@@ -496,8 +570,8 @@ export default function App() {
           🌱<span>My Bean</span>
         </div>
 
-        <div className={`nav-item ${tab === "rank" ? "active" : ""}`} onClick={() => safeSetTab("rank")}>
-          🏆<span>Rank</span>
+        <div className={`nav-item ${tab === "insights" ? "active" : ""}`} onClick={() => safeSetTab("insights")}>
+          📊<span>Insights</span>
         </div>
 
         <div className={`nav-item ${tab === "faq" ? "active" : ""}`} onClick={() => safeSetTab("faq")}>
@@ -505,10 +579,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* small toast */}
-      {toast && (
-        <div className="toast-popup">{toast}</div>
-      )}
+      {/* toast */}
+      {toast && <div className="toast-popup">{toast}</div>}
     </div>
   );
 }
