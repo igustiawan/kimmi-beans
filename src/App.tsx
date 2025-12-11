@@ -168,7 +168,16 @@ export default function App() {
   // ============================================================
   async function shareProgressFromLeaderboard(rank?: number | null) {
     const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
-    const msg = `My Kimmi Bean — Lvl ${lifetimeLevel} — 🫘 ${dailyBeans}${rank ? ` — Rank #${rank}` : ""}`;
+
+    const msg =
+  `My Kimmi Bean is growing strong!
+  Lvl ${lifetimeLevel} — ${dailyBeans} Beans ${rank ? `— Rank #${rank}` : ""}
+    
+  Come join the Kimmi Beans mini-game on Farcaster!
+  Mint your own Bean, level it up, climb the leaderboard,
+  and flex your progress with the community!
+
+  Let’s grow together`;
 
     try {
       await sdk.actions.openUrl({
@@ -181,13 +190,6 @@ export default function App() {
       setToast("Unable to open compose");
       setTimeout(() => setToast(null), 1600);
     }
-  }
-
-  // compute user's rank if present in leaderboard
-  function userRankFromLeaderboard(): number | null {
-    if (!wallet || !leaderboard || leaderboard.length === 0) return null;
-    const idx = leaderboard.findIndex((p) => p.wallet.toLowerCase() === wallet?.toLowerCase());
-    return idx === -1 ? null : idx + 1;
   }
 
   // safeSetTab simplified (no daily guard)
