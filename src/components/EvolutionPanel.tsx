@@ -1,17 +1,15 @@
-// src/components/EvolutionPanel.tsx
 import React, { useEffect, useState } from "react";
 import { useWriteContract, useReadContract } from "wagmi";
 import careAbi from "../abi/kimmiBeansCare.json";
 import { createPortal } from "react-dom";
 
-export interface Props {
+interface Props {
   wallet: string | undefined;
   isConnected: boolean;
   bean: { id: number; rarity: string; image: string } | null;
   fid: number | null;
   username: string | null;
   onStatsUpdate?: (xp: number, beans: number) => void;
-  refreshLeaderboard?: () => Promise<void>; // <-- added optional prop
 }
 
 const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
@@ -29,8 +27,7 @@ export default function EvolutionPanel({
   isConnected,
   fid,
   username,
-  onStatsUpdate,
-  refreshLeaderboard
+  onStatsUpdate
 }: Props) {
 
   const { writeContractAsync } = useWriteContract();
@@ -41,7 +38,6 @@ export default function EvolutionPanel({
 
   // XP requirement (dinamis)
   const [nextReq, setNextReq] = useState(100);
-  const [prevReq, setPrevReq] = useState(0);
 
   // Fees
   const [feedFee, setFeedFee] = useState<bigint>(0n);
@@ -90,18 +86,9 @@ export default function EvolutionPanel({
     query: { enabled: Boolean(wallet) }
   });
 
-  const { data: prevReqRaw } = useReadContract({
-    address: CONTRACT,
-    abi: careAbi,
-    functionName: "nextLevelRequirement",
-    args: [Math.max(0, level - 1)],
-    query: { enabled: Boolean(wallet) }
-  });
-
   useEffect(() => {
     if (nextReqRaw) setNextReq(Number(nextReqRaw));
-    if (prevReqRaw) setPrevReq(Number(prevReqRaw));
-  }, [nextReqRaw, prevReqRaw]);
+  }, [nextReqRaw]);
 
   // ---------------------------------------------------------------
   // LOAD FEES
@@ -160,10 +147,7 @@ export default function EvolutionPanel({
 
       setTimeout(async () => {
         const updated = await refetchStats();
-        if (!updated || !updated.data) {
-          setLoading("");
-          return;
-        }
+        if (!updated.data) return;
 
         const stats = updated.data as StatsStruct;
 
@@ -179,25 +163,18 @@ export default function EvolutionPanel({
         }
 
         // Sync ke Supabase
-        try {
-          await fetch("/api/updateStats", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+        await fetch("/api/updateStats", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              wallet,
-              fid,
-              username,
-              xp: newXp,
-              level: Number(stats.level),
-              beans: newBeans,
+            wallet,
+            fid,
+            username,
+            xp: newXp,
+            level: Number(stats.level),
+            beans: newBeans,
             })
-          });
-        } catch (e) {
-          console.warn("updateStats failed", e);
-        }
-
-        // optionally refresh leaderboard if parent provided refresh fn
-        await refreshLeaderboard?.();
+        });
 
         setLoading("");
 
@@ -213,10 +190,7 @@ export default function EvolutionPanel({
   // ---------------------------------------------------------------
   // PROGRESS BAR PROPERLY USING CONTRACT REQUIREMENT
   // ---------------------------------------------------------------
-  // compute progress inside current level using prevReq/nextReq
-  const denom = Math.max(1, nextReq - prevReq);
-  const progressXp = Math.max(0, Math.min(xp - prevReq, denom));
-  const progress = Math.min(Math.round((progressXp / denom) * 100), 100);
+  const progress = Math.min((xp / nextReq) * 100, 100);
 
   return (
     <div className="card bean-panel">
