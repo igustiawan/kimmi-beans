@@ -170,14 +170,14 @@ export default function App() {
     const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
 
     const msg =
-  `My Kimmi Bean is growing strong!
-  Lvl ${lifetimeLevel} — ${dailyBeans} Beans ${rank ? `— Rank #${rank}` : ""}
-    
-  Come join the Kimmi Beans mini-game on Farcaster!
-  Mint your own Bean, level it up, climb the leaderboard,
-  and flex your progress with the community!
+    `My Kimmi Bean is growing strong! 🌱
+    Lvl ${lifetimeLevel} — 🫘 ${dailyBeans} Beans ${rank ? `— Rank #${rank}` : ""}
 
-  Let’s grow together`;
+    Come join the Kimmi Beans mini-game on Farcaster!
+    Mint your own Bean, level it up, climb the leaderboard,
+    and flex your progress with the community!
+
+    Let’s grow together 🫘✨`;
 
     try {
       await sdk.actions.openUrl({
@@ -353,19 +353,20 @@ export default function App() {
                   {/* Small share button placed to the right of Your Rank */}
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
-                      className="mini-share-btn"
                       onClick={() => shareProgressFromLeaderboard(userRank > 0 ? userRank : null)}
-                      title="Share your progress"
                       style={{
-                        padding: "6px 10px",
-                        borderRadius: 999,
-                        background: "white",
+                        padding: "8px 14px",
+                        borderRadius: "20px",
+                        background: "#ff9548",
+                        color: "white",
                         border: "none",
                         fontWeight: 700,
-                        cursor: "pointer"
+                        fontSize: "14px",
+                        cursor: "pointer",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
                       }}
                     >
-                      Share
+                      🚀 Share Progress
                     </button>
                   </div>
                 </div>
