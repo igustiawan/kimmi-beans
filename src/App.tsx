@@ -167,48 +167,48 @@ export default function App() {
   // Share to Cast helper (used by leaderboard small share button)
   // ============================================================
   async function shareProgressFromLeaderboard(rank?: number | null) {
-  const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+    const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
 
-  // raw lines (no leading newline, start immediately)
-  const lines = [
-    `My Kimmi Bean is growing strong! 🌱`,
-    `Lvl ${lifetimeLevel} — ${dailyBeans} Beans${rank ? ` — Rank #${rank}` : ""}`,
-    "",
-    `Come join the Kimmi Beans mini-game on Farcaster!`,
-    `Mint your own Bean, level it up, climb the leaderboard,`,
-    `and flex your progress with the community!`,
-    "",
-    `Let’s grow together`
-  ];
+    // raw lines (no leading newline, start immediately)
+    const lines = [
+      `My Kimmi Bean is growing strong! 🌱`,
+      `Lvl ${lifetimeLevel} — ${dailyBeans} Beans${rank ? ` — Rank #${rank}` : ""}`,
+      "",
+      `Come join the Kimmi Beans mini-game on Farcaster!`,
+      `Mint your own Bean, level it up, climb the leaderboard,`,
+      `and flex your progress with the community!`,
+      "",
+      `Let’s grow together`
+    ];
 
-  // sanitize: remove BOM / zero-width chars, normalize newlines, trim lines
-  function sanitizeLine(s: string) {
-    // Remove BOM and zero-width spaces / non-printing chars
-    const noZW = s.replace(/[\u200B-\u200F\uFEFF]/g, "");
-    // Trim spaces on both ends
-    return noZW.trim();
-  }
+    // sanitize: remove BOM / zero-width chars, normalize newlines, trim lines
+    function sanitizeLine(s: string) {
+      // Remove BOM and zero-width spaces / non-printing chars
+      const noZW = s.replace(/[\u200B-\u200F\uFEFF]/g, "");
+      // Trim spaces on both ends
+      return noZW.trim();
+    }
 
-  const cleanedLines = lines.map(sanitizeLine);
+    const cleanedLines = lines.map(sanitizeLine);
 
-  // Remove accidental empty leading lines
-  while (cleanedLines.length && cleanedLines[0] === "") cleanedLines.shift();
-  // Remove trailing empty lines
-  while (cleanedLines.length && cleanedLines[cleanedLines.length - 1] === "") cleanedLines.pop();
+    // Remove accidental empty leading lines
+    while (cleanedLines.length && cleanedLines[0] === "") cleanedLines.shift();
+    // Remove trailing empty lines
+    while (cleanedLines.length && cleanedLines[cleanedLines.length - 1] === "") cleanedLines.pop();
 
-  // Join with single blank line between paragraphs where there's an empty string in the array
-  // (we already have "" in lines to show paragraph breaks)
-  const finalText = cleanedLines.join("\n");
+    // Join with single blank line between paragraphs where there's an empty string in the array
+    // (we already have "" in lines to show paragraph breaks)
+    const finalText = cleanedLines.join("\n");
 
-  try {
-    const url =
-      `https://warpcast.com/~/compose?text=${encodeURIComponent(finalText)}` +
-      `&embeds[]=${encodeURIComponent(miniAppURL)}`;
+    try {
+      const url =
+        `https://warpcast.com/~/compose?text=${encodeURIComponent(finalText)}` +
+        `&embeds[]=${encodeURIComponent(miniAppURL)}`;
 
-    // debug: you can console.log(url) to inspect the encoded text if needed
-    // console.log("Share URL:", url);
+      // debug: you can console.log(url) to inspect the encoded text if needed
+      // console.log("Share URL:", url);
 
-    await sdk.actions.openUrl({ url });
+      await sdk.actions.openUrl({ url });
     } catch (err) {
       console.warn("openUrl failed", err);
       setToast("Unable to open compose");
@@ -219,6 +219,19 @@ export default function App() {
   // safeSetTab simplified (no daily guard)
   function safeSetTab(t: Tab) {
     setTab(t);
+  }
+
+  // ============================================================
+  // helper to refresh leaderboard on demand
+  // ============================================================
+  async function fetchLeaderboardNow() {
+    try {
+      const res = await fetch("/api/leaderboard");
+      const data = await res.json();
+      setLeaderboard(data.leaderboard || []);
+    } catch (err) {
+      console.warn("fetchLeaderboardNow failed", err);
+    }
   }
 
   // ============================================================
@@ -439,17 +452,6 @@ export default function App() {
           </div>
         </div>
       );
-    }
-  }
-
-  // helper to refresh leaderboard on demand
-  async function fetchLeaderboardNow() {
-    try {
-      const res = await fetch("/api/leaderboard");
-      const data = await res.json();
-      setLeaderboard(data.leaderboard || []);
-    } catch (err) {
-      console.warn("fetchLeaderboardNow failed", err);
     }
   }
 
