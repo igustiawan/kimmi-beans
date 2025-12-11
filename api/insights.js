@@ -1,191 +1,144 @@
-// pages/api/insights.js
-const { ethers } = require("ethers");
+// /api/insights.js
+// Node (Next/Vercel-style) serverless endpoint — plain JS
 
-const RPC_URL = process.env.RPC_URL;
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
+import { ethers } from "ethers";
+import careAbi from "../abi/kimmiBeansCare.json"; // adjust path if needed
 
-if (!RPC_URL) console.warn("RPC_URL not set");
-if (!CONTRACT_ADDRESS) console.warn("CONTRACT_ADDRESS not set");
-
-// Minimal ABI: getStats + ActionPerformed event (we only need these)
-const CARE_ABI = [
-  "function getStats(address user) view returns (uint256 xp, uint256 level, uint256 beans, uint256 lastAction)",
-  "event ActionPerformed(address indexed user, string actionType, uint256 xpGained, uint256 beansGained, uint256 newXp, uint256 newLevel, uint256 newBeans)"
-];
-
-const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-
-// binary search block by timestamp (seconds)
-async function findBlockByTimestamp(targetTs) {
-  const latest = await provider.getBlockNumber();
-  let low = 0;
-  let high = latest;
-
-  const lowBlock = await provider.getBlock(low);
-  const highBlock = await provider.getBlock(high);
-  if (!lowBlock || !highBlock) return 0;
-
-  if (targetTs <= lowBlock.timestamp) return low;
-  if (targetTs >= highBlock.timestamp) return high;
-
-  while (low + 1 < high) {
-    const mid = Math.floor((low + high) / 2);
-    const midBlock = await provider.getBlock(mid);
-    if (!midBlock) {
-      high = mid;
-      continue;
-    }
-    if (midBlock.timestamp === targetTs) return mid;
-    if (midBlock.timestamp < targetTs) low = mid;
-    else high = mid;
-  }
-  return high;
-}
-
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
-    const wallet = (req.query.wallet || "").toString().trim();
+    const wallet = (req.query.wallet || req.body?.wallet || "").toString().trim().toLowerCase();
     if (!wallet || !ethers.utils.isAddress(wallet)) {
-      return res.status(400).json({ error: "Invalid or missing wallet query param" });
+      return res.status(400).json({ error: "Missing or invalid wallet query param (use ?wallet=0x...)" });
     }
 
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CARE_ABI, provider);
+    const RPC_URL = process.env.RPC_URL;
+    const CONTRACT_ADDR = (process.env.BEAN_CONTRACT || process.env.VITE_BEAN_CONTRACT);
+    const FROM_BLOCK = Number(process.env.INSIGHTS_FROM_BLOCK || 0);
 
-    // 1) fetch totals from getStats
-    let totalXp = 0;
-    let totalLevel = 0;
-    let totalBeans = 0;
+    if (!RPC_URL) return res.status(500).json({ error: "RPC_URL not configured on server" });
+    if (!CONTRACT_ADDR) return res.status(500).json({ error: "BEAN_CONTRACT not configured on server" });
+
+    const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+    const contract = new ethers.Contract(CONTRACT_ADDR, careAbi, provider);
+
+    // 1) read on-chain current stats via getStats
+    let onChainStats;
     try {
-      const st = await contract.getStats(wallet);
-      totalXp = st && st.xp ? Number(st.xp.toString()) : 0;
-      totalLevel = st && st.level ? Number(st.level.toString()) : 0;
-      totalBeans = st && st.beans ? Number(st.beans.toString()) : 0;
+      const raw = await contract.getStats(wallet);
+      // raw is tuple: { xp, level, beans, lastAction }
+      onChainStats = {
+        xp: raw.xp ? raw.xp.toString() : "0",
+        level: raw.level ? raw.level.toString() : "0",
+        beans: raw.beans ? raw.beans.toString() : "0",
+        lastAction: raw.lastAction ? Number(raw.lastAction) : null,
+      };
     } catch (err) {
-      console.warn("getStats failed:", err?.message || err);
+      // bubble a clearer message
+      console.warn("getStats read failed:", err && err.message ? err.message : err);
+      return res.status(502).json({ error: "Failed reading getStats from chain", detail: String(err?.message || err) });
     }
 
-    // 2) compute start-of-day UTC timestamp (seconds)
-    const now = new Date();
-    const startOfDayUtc = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 1000);
-
-    // 3) find block at startOfDayUtc
-    const startBlock = await findBlockByTimestamp(startOfDayUtc);
-    const latestBlock = await provider.getBlockNumber();
-
-    // 4) prepare iface & event topic
-    const iface = new ethers.utils.Interface(CARE_ABI);
-    const eventTopic = iface.getEventTopic("ActionPerformed");
-
-    // topic[1] is indexed user (address padded to 32 bytes)
-    const userTopic = ethers.utils.hexZeroPad(wallet.toLowerCase(), 32);
-
-    // 5) get logs in startOfDay..latest
-    let logs = [];
+    // 2) query ActionPerformed events for this user (indexed user address)
+    // filter by user indexed param (first indexed)
+    const filter = contract.filters.ActionPerformed(wallet, null, null, null, null, null, null);
+    // Use fromBlock to limit scan
+    let events = [];
     try {
-      logs = await provider.getLogs({
-        address: CONTRACT_ADDRESS,
-        fromBlock: startBlock,
-        toBlock: latestBlock,
-        topics: [eventTopic, userTopic]
+      events = await contract.queryFilter(filter, FROM_BLOCK, "latest");
+    } catch (err) {
+      console.warn("queryFilter failed:", err && err.message ? err.message : err);
+      return res.status(502).json({ error: "Failed querying events", detail: String(err?.message || err) });
+    }
+
+    // If no events, return zeros
+    if (!events || events.length === 0) {
+      return res.status(200).json({
+        daily: { feed: 0, water: 0, train: 0, beans: 0, xp: 0 },
+        total: { feed: 0, water: 0, train: 0, beans: onChainStats.beans || 0, xp: onChainStats.xp || 0, level: onChainStats.level || 0 },
+        onChainStats
       });
-    } catch (err) {
-      console.warn("getLogs (day range) failed:", err?.message || err);
-      // fallback attempt (may be heavy)
-      try {
-        logs = await provider.getLogs({
-          address: CONTRACT_ADDRESS,
-          fromBlock: 0,
-          toBlock: latestBlock,
-          topics: [eventTopic, userTopic]
-        });
-      } catch (err2) {
-        console.warn("fallback getLogs failed:", err2?.message || err2);
-        logs = [];
-      }
     }
 
-    // 6) parse logs for daily counts
-    let dailyFeed = 0;
-    let dailyWater = 0;
-    let dailyTrain = 0;
-    let dailyBeansGained = 0;
-    let dailyXpGained = 0;
-
-    for (const log of logs) {
+    // We need to map events to timestamps: fetch blocks in batch (unique blockNumbers)
+    const blockNumbers = Array.from(new Set(events.map(e => e.blockNumber)));
+    const blockMap = {};
+    // fetch in parallel, but be friendly (Promise.all)
+    await Promise.all(blockNumbers.map(async (bn) => {
       try {
-        const parsed = iface.parseLog(log);
-        const actionType = parsed.args.actionType ? parsed.args.actionType.toString() : "";
-        const xpGainedBN = parsed.args.xpGained;
-        const beansGainedBN = parsed.args.beansGained;
-
-        const xpGained = xpGainedBN ? Number(xpGainedBN.toString()) : 0;
-        const beansGained = beansGainedBN ? Number(beansGainedBN.toString()) : 0;
-
-        const key = (actionType || "").toUpperCase();
-        if (key === "FEED") dailyFeed++;
-        else if (key === "WATER") dailyWater++;
-        else if (key === "TRAIN") dailyTrain++;
-
-        dailyBeansGained += beansGained;
-        dailyXpGained += xpGained;
+        const b = await provider.getBlock(bn);
+        blockMap[bn] = b ? b.timestamp : null;
       } catch (err) {
-        // ignore parse errors
-        console.warn("parseLog failed:", err?.message || err);
+        blockMap[bn] = null;
       }
-    }
+    }));
 
-    // 7) lifetime action counts: try to fetch ALL logs for this user and count each type
-    let lifetimeFeed = 0;
-    let lifetimeWater = 0;
-    let lifetimeTrain = 0;
-    try {
-      const logsAll = await provider.getLogs({
-        address: CONTRACT_ADDRESS,
-        fromBlock: 0,
-        toBlock: latestBlock,
-        topics: [eventTopic, userTopic]
-      });
+    // Determine "today" range (UTC): start of current UTC day (00:00:00)
+    const now = Math.floor(Date.now() / 1000);
+    const utcDate = new Date(); // local machine time, we'll compute UTC midnight
+    const utcYear = utcDate.getUTCFullYear();
+    const utcMonth = utcDate.getUTCMonth();
+    const utcDay = utcDate.getUTCDate();
+    const utcMidnight = Math.floor(Date.UTC(utcYear, utcMonth, utcDay) / 1000); // seconds
 
-      for (const log of logsAll) {
-        try {
-          const parsed = iface.parseLog(log);
-          const key = (parsed.args.actionType || "").toUpperCase();
-          if (key === "FEED") lifetimeFeed++;
-          else if (key === "WATER") lifetimeWater++;
-          else if (key === "TRAIN") lifetimeTrain++;
-        } catch (e) {
-          // ignore
+    // accumulate totals
+    const totals = { feed: 0, water: 0, train: 0, beans: 0, xp: 0 };
+    const daily = { feed: 0, water: 0, train: 0, beans: 0, xp: 0 };
+
+    for (const ev of events) {
+      try {
+        const args = ev.args;
+        // args: (user indexed), actionType (string), xpGained, beansGained, newXp, newLevel, newBeans
+        const actionType = args?.actionType ? args.actionType.toString() : "";
+        const xpGained = args?.xpGained ? Number(args.xpGained.toString()) : 0;
+        const beansGained = args?.beansGained ? Number(args.beansGained.toString()) : 0;
+
+        // classify action by actionType upper-case
+        const at = (actionType || "").toUpperCase?.() || "";
+
+        if (at === "FEED") totals.feed++;
+        else if (at === "WATER") totals.water++;
+        else if (at === "TRAIN") totals.train++;
+
+        totals.beans += beansGained;
+        totals.xp += xpGained;
+
+        // timestamp
+        const ts = blockMap[ev.blockNumber] || null;
+        if (ts && ts >= utcMidnight) {
+          // event happened today (UTC)
+          if (at === "FEED") daily.feed++;
+          else if (at === "WATER") daily.water++;
+          else if (at === "TRAIN") daily.train++;
+
+          daily.beans += beansGained;
+          daily.xp += xpGained;
         }
+      } catch (err) {
+        // ignore per-event errors but log
+        console.warn("event parse failed:", err && err.message ? err.message : err);
       }
-    } catch (err) {
-      console.warn("fetching all logs for lifetime failed (provider may restrict large range):", err?.message || err);
-      // leave lifetime counts as 0
     }
 
-    const response = {
-      daily: {
-        feed: dailyFeed,
-        water: dailyWater,
-        train: dailyTrain,
-        beans: dailyBeansGained,
-        xp: dailyXpGained,
-        startOfDayTs: startOfDayUtc,
-        scannedFromBlock: startBlock,
-        scannedToBlock: latestBlock
-      },
+    // respond
+    return res.status(200).json({
+      daily,
       total: {
-        feed: lifetimeFeed,
-        water: lifetimeWater,
-        train: lifetimeTrain,
-        beans: totalBeans,
-        xp: totalXp,
-        level: totalLevel
+        feed: totals.feed,
+        water: totals.water,
+        train: totals.train,
+        beans: totals.beans.toString(),
+        xp: totals.xp.toString(),
+        level: onChainStats.level
+      },
+      onChainStats,
+      meta: {
+        eventsScanned: events.length,
+        fromBlock: FROM_BLOCK
       }
-    };
+    });
 
-    return res.status(200).json(response);
   } catch (err) {
-    console.error("insights API error:", err?.message || err);
-    return res.status(500).json({ error: err?.message || "Server error" });
+    console.error("insights server error:", err);
+    return res.status(500).json({ error: "Server error", detail: String(err?.message || err) });
   }
-};
+}
