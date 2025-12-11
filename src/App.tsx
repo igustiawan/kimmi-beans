@@ -165,19 +165,19 @@ export default function App() {
           <div className="title">Kimmi Beans</div>
           <div className="subtitle">Mint cute, unique beans every day!</div>
 
-          <div className="counter">
-            {soldOut ? (
-              <b>🎉 Sold Out — 10000 / 10000</b>
-            ) : (
-              <b>{totalMinted} / {MAX_SUPPLY} Minted</b>
-            )}
-          </div>
-
           <div className="image-container">
             {mintResult ? (
               <img src={mintResult.image} alt="Minted Bean" />
             ) : (
               <img src="/bean.gif" alt="Bean" />
+            )}
+          </div>
+
+          <div className="counter">
+            {soldOut ? (
+              <b>🎉 Sold Out — 10000 / 10000</b>
+            ) : (
+              <b>{totalMinted} / {MAX_SUPPLY} Minted</b>
             )}
           </div>
 
