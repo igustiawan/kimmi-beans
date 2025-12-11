@@ -6,8 +6,7 @@ import MintButton from "./components/MintButton";
 import EvolutionPanel from "./components/EvolutionPanel";
 import careAbi from "./abi/kimmiBeansCare.json";
 
-type Tab = "mint" | "bean" | "rank" | "faq" | "daily";
-const DEV_FID = 299929; // only this FID can access Daily for now
+type Tab = "mint" | "bean" | "rank" | "faq";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("mint");
@@ -35,17 +34,16 @@ export default function App() {
   // Header values
   const [dailyBeans, setDailyBeans] = useState(0);
   const [lifetimeXp, setLifetimeXp] = useState(0);
-  const [lifetimeLevel, setLifetimeLevel] = useState(0); // added to show level in daily share
+  const [lifetimeLevel, setLifetimeLevel] = useState(0); // show level in leaderboard share
 
   // STATE UNTUK LEADERBOARD
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loadingRank, setLoadingRank] = useState(false);
 
-  // DAILY STATE (minimal)
-  const [dailyToast, setDailyToast] = useState<string | null>(null);
-  const [dailyLoading, setDailyLoading] = useState(false);
+  // small toast root (keperluan ringan)
+  const [toast, setToast] = useState<string | null>(null);
 
-  // LOAD LEADERBOARD (top 100) when rank tab is opened; also used by daily
+  // LOAD LEADERBOARD (top 100) when rank tab is opened; also used for share
   useEffect(() => {
     if (tab !== "rank") return;
 
@@ -67,7 +65,7 @@ export default function App() {
   }, [tab]);
 
   // ============================================================
-  // Load FID
+  // Load FID (still read for display, but no dev-only logic)
   // ============================================================
   useEffect(() => {
     sdk.actions.ready();
@@ -166,54 +164,24 @@ export default function App() {
   }, []);
 
   // ============================================================
-  // Share to Cast (used by mint flow and daily share)
+  // Share to Cast helper (used by leaderboard small share button)
   // ============================================================
-  async function shareToCast(tokenId: number | null, rarity: string | null, extraMsg?: string) {
+  async function shareProgressFromLeaderboard(rank?: number | null) {
     const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
-    const msg = tokenId
-      ? `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨${extraMsg ? " — " + extraMsg : ""}`
-      : `My Kimmi Bean — Lvl ${lifetimeLevel} — 🫘 ${dailyBeans}${extraMsg ? " — " + extraMsg : ""}`;
+    const msg = `My Kimmi Bean — Lvl ${lifetimeLevel} — 🫘 ${dailyBeans}${rank ? ` — Rank #${rank}` : ""}`;
 
-    await sdk.actions.openUrl({
-      url:
-        `https://warpcast.com/~/compose?text=${encodeURIComponent(msg)}` +
-        `&embeds[]=${encodeURIComponent(miniAppURL)}`
-    });
-  }
-
-  // ============================================================
-  // DAILY: when opening daily, fetch leaderboard (to compute rank)
-  // ============================================================
-  async function fetchDailyAssets() {
-    // fetch leaderboard top100 to compute rank
     try {
-      setDailyLoading(true);
-      const res = await fetch("/api/leaderboard");
-      if (res.ok) {
-        const data = await res.json();
-        setLeaderboard(data.leaderboard || []);
-      } else {
-        setLeaderboard([]);
-      }
+      await sdk.actions.openUrl({
+        url:
+          `https://warpcast.com/~/compose?text=${encodeURIComponent(msg)}` +
+          `&embeds[]=${encodeURIComponent(miniAppURL)}`
+      });
     } catch (err) {
-      console.warn("fetchDailyAssets failed", err);
-      setLeaderboard([]);
-    } finally {
-      setDailyLoading(false);
+      console.warn("openUrl failed", err);
+      setToast("Unable to open compose");
+      setTimeout(() => setToast(null), 1600);
     }
   }
-
-  useEffect(() => {
-    if (tab !== "daily") return;
-    // guard - only allow DEV_FID
-    if (userFID !== DEV_FID) {
-      setDailyToast("Daily tab is currently for tester FID only.");
-      setTimeout(() => setDailyToast(null), 2000);
-      setTab("mint");
-      return;
-    }
-    fetchDailyAssets();
-  }, [tab, wallet, userFID]);
 
   // compute user's rank if present in leaderboard
   function userRankFromLeaderboard(): number | null {
@@ -222,63 +190,8 @@ export default function App() {
     return idx === -1 ? null : idx + 1;
   }
 
-  // ============================================================
-  // Handle share from Daily
-  // ============================================================
-  async function handleShareProgress() {
-    if (!wallet) {
-      setDailyToast("Connect wallet first");
-      setTimeout(() => setDailyToast(null), 2000);
-      return;
-    }
-
-    // Compose share message containing level, beans, rank
-    const rank = userRankFromLeaderboard();
-    const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
-    const msg = `My Kimmi Bean — Lvl ${lifetimeLevel} — 🫘 ${dailyBeans}${rank ? ` — Rank #${rank}` : ""}`;
-
-    await sdk.actions.openUrl({
-      url:
-        `https://warpcast.com/~/compose?text=${encodeURIComponent(msg)}` +
-        `&embeds[]=${encodeURIComponent(miniAppURL)}`
-    });
-
-    // Optionally inform backend to grant share reward (if implemented)
-    try {
-      const res = await fetch("/api/claimDailyShare", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet })
-      });
-
-      if (!res.ok) {
-        setDailyToast("Shared! (no backend reward)");
-        setTimeout(() => setDailyToast(null), 1800);
-        return;
-      }
-
-      const data = await res.json();
-      if (data.xpEarned || data.beansEarned) {
-        setDailyToast(`+${data.xpEarned ?? 0} XP  +${data.beansEarned ?? 0} Beans`);
-        handleStatsUpdate((lifetimeXp || 0) + (data.xpEarned ?? 0), (dailyBeans || 0) + (data.beansEarned ?? 0));
-      } else {
-        setDailyToast("Shared!");
-      }
-      setTimeout(() => setDailyToast(null), 1800);
-    } catch (err) {
-      // backend fail is not blocking the share UX
-      setDailyToast("Shared!");
-      setTimeout(() => setDailyToast(null), 1400);
-    }
-  }
-
-  // safeTabSetter: prevents non-dev from going to daily
+  // safeSetTab simplified (no daily guard)
   function safeSetTab(t: Tab) {
-    if (t === "daily" && userFID !== DEV_FID) {
-      setDailyToast("Daily is for tester FID only.");
-      setTimeout(() => setDailyToast(null), 1800);
-      return;
-    }
     setTab(t);
   }
 
@@ -286,7 +199,7 @@ export default function App() {
   // RENDER content per tab
   // ============================================================
   function renderContent() {
-    // MINT (unchanged)
+    // MINT
     if (tab === "mint") {
       return (
         <div className="card">
@@ -342,7 +255,7 @@ export default function App() {
                 Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
               </div>
 
-              <button className="share-btn" onClick={() => shareToCast(mintResult.id, mintResult.rarity)}>
+              <button className="share-btn" onClick={() => shareProgressFromLeaderboard(null)}>
                 Share to Cast 🚀
               </button>
             </>
@@ -351,7 +264,7 @@ export default function App() {
       );
     }
 
-    // MY BEAN (unchanged)
+    // MY BEAN
     if (tab === "bean") {
       if (!isConnected || !wallet) {
         return (
@@ -381,13 +294,16 @@ export default function App() {
           username={displayName}
           onStatsUpdate={(xp, beans) => {
             handleStatsUpdate(xp, beans);
-            fetchDailyAssets();
+            // refresh leaderboard when stats change so rank is accurate
+            if (tab === "bean" || tab === "rank") {
+              fetchLeaderboardNow();
+            }
           }}
         />
       );
     }
 
-    // RANK (unchanged)
+    // RANK (Leaderboard) — now includes small share button next to Your Rank
     if (tab === "rank") {
       const userRank = leaderboard.findIndex(
         (p) => p.wallet.toLowerCase() === wallet?.toLowerCase()
@@ -424,61 +340,36 @@ export default function App() {
               </div>
 
               {wallet && (
-                <div className="user-rank-box" style={{ marginTop: 12 }}>
-                  <span className="user-rank-label">Your Rank</span>
-                  <span className="user-rank-value" style={{ marginLeft: 8 }}>
-                    {userRank > 0 ? `#${userRank}` : "Not in Top 100"}
-                  </span>
+                <div className="user-rank-box" style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <span className="user-rank-label">Your Rank</span>
+                    <span className="user-rank-value" style={{ marginLeft: 8 }}>
+                      {userRank > 0 ? `#${userRank}` : "Not in Top 100"}
+                    </span>
+                  </div>
+
+                  {/* Small share button placed to the right of Your Rank */}
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      className="mini-share-btn"
+                      onClick={() => shareProgressFromLeaderboard(userRank > 0 ? userRank : null)}
+                      title="Share your progress"
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: 999,
+                        background: "white",
+                        border: "none",
+                        fontWeight: 700,
+                        cursor: "pointer"
+                      }}
+                    >
+                      Share
+                    </button>
+                  </div>
                 </div>
               )}
             </>
           )}
-        </div>
-      );
-    }
-
-    // DAILY - simplified per request: no streak, no feed/water/train, only share progress
-    if (tab === "daily") {
-      const userRank = userRankFromLeaderboard();
-      return (
-        <div className="card" style={{ alignItems: "stretch" }}>
-          <div style={{ textAlign: "center", width: "100%" }}>
-            <div className="title">Daily Progress</div>
-            <div style={{ marginTop: 6, marginBottom: 8 }} className="subtitle">
-              Share your current progress — others will see your level, beans, and rank.
-            </div>
-          </div>
-
-          <div style={{ width: "100%", maxWidth: 420, marginTop: 6 }}>
-            <div style={{ display: "grid", gap: 10 }}>
-              <div style={{ padding: 12, borderRadius: 12, background: "rgba(255,255,255,0.06)" }}>
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>
-                  Your Progress
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                  <div style={{ opacity: 0.9 }}>Level</div>
-                  <div style={{ fontWeight: 700 }}>Lvl {lifetimeLevel}</div>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                  <div style={{ opacity: 0.9 }}>Beans</div>
-                  <div style={{ fontWeight: 700 }}>🫘 {dailyBeans}</div>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <div style={{ opacity: 0.9 }}>Rank (Top 100)</div>
-                  <div style={{ fontWeight: 700 }}>{userRank ? `#${userRank}` : "Not in Top 100"}</div>
-                </div>
-              </div>
-
-              <div style={{ textAlign: "center", marginTop: 6 }}>
-                <button className="share-btn" onClick={() => handleShareProgress()} disabled={dailyLoading}>
-                  {dailyLoading ? "Opening..." : "Share Progress 🚀"}
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       );
     }
@@ -521,6 +412,17 @@ export default function App() {
           </div>
         </div>
       );
+    }
+  }
+
+  // helper to refresh leaderboard on demand
+  async function fetchLeaderboardNow() {
+    try {
+      const res = await fetch("/api/leaderboard");
+      const data = await res.json();
+      setLeaderboard(data.leaderboard || []);
+    } catch (err) {
+      console.warn("fetchLeaderboardNow failed", err);
     }
   }
 
@@ -571,21 +473,14 @@ export default function App() {
           🏆<span>Rank</span>
         </div>
 
-        {/* show daily nav only for DEV_FID (tester) */}
-        {userFID === DEV_FID && (
-          <div className={`nav-item ${tab === "daily" ? "active" : ""}`} onClick={() => safeSetTab("daily")}>
-            🚀<span>Daily</span>
-          </div>
-        )}
-
         <div className={`nav-item ${tab === "faq" ? "active" : ""}`} onClick={() => safeSetTab("faq")}>
           ❓<span>FAQ</span>
         </div>
       </div>
 
-      {/* daily toast */}
-      {dailyToast && (
-        <div className="toast-popup">{dailyToast}</div>
+      {/* small toast */}
+      {toast && (
+        <div className="toast-popup">{toast}</div>
       )}
     </div>
   );
