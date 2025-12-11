@@ -8,7 +8,6 @@ import careAbi from "./abi/kimmiBeansCare.json";
 
 type Tab = "mint" | "bean" | "rank" | "faq" | "daily";
 const DEV_FID = 299929; // only this FID can access Daily for now
-const MINI_APP_URL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("mint");
@@ -41,28 +40,22 @@ export default function App() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loadingRank, setLoadingRank] = useState(false);
 
-  // DAILY simple state
+  // DAILY / MISSIONS STATE
+  const [dailyStatus, setDailyStatus] = useState({
+    feed: false,
+    water: false,
+    train: false,
+    share: false,
+  });
+  const [streak, setStreak] = useState(0);
   const [dailyLoading, setDailyLoading] = useState(false);
   const [dailyToast, setDailyToast] = useState<string | null>(null);
-
-  // dailySummary: level, beans, rank, username
-  const [dailySummary, setDailySummary] = useState<{
-    level?: number;
-    beans?: number;
-    rank?: number | null;
-    username?: string | null;
-  }>({});
-
-  // FEATURE GATING: apakah user sudah "shared" hari ini dan boleh interaksi?
-  const [canInteract, setCanInteract] = useState<boolean>(false);
-
-  // apakah row bean_stats untuk wallet ini ada di DB
-  const [hasBeanStats, setHasBeanStats] = useState<boolean>(false);
 
   // LOAD LEADERBOARD (top 100)
   useEffect(() => {
     if (tab !== "rank") return;
-    (async function loadRank() {
+
+    async function loadRank() {
       setLoadingRank(true);
       try {
         const res = await fetch("/api/leaderboard");
@@ -74,7 +67,9 @@ export default function App() {
       } finally {
         setLoadingRank(false);
       }
-    })();
+    }
+
+    loadRank();
   }, [tab]);
 
   // ============================================================
@@ -82,7 +77,7 @@ export default function App() {
   // ============================================================
   useEffect(() => {
     sdk.actions.ready();
-    (async function loadFID() {
+    async function loadFID() {
       const ctx = await sdk.context;
       const user = ctx?.user;
       if (user) {
@@ -90,18 +85,21 @@ export default function App() {
         setDisplayName(user.displayName || null);
         setPfp(user.pfpUrl || null);
       }
-    })();
+    }
+    loadFID();
   }, []);
 
   // ============================================================
   // Check minted NFT
   // ============================================================
   useEffect(() => {
-    (async function checkMinted() {
+    async function checkMinted() {
       if (!wallet) return;
+
       try {
         const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
         const data = await res.json();
+
         if (data.minted) {
           setMintResult({
             id: data.tokenId,
@@ -114,7 +112,8 @@ export default function App() {
       } catch (err) {
         console.error("checkMinted error", err);
       }
-    })();
+    }
+    checkMinted();
   }, [wallet]);
 
   // ============================================================
@@ -137,7 +136,9 @@ export default function App() {
 
   useEffect(() => {
     if (!headerStatsRaw) return;
+
     const stats = headerStatsRaw as StatsStruct;
+
     setLifetimeXp(Number(stats.xp));
     setDailyBeans(Number(stats.beans));
   }, [headerStatsRaw]);
@@ -152,40 +153,45 @@ export default function App() {
   // Load supply
   // ============================================================
   useEffect(() => {
-    (async function loadSupply() {
+    async function loadSupply() {
       try {
         const res = await fetch("/api/checkSupply");
         const data = await res.json();
+
         setTotalMinted(data.totalMinted);
         setSoldOut(data.soldOut);
       } catch (err) {
         console.error("loadSupply error", err);
       }
-    })();
+    }
 
-    const interval = setInterval(() => {
-      (async function loadSupplyInterval() {
-        try {
-          const res = await fetch("/api/checkSupply");
-          const data = await res.json();
-          setTotalMinted(data.totalMinted);
-          setSoldOut(data.soldOut);
-        } catch (err) {}
-      })();
-    }, 10000);
+    loadSupply();
+    const interval = setInterval(loadSupply, 10000);
     return () => clearInterval(interval);
   }, []);
 
   // ============================================================
-  // DAILY: fetch summary and gating info from backend
-  //  - expects backend /api/dailyStatus?wallet=... to return:
-  //    { user?, userRank?, can_interact?: boolean, last_shared_date?: string }
+  // Share to Cast (used by mint flow and daily share)
+  // ============================================================
+  async function shareToCast(tokenId: number, rarity: string, extraMsg?: string) {
+    const miniAppURL =
+      "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+    const msg = `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨${extraMsg ? " — " + extraMsg : ""}`;
+
+    await sdk.actions.openUrl({
+      url:
+        `https://warpcast.com/~/compose?text=${encodeURIComponent(msg)}` +
+        `&embeds[]=${encodeURIComponent(miniAppURL)}`
+    });
+  }
+
+  // ============================================================
+  // DAILY / MISSIONS: fetch status from backend (if exists)
   // ============================================================
   async function fetchDailyStatus() {
     if (!wallet) {
-      setDailySummary({});
-      setCanInteract(false);
-      setHasBeanStats(false);
+      setDailyStatus({ feed: false, water: false, train: false, share: false });
+      setStreak(0);
       return;
     }
 
@@ -194,72 +200,29 @@ export default function App() {
       const res = await fetch(`/api/dailyStatus?wallet=${wallet}`);
       if (!res.ok) throw new Error("no daily API");
       const data = await res.json();
-
-      // apakah ada row di bean_stats?
-      const userExists = Boolean(data.user);
-      setHasBeanStats(userExists);
-
-      // dailySummary from leaderboard
-      if (userExists) {
-        setDailySummary({
-          level: Number(data.user.level ?? 0),
-          beans: Number(data.user.beans ?? 0),
-          rank: data.userRank ?? null,
-          username: data.user.username ?? null
-        });
-      } else {
-        setDailySummary({
-          level: undefined,
-          beans: dailyBeans,
-          rank: null,
-          username: displayName || null
-        });
-      }
-
-      // gating info: can_interact preferred, otherwise derive from last_shared_date
-      if (typeof data.can_interact === "boolean") {
-        setCanInteract(data.can_interact);
-      } else if (data.last_shared_date) {
-        // derive: true if last_shared_date is today (UTC)
-        const last = new Date(data.last_shared_date);
-        const now = new Date();
-        const lastDay = Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), last.getUTCDate());
-        const todayDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-        setCanInteract(lastDay === todayDay);
-      } else {
-        setCanInteract(false);
-      }
+      setDailyStatus(data.tasks || { feed: false, water: false, train: false, share: false });
+      setStreak(data.streak || 0);
     } catch (err) {
-      console.warn("dailyStatus fetch failed, using fallback", err);
-      setDailySummary({ level: undefined, beans: dailyBeans, rank: null, username: displayName || null });
-      setCanInteract(false);
-      setHasBeanStats(false);
+      console.warn("dailyStatus fetch failed, using local state", err);
     } finally {
       setDailyLoading(false);
     }
   }
 
   useEffect(() => {
-    if (tab !== "daily" && tab !== "bean") return; // update when visiting bean or daily (so My Bean shows correct gating)
+    if (tab !== "daily") return;
+    // guard - only allow DEV_FID
+    if (userFID !== DEV_FID) {
+      setDailyToast("Daily tab is currently for tester FID only.");
+      setTimeout(() => setDailyToast(null), 2000);
+      setTab("mint");
+      return;
+    }
     fetchDailyStatus();
-  }, [tab, wallet, userFID, dailyBeans, displayName]);
+  }, [tab, wallet, userFID]);
 
   // ============================================================
-  // Share to Cast (used by mint flow)
-  // ============================================================
-  async function shareToCast(tokenId: number, rarity: string, extraMsg?: string) {
-    const msg = `I just minted Kimmi Bean #${tokenId} — Rarity: ${rarity} 🫘✨${extraMsg ? " — " + extraMsg : ""}`;
-    await sdk.actions.openUrl({
-      url:
-        `https://warpcast.com/~/compose?text=${encodeURIComponent(msg)}` +
-        `&embeds[]=${encodeURIComponent(MINI_APP_URL)}`
-    });
-  }
-
-  // ============================================================
-  // Handle share + markShared (optimistic)
-  //  - open warpcast composer
-  //  - call /api/markShared to set server-side can_interact / last_shared_date
+  // Handle share + claim
   // ============================================================
   async function handleShareProgress() {
     if (!wallet) {
@@ -268,62 +231,52 @@ export default function App() {
       return;
     }
 
-    setDailyLoading(true);
+    await sdk.actions.openUrl({
+      url: `https://warpcast.com/~/compose?text=${encodeURIComponent(
+        `My Kimmi Bean — Lvl ${lifetimeXp} — come play! 🫘`
+      )}`
+    });
 
-    // 1) open composer (best-effort)
     try {
-      const lvl = dailySummary.level ?? Math.floor(lifetimeXp / 100);
-      const beans = dailySummary.beans ?? dailyBeans;
-      const rankText = dailySummary.rank ? `#${dailySummary.rank}` : "Not ranked";
-      const usernameText = dailySummary.username || displayName || wallet;
-      const msg = `${usernameText} — Kimmi Bean progress: Lvl ${lvl} • 🫘 ${beans} • ${rankText} — main di Kimmi Beans! ${MINI_APP_URL}`;
-
-      await sdk.actions.openUrl({
-        url: `https://warpcast.com/~/compose?text=${encodeURIComponent(msg)}&embeds[]=${encodeURIComponent(MINI_APP_URL)}`
-      });
-    } catch (err) {
-      console.warn("openUrl failed", err);
-    }
-
-    // 2) optimistic server mark (api/markShared)
-    try {
-      const res = await fetch("/api/markShared", {
+      const res = await fetch("/api/claimDailyShare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet, fid: userFID })
+        body: JSON.stringify({ wallet })
       });
 
       if (!res.ok) {
-        console.warn("markShared not ok, fallback - still treat as shared");
-        setCanInteract(true);
-        setDailyToast("Shared! (backend not available)");
-        setTimeout(() => setDailyToast(null), 1800);
-        setDailyLoading(false);
+        setDailyStatus(s => ({ ...s, share: true }));
+        setDailyToast("Shared! (no backend reward)");
+        setTimeout(() => setDailyToast(null), 2000);
         return;
       }
 
-      // success - server returned data
-      await res.json();
-      setCanInteract(true);
-      setDailyToast("Berhasil! Aksi harian sudah dibuka.");
-      setTimeout(() => setDailyToast(null), 1800);
-
-      // refresh summary after mark
-      fetchDailyStatus();
+      const data = await res.json();
+      if (data.xpEarned || data.beansEarned) {
+        setDailyToast(`+${data.xpEarned ?? 0} XP  +${data.beansEarned ?? 0} Beans`);
+        handleStatsUpdate((lifetimeXp || 0) + (data.xpEarned ?? 0), (dailyBeans || 0) + (data.beansEarned ?? 0));
+      } else {
+        setDailyToast("Shared!");
+      }
+      setStreak(data.streak ?? streak);
+      setDailyStatus(s => ({ ...s, share: true }));
+      setTimeout(() => setDailyToast(null), 2000);
     } catch (err) {
-      console.error("markShared error", err);
-      setCanInteract(true); // optimistic fallback
-      setDailyToast("Shared! (offline fallback)");
-      setTimeout(() => setDailyToast(null), 1500);
-    } finally {
-      setDailyLoading(false);
+      console.error("claimDailyShare error", err);
+      setDailyStatus(s => ({ ...s, share: true }));
+      setDailyToast("Shared!");
+      setTimeout(() => setDailyToast(null), 2000);
     }
+  }
+
+  function markTaskDone(task: "feed" | "water" | "train") {
+    setDailyStatus(s => ({ ...s, [task]: true }));
   }
 
   // safeTabSetter: prevents non-dev from going to daily
   function safeSetTab(t: Tab) {
     if (t === "daily" && userFID !== DEV_FID) {
-      setDailyToast("Daily tab is currently for tester FID only.");
+      setDailyToast("Daily is for tester FID only.");
       setTimeout(() => setDailyToast(null), 1800);
       return;
     }
@@ -331,7 +284,7 @@ export default function App() {
   }
 
   // ============================================================
-  // RENDER content per tab (My Bean shows share prompt if cannot interact)
+  // RENDER content per tab
   // ============================================================
   function renderContent() {
     // MINT
@@ -420,66 +373,6 @@ export default function App() {
         );
       }
 
-      // If user does not have bean_stats yet (no row in DB)
-      if (!hasBeanStats) {
-        return (
-          <div className="card" style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 18, fontWeight: 700 }}>Menunggu sinkronisasi data Bean</div>
-            <div style={{ marginTop: 8, opacity: 0.9 }}>
-              Kamu sudah mint NFT, tapi data profil Bean belum tersedia di server kami.
-              Biasanya ini selesai otomatis dalam beberapa menit setelah transaksi konfirmasi.
-            </div>
-
-            <div style={{ marginTop: 14 }}>
-              <button
-                className="main-btn"
-                onClick={() => { fetchDailyStatus(); setDailyToast("Mengecek kembali..."); setTimeout(()=>setDailyToast(null),1200); }}
-                disabled={dailyLoading}
-              >
-                {dailyLoading ? "Mengecek..." : "Cek ulang status"}
-              </button>
-            </div>
-
-            <div style={{ marginTop: 12, color: "#666", fontSize: 13 }}>
-              Jika lebih dari 10 menit belum muncul, cek transaksi mint atau hubungi tim.
-            </div>
-          </div>
-        );
-      }
-
-      // Now we know hasBeanStats === true
-      // If user cannot interact yet (not shared today), show Share & Unlock banner
-      if (!canInteract) {
-        const lvl = dailySummary.level ?? Math.floor(lifetimeXp / 100);
-        const beans = dailySummary.beans ?? dailyBeans;
-        const rankDisplay = dailySummary.rank ? `#${dailySummary.rank}` : "Not ranked";
-        const usernameText = dailySummary.username || displayName || wallet;
-
-        return (
-          <div className="card" style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 20, fontWeight: 800 }}>Bagikan progresmu — buka aksi harian!</div>
-            <div style={{ marginTop: 8, opacity: 0.9 }}>
-              Bagikan ringkasan (Level {lvl} • 🫘 {beans} • {rankDisplay}) ke Warpcast untuk membuka tombol Feed / Water / Train.
-            </div>
-
-            <div style={{ marginTop: 16 }}>
-              <button
-                className="main-btn"
-                onClick={() => handleShareProgress()}
-                disabled={dailyLoading}
-              >
-                {dailyLoading ? "Membuka..." : "Share & Unlock 🚀"}
-              </button>
-            </div>
-
-            <div style={{ marginTop: 12, color: "#666", fontSize: 13 }}>
-              Setelah dishare, tombol aksi harian akan aktif. XP & Beans tetap berasal dari kontrak saat kamu melakukan aksi.
-            </div>
-          </div>
-        );
-      }
-
-      // canInteract === true -> show EvolutionPanel normal
       return (
         <EvolutionPanel
           wallet={wallet}
@@ -489,9 +382,9 @@ export default function App() {
           username={displayName}
           onStatsUpdate={(xp, beans) => {
             handleStatsUpdate(xp, beans);
+            markTaskDone("feed"); // minimal heuristic
             fetchDailyStatus();
           }}
-          canInteract={true}
         />
       );
     }
@@ -546,50 +439,84 @@ export default function App() {
       );
     }
 
-    // DAILY (mini) - only share summary (for DEV_FID)
+    // DAILY - guarded by useEffect and safeSetTab; this block only renders when allowed
     if (tab === "daily") {
-      const lvl = dailySummary.level ?? Math.floor(lifetimeXp / 100);
-      const beans = dailySummary.beans ?? dailyBeans;
-      const rankDisplay = dailySummary.rank ? `#${dailySummary.rank}` : "Not ranked";
-      const usernameText = dailySummary.username || displayName || wallet;
-
       return (
         <div className="card" style={{ alignItems: "stretch" }}>
           <div style={{ textAlign: "center", width: "100%" }}>
-            <div className="title">Daily Progress</div>
+            <div className="title">Daily Missions</div>
             <div style={{ marginTop: 6, marginBottom: 8 }} className="subtitle">
-              Bagikan progresmu — bantu Kimmi Beans dikenal lebih luas.
+              Complete tasks to earn XP & Beans — streaks grant bonuses.
             </div>
           </div>
 
-          <div style={{ width: "100%", maxWidth: 420, marginTop: 8 }}>
-            {dailyLoading ? (
-              <div style={{ textAlign: "center", padding: 24 }}>Loading...</div>
-            ) : (
-              <div style={{ display: "grid", gap: 12 }}>
-                <div style={{ fontSize: 14, opacity: 0.9 }}>
-                  <b>{usernameText}</b> — Level <b>{lvl}</b> • 🫘 <b>{beans}</b>
-                </div>
+          <div style={{ width: "100%", maxWidth: 420 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>Streak</div>
+              <div style={{ fontSize: 14 }}>🔥 {streak} days</div>
+            </div>
 
-                <div style={{ fontSize: 13, color: "#333", opacity: 0.85 }}>
-                  Current Rank: <b>{rankDisplay}</b>
+            <div style={{ display: "grid", gap: 10 }}>
+              <div className="leader-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 700 }}>Feed your Bean</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>Small XP & Beans</div>
                 </div>
-
-                <div style={{ fontSize: 13, color: "#666" }}>
-                  Bagikan ringkasan ini ke Warpcast untuk menunjukkan progress kamu.
-                </div>
-
-                <div style={{ marginTop: 8 }}>
-                  <button
-                    className="share-btn"
-                    onClick={() => handleShareProgress()}
-                    disabled={dailyLoading}
-                  >
-                    {dailyLoading ? "Sharing..." : "Share your progress 🚀"}
+                <div>
+                  <button className="bean-btn" disabled={!isConnected || dailyStatus.feed} onClick={() => { markTaskDone("feed"); setDailyToast("Feed done — +XP"); setTimeout(()=>setDailyToast(null),1400); }}>
+                    {dailyStatus.feed ? "Done" : "Do"}
                   </button>
                 </div>
               </div>
-            )}
+
+              <div className="leader-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 700 }}>Water your Bean</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>Medium XP & Beans</div>
+                </div>
+                <div>
+                  <button className="bean-btn" disabled={!isConnected || dailyStatus.water} onClick={() => { markTaskDone("water"); setDailyToast("Water done — +XP"); setTimeout(()=>setDailyToast(null),1400); }}>
+                    {dailyStatus.water ? "Done" : "Do"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="leader-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 700 }}>Train your Bean</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>Highest XP & Beans</div>
+                </div>
+                <div>
+                  <button className="bean-btn" disabled={!isConnected || dailyStatus.train} onClick={() => { markTaskDone("train"); setDailyToast("Train done — +XP"); setTimeout(()=>setDailyToast(null),1400); }}>
+                    {dailyStatus.train ? "Done" : "Do"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="leader-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 700 }}>Share your progress</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>Share to Warpcast — get bonus</div>
+                </div>
+                <div>
+                  <button className="bean-btn" disabled={!isConnected || dailyStatus.share || dailyLoading} onClick={() => handleShareProgress()}>
+                    {dailyLoading ? "Sharing..." : dailyStatus.share ? "Shared" : "Share"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 12, textAlign: "center" }}>
+              <div style={{ fontSize: 13, opacity: 0.9 }}>
+                Complete tasks daily — Train &gt; Water &gt; Feed for reward scaling.
+              </div>
+
+              <div style={{ marginTop: 12 }}>
+                <button className="share-btn" onClick={() => handleShareProgress()}>
+                  Share Daily Progress 🚀
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       );
