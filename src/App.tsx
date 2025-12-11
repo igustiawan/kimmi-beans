@@ -172,13 +172,13 @@ export default function App() {
   // raw lines (no leading newline, start immediately)
   const lines = [
     `My Kimmi Bean is growing strong! 🌱`,
-    `Lvl ${lifetimeLevel} — 🫘 ${dailyBeans} Beans${rank ? ` — Rank #${rank}` : ""}`,
+    `Lvl ${lifetimeLevel} — ${dailyBeans} Beans${rank ? ` — Rank #${rank}` : ""}`,
     "",
     `Come join the Kimmi Beans mini-game on Farcaster!`,
     `Mint your own Bean, level it up, climb the leaderboard,`,
     `and flex your progress with the community!`,
     "",
-    `Let’s grow together 🫘✨`
+    `Let’s grow together`
   ];
 
   // sanitize: remove BOM / zero-width chars, normalize newlines, trim lines
