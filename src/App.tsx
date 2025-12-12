@@ -350,6 +350,17 @@ export default function App() {
         <div className="leaderboard-card">
           <div className="leader-title">🏆 Leaderboard</div>
 
+          <div style={{
+            textAlign: "center",
+            fontSize: "13px",
+            opacity: 0.75,
+            marginTop: "-4px",
+            marginBottom: "10px",
+            fontWeight: 500
+          }}>
+            Season 1 — December 10, 2025 to January 10, 2026
+          </div>
+
           {loadingRank ? (
             <p className="leader-loading">Loading...</p>
           ) : leaderboard.length === 0 ? (
