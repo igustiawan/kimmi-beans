@@ -388,27 +388,47 @@ export default function App() {
 </button>
 
         <div style={{ background: "linear-gradient(180deg,#fff6f0,#ffe6ca)", borderRadius: 14, padding: 18, textAlign: "center" }}>
-          <div style={{ width: 220, height: 220, margin: "0 auto", borderRadius: 14, position: "relative", overflow: "hidden", background: "#0f1724", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {/* placeholder always present for stable layout */}
-            <img
-              src="/bean.gif"
-              alt="Bean placeholder"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                borderRadius: 12,
-                display: "block",
-                filter: loadingMeta ? "blur(6px) brightness(0.95)" : "none",
-                transition: "filter 240ms ease"
-              }}
-            />
+          <div
+            style={{
+              width: 220,
+              height: 220,
+              margin: "0 auto",
+              borderRadius: 14,
+              position: "relative",
+              overflow: "hidden",
+              background: "#f9e4d0" /* soft pastel background while loading */
+            }}
+          >
+            {/* spinner while loading */}
+            {loadingMeta && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "none"
+                }}
+              >
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    border: "4px solid rgba(0,0,0,0.12)",
+                    borderTopColor: "rgba(0,0,0,0.55)",
+                    animation: "km-spin 1s linear infinite"
+                  }}
+                />
+              </div>
+            )}
 
-            {/* overlay actual image when meta?.image is set (preloaded via useEffect) */}
+            {/* real image — ONLY shows when preloaded (no flash) */}
             {meta?.image && (
               <img
                 src={meta.image}
-                alt="Bean"
+                alt="Bean NFT"
                 style={{
                   position: "absolute",
                   inset: 0,
@@ -416,32 +436,10 @@ export default function App() {
                   height: "100%",
                   objectFit: "cover",
                   borderRadius: 12,
-                  transition: "opacity 260ms ease",
-                  opacity: loadingMeta ? 0 : 1
+                  opacity: loadingMeta ? 0 : 1,
+                  transition: "opacity 260ms ease"
                 }}
               />
-            )}
-
-            {/* subtle loading indicator while preloading */}
-            {loadingMeta && (
-              <div style={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                pointerEvents: "none"
-              }}>
-                <div style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  border: "4px solid rgba(0,0,0,0.10)",
-                  borderTopColor: "rgba(0,0,0,0.60)",
-                  boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
-                  animation: "km-spin 1s linear infinite"
-                }} />
-              </div>
             )}
 
             <style>{`
@@ -451,7 +449,6 @@ export default function App() {
               }
             `}</style>
           </div>
-
           <h2 style={{ marginTop: 12 }}>{player?.username || `${viewWallet.slice(0,6)}…${viewWallet.slice(-4)}`}</h2>
           {/* <p style={{ marginTop: 6, marginBottom: 6, color: "#444" }}>{viewWallet}</p> */}
 
