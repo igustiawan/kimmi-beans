@@ -123,7 +123,7 @@ export default function App() {
     abi: careAbi,
     functionName: "getStats",
     args: wallet ? [wallet] : undefined,
-    query: { enabled: Boolean(wallet) }
+    query: { enabled: Boolean(wallet) } // keep as you had it; adjust if your wagmi uses a different option shape
   });
 
   useEffect(() => {
@@ -167,48 +167,45 @@ export default function App() {
   // Share to Cast helper (used by leaderboard small share button)
   // ============================================================
   async function shareProgressFromLeaderboard(rank?: number | null) {
-  const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+    const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
 
-  // raw lines (no leading newline, start immediately)
-  const lines = [
-    `My Kimmi Bean is growing strong! 🌱`,
-    `Lvl ${lifetimeLevel} — ${dailyBeans} Beans${rank ? ` — Rank #${rank}` : ""}`,
-    "",
-    `Come join the Kimmi Beans mini-game on Farcaster!`,
-    `Mint your own Bean, level it up, climb the leaderboard,`,
-    `and flex your progress with the community!`,
-    "",
-    `Let’s grow together`
-  ];
+    // raw lines (no leading newline, start immediately)
+    const lines = [
+      `My Kimmi Bean is growing strong! 🌱`,
+      `Lvl ${lifetimeLevel} — ${dailyBeans} Beans${rank ? ` — Rank #${rank}` : ""}`,
+      "",
+      `Come join the Kimmi Beans mini-game on Farcaster!`,
+      `Mint your own Bean, level it up, climb the leaderboard,`,
+      `and flex your progress with the community!`,
+      "",
+      `Let’s grow together`
+    ];
 
-  // sanitize: remove BOM / zero-width chars, normalize newlines, trim lines
-  function sanitizeLine(s: string) {
-    // Remove BOM and zero-width spaces / non-printing chars
-    const noZW = s.replace(/[\u200B-\u200F\uFEFF]/g, "");
-    // Trim spaces on both ends
-    return noZW.trim();
-  }
+    // sanitize: remove BOM / zero-width chars, normalize newlines, trim lines
+    function sanitizeLine(s: string) {
+      // Remove BOM and zero-width spaces / non-printing chars
+      const noZW = s.replace(/[\u200B-\u200F\uFEFF]/g, "");
+      // Trim spaces on both ends
+      return noZW.trim();
+    }
 
-  const cleanedLines = lines.map(sanitizeLine);
+    const cleanedLines = lines.map(sanitizeLine);
 
-  // Remove accidental empty leading lines
-  while (cleanedLines.length && cleanedLines[0] === "") cleanedLines.shift();
-  // Remove trailing empty lines
-  while (cleanedLines.length && cleanedLines[cleanedLines.length - 1] === "") cleanedLines.pop();
+    // Remove accidental empty leading lines
+    while (cleanedLines.length && cleanedLines[0] === "") cleanedLines.shift();
+    // Remove trailing empty lines
+    while (cleanedLines.length && cleanedLines[cleanedLines.length - 1] === "") cleanedLines.pop();
 
-  // Join with single blank line between paragraphs where there's an empty string in the array
-  // (we already have "" in lines to show paragraph breaks)
-  const finalText = cleanedLines.join("\n");
+    // Join with single blank line between paragraphs where there's an empty string in the array
+    // (we already have "" in lines to show paragraph breaks)
+    const finalText = cleanedLines.join("\n");
 
-  try {
-    const url =
-      `https://warpcast.com/~/compose?text=${encodeURIComponent(finalText)}` +
-      `&embeds[]=${encodeURIComponent(miniAppURL)}`;
+    try {
+      const url =
+        `https://warpcast.com/~/compose?text=${encodeURIComponent(finalText)}` +
+        `&embeds[]=${encodeURIComponent(miniAppURL)}`;
 
-    // debug: you can console.log(url) to inspect the encoded text if needed
-    // console.log("Share URL:", url);
-
-    await sdk.actions.openUrl({ url });
+      await sdk.actions.openUrl({ url });
     } catch (err) {
       console.warn("openUrl failed", err);
       setToast("Unable to open compose");
@@ -219,6 +216,20 @@ export default function App() {
   // safeSetTab simplified (no daily guard)
   function safeSetTab(t: Tab) {
     setTab(t);
+  }
+
+  // ============================================================
+  // helper to refresh leaderboard on demand
+  // (declared before renderContent so it's available)
+  // ============================================================
+  async function fetchLeaderboardNow() {
+    try {
+      const res = await fetch("/api/leaderboard");
+      const data = await res.json();
+      setLeaderboard(data.leaderboard || []);
+    } catch (err) {
+      console.warn("fetchLeaderboardNow failed", err);
+    }
   }
 
   // ============================================================
@@ -329,7 +340,7 @@ export default function App() {
       );
     }
 
-    // RANK (Leaderboard) — now includes small share button next to Your Rank
+    // RANK (Leaderboard)
     if (tab === "rank") {
       const userRank = leaderboard.findIndex(
         (p) => p.wallet.toLowerCase() === wallet?.toLowerCase()
@@ -374,7 +385,6 @@ export default function App() {
                     </span>
                   </div>
 
-                  {/* Small share button placed to the right of Your Rank */}
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       onClick={() => shareProgressFromLeaderboard(userRank > 0 ? userRank : null)}
@@ -401,88 +411,84 @@ export default function App() {
       );
     }
 
-    // FAQ
+    // FAQ - we put this inside a scrollable wrapper so scrollbar works reliably
     if (tab === "faq") {
       return (
-        <div className="faq-wrapper">
-          <div className="faq-card" role="region" aria-label="FAQ about Kimmi Beans">
-            <div className="faq-title">FAQ</div>
-            <div className="faq-sub">Answers to common questions about the Kimmi Beans mini app</div>
+        <div className="container">
+          <div className="content-bg">
+            <div className="faq-wrapper" role="region" aria-label="FAQ area">
+              <div className="faq-card" aria-live="polite">
+                <div className="faq-title">FAQ</div>
+                <div className="faq-sub">Answers to common questions about the Kimmi Beans mini app</div>
 
-            <div className="faq-block">
-              <div className="faq-q">
-                <div className="faq-icon">🫘</div>
-                <div><b>What is Kimmi Beans?</b></div>
-              </div>
-              <div className="faq-a">
-                A fun Farcaster Mini App where you mint and grow your own Bean NFT.
-              </div>
-            </div>
+                <div className="faq-block">
+                  <div className="faq-q">
+                    <div className="faq-icon">🫘</div>
+                    <div><b>What is Kimmi Beans?</b></div>
+                  </div>
+                  <div className="faq-a">
+                    A fun Farcaster Mini App where you mint and grow your own Bean NFT.
+                  </div>
+                </div>
 
-            <div className="faq-block">
-              <div className="faq-q">
-                <div className="faq-icon">⚡</div>
-                <div><b>How do I earn XP & Beans?</b></div>
-              </div>
-              <div className="faq-a">
-                Take care of your Bean every day by feeding, watering, and training it.
-              </div>
-            </div>
+                <div className="faq-block">
+                  <div className="faq-q">
+                    <div className="faq-icon">⚡</div>
+                    <div><b>How do I earn XP & Beans?</b></div>
+                  </div>
+                  <div className="faq-a">
+                    Take care of your Bean every day by feeding, watering, and training it.
+                  </div>
+                </div>
 
-            <div className="faq-block">
-              <div className="faq-q">
-                <div className="faq-icon">📈</div>
-                <div><b>Which action gives the best reward?</b></div>
-              </div>
-              <div className="faq-a">
-                <b>Train &gt; Water &gt; Feed</b> — higher difficulty gives higher XP & Beans reward.
-              </div>
-            </div>
+                <div className="faq-block">
+                  <div className="faq-q">
+                    <div className="faq-icon">📈</div>
+                    <div><b>Which action gives the best reward?</b></div>
+                  </div>
+                  <div className="faq-a">
+                    <b>Train &gt; Water &gt; Feed</b> — higher difficulty gives higher XP & Beans reward.
+                  </div>
+                </div>
 
-            <div className="faq-block">
-              <div className="faq-q">
-                <div className="faq-icon">💰</div>
-                <div><b>What are Beans used for?</b></div>
-              </div>
-              <div className="faq-a">
-                Beans increase leaderboard ranking and unlock future rewards.
-              </div>
-            </div>
+                <div className="faq-block">
+                  <div className="faq-q">
+                    <div className="faq-icon">💰</div>
+                    <div><b>What are Beans used for?</b></div>
+                  </div>
+                  <div className="faq-a">
+                    Beans increase leaderboard ranking and unlock future rewards.
+                  </div>
+                </div>
 
-            <div className="faq-block">
-              <div className="faq-q">
-                <div className="faq-icon">🔒</div>
-                <div><b>How many NFTs can I mint?</b></div>
-              </div>
-              <div className="faq-a">
-                Only 1 NFT per wallet — your Bean is unique and yours forever.
-              </div>
-            </div>
+                <div className="faq-block">
+                  <div className="faq-q">
+                    <div className="faq-icon">🔒</div>
+                    <div><b>How many NFTs can I mint?</b></div>
+                  </div>
+                  <div className="faq-a">
+                    Only 1 NFT per wallet — your Bean is unique and yours forever.
+                  </div>
+                </div>
 
-            <div className="faq-block">
-              <div className="faq-q">
-                <div className="faq-icon">🔵</div>
-                <div><b>Is this on Base?</b></div>
-              </div>
-              <div className="faq-a">
-                Yes — all minting and actions run on the Base blockchain.
+                <div className="faq-block">
+                  <div className="faq-q">
+                    <div className="faq-icon">🔵</div>
+                    <div><b>Is this on Base?</b></div>
+                  </div>
+                  <div className="faq-a">
+                    Yes — all minting and actions run on the Base blockchain.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       );
     }
-  }
 
-  // helper to refresh leaderboard on demand
-  async function fetchLeaderboardNow() {
-    try {
-      const res = await fetch("/api/leaderboard");
-      const data = await res.json();
-      setLeaderboard(data.leaderboard || []);
-    } catch (err) {
-      console.warn("fetchLeaderboardNow failed", err);
-    }
+    // default fallback
+    return null;
   }
 
   // ============================================================
