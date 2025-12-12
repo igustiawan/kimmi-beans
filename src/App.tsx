@@ -81,6 +81,24 @@ export default function App() {
     loadFID();
   }, []);
 
+  useEffect(() => {
+    if (localStorage.getItem("kimmi_add_prompted")) return;
+
+    async function askAdd() {
+      try {
+        // call the official API
+        await sdk.actions.addMiniApp();
+        localStorage.setItem("kimmi_add_prompted", "yes");
+      } catch (err) {
+        console.warn("addMiniApp failed or user canceled", err);
+      }
+    }
+
+    // Wait a bit so SDK is ready and UI settled
+    const t = setTimeout(() => askAdd(), 400);
+    return () => clearTimeout(t);
+  }, []);
+
   // ============================================================
   // Check minted NFT
   // ============================================================
