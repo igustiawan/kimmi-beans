@@ -81,18 +81,6 @@ export default function App() {
     loadFID();
   }, []);
 
-  useEffect(() => {
-    if (localStorage.getItem("kimmi_add_prompted")) return;
-
-    sdk.actions.ready().then(() => {
-      sdk.actions.openUrl({
-        url: "https://warpcast.com/~/compose?embeds[]=https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans"
-      });
-      localStorage.setItem("kimmi_add_prompted", "yes");
-    });
-  }, []);
-
-
   // ============================================================
   // Check minted NFT
   // ============================================================
