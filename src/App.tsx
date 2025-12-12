@@ -46,6 +46,9 @@ export default function App() {
   // small toast root (keperluan ringan)
   const [toast, setToast] = useState<string | null>(null);
 
+  const [mintImageLoading, setMintImageLoading] = useState<boolean>(false);
+  const [preloadedMintImage, setPreloadedMintImage] = useState<string | null>(null);
+
   // LOAD LEADERBOARD (top 100) when rank tab is opened; also used for share
   useEffect(() => {
     if (tab !== "rank") return;
@@ -87,27 +90,74 @@ export default function App() {
   }, []);
 
   // ============================================================
-  // Check minted NFT
+  // Check minted NFT (with image preloading to avoid flash)
   // ============================================================
   useEffect(() => {
     async function checkMinted() {
-      if (!wallet) return;
+      if (!wallet) {
+        // clear if wallet disconnected
+        setMintResult(null);
+        setPreloadedMintImage(null);
+        setMintImageLoading(false);
+        return;
+      }
 
       try {
         const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
         const data = await res.json();
 
         if (data.minted) {
-          setMintResult({
-            id: data.tokenId,
-            rarity: data.rarity,
-            image: data.image
-          });
+          // if there's an image url, preload it first
+          const imgUrl = data.image || null;
+
+          if (imgUrl) {
+            setMintImageLoading(true);
+            setPreloadedMintImage(null);
+
+            // preload using Image()
+            const img = new Image();
+            img.src = imgUrl;
+            img.onload = () => {
+              // only set result after image loaded to avoid flash
+              setMintResult({
+                id: data.tokenId,
+                rarity: data.rarity,
+                image: imgUrl
+              });
+              setPreloadedMintImage(imgUrl);
+              setMintImageLoading(false);
+            };
+            img.onerror = () => {
+              // fallback: still set result but keep using default placeholder visually
+              console.warn("Failed to preload mint image", imgUrl);
+              setMintResult({
+                id: data.tokenId,
+                rarity: data.rarity,
+                image: imgUrl
+              });
+              setPreloadedMintImage(null);
+              setMintImageLoading(false);
+            };
+          } else {
+            // no image available
+            setMintResult({
+              id: data.tokenId,
+              rarity: data.rarity,
+              image: ""
+            });
+            setPreloadedMintImage(null);
+            setMintImageLoading(false);
+          }
         } else {
           setMintResult(null);
+          setPreloadedMintImage(null);
+          setMintImageLoading(false);
         }
       } catch (err) {
         console.error("checkMinted error", err);
+        setMintResult(null);
+        setPreloadedMintImage(null);
+        setMintImageLoading(false);
       }
     }
     checkMinted();
@@ -406,12 +456,67 @@ export default function App() {
           <div className="title">Kimmi Beans</div>
           <div className="subtitle">Mint cute, unique beans every day!</div>
 
-          <div className="image-container">
-            {mintResult ? (
-              <img src={mintResult.image} alt="Minted Bean" />
-            ) : (
-              <img src="/bean.gif" alt="Bean" />
+          <div className="image-container" style={{ position: "relative" }}>
+            {/* Always show placeholder visual to avoid layout jump */}
+            <img
+              src="/bean.gif"
+              alt="Bean placeholder"
+              style={{
+                width: "100%",
+                borderRadius: 12,
+                display: "block",
+                filter: mintImageLoading ? "blur(6px) brightness(0.9)" : "none",
+                transition: "filter 240ms ease"
+              }}
+            />
+
+            {/* When preloadedMintImage available, overlay actual image (fade in) */}
+            {preloadedMintImage && (
+              <img
+                src={preloadedMintImage}
+                alt="Minted Bean"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: 12,
+                  transition: "opacity 260ms ease",
+                  opacity: mintImageLoading ? 0 : 1
+                }}
+              />
             )}
+
+            {/* subtle loading indicator when preloading */}
+            {mintImageLoading && (
+              <div style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                pointerEvents: "none"
+              }}>
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  border: "4px solid rgba(255,255,255,0.6)",
+                  borderTopColor: "rgba(255,255,255,0.95)",
+                  animation: "km-spin 1s linear infinite",
+                  boxShadow: "0 6px 18px rgba(0,0,0,0.12)"
+                }} />
+              </div>
+            )}
+
+            {/* spinner keyframes (inline style block) */}
+            <style>{`
+              @keyframes km-spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
           </div>
 
           <div className="counter">
