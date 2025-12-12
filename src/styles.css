@@ -449,7 +449,6 @@ html, body {
 .bean-level {
   font-size: 18px;
   font-weight: 700;
-  margin-top: 12px;
 }
 
 /* XP BAR */
@@ -472,7 +471,7 @@ html, body {
 
 .xp-text {
   font-size: 14px;
-  margin-bottom: 12px;
+  margin-bottom: 5px;
 }
 
 /* ACTION BUTTONS */
