@@ -40,6 +40,9 @@ export default function App() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loadingRank, setLoadingRank] = useState(false);
 
+  // Viewer state: which wallet we're viewing (null = none)
+  const [viewBeanWallet, setViewBeanWallet] = useState<string | null>(null);
+
   // small toast root (keperluan ringan)
   const [toast, setToast] = useState<string | null>(null);
 
@@ -68,7 +71,8 @@ export default function App() {
   // Load FID (still read for display, but no dev-only logic)
   // ============================================================
   useEffect(() => {
-    sdk.actions.addMiniApp()
+    // attempt to open add-miniapp if supported (safe optional)
+    (sdk.actions as any).addMiniApp?.();
     sdk.actions.ready();
     async function loadFID() {
       const ctx = await sdk.context;
@@ -234,9 +238,149 @@ export default function App() {
   }
 
   // ============================================================
+  // BeanViewer component (inline for convenience)
+  // ============================================================
+  function BeanViewer({ wallet: viewWallet, onClose }: { wallet: string; onClose: () => void }) {
+    const { data: statsRaw } = useReadContract({
+      address: CONTRACT,
+      abi: careAbi,
+      functionName: "getStats",
+      args: [viewWallet],
+      query: { enabled: Boolean(viewWallet) }
+    });
+
+    const [meta, setMeta] = useState<{ tokenId?: number; rarity?: string; image?: string } | null>(null);
+    const [loadingMeta, setLoadingMeta] = useState(false);
+
+    useEffect(() => {
+      let mounted = true;
+      async function loadMeta() {
+        setLoadingMeta(true);
+        try {
+          const res = await fetch(`/api/checkMinted?wallet=${viewWallet}`);
+          const data = await res.json();
+          if (!mounted) return;
+          if (data.minted) {
+            setMeta({
+              tokenId: data.tokenId,
+              rarity: data.rarity,
+              image: data.image
+            });
+          } else {
+            setMeta(null);
+          }
+        } catch (err) {
+          console.warn("BeanViewer: failed to load meta", err);
+          if (mounted) setMeta(null);
+        } finally {
+          if (mounted) setLoadingMeta(false);
+        }
+      }
+      loadMeta();
+      return () => { mounted = false; };
+    }, [viewWallet]);
+
+    const stats = statsRaw as StatsStruct | undefined;
+    const player = leaderboard.find((p) => p.wallet.toLowerCase() === viewWallet.toLowerCase());
+
+    const rank = player ? leaderboard.findIndex((p) => p.wallet.toLowerCase() === viewWallet.toLowerCase()) + 1 : null;
+
+    async function followUser() {
+      try {
+        const username = player?.username;
+        // if username exists, use follow by username; otherwise open the wallet profile
+        const url = username ? `https://warpcast.com/~/follow/${username}` : `https://warpcast.com/${viewWallet}`;
+        await sdk.actions.openUrl({ url });
+      } catch (err) {
+        console.warn("followUser failed", err);
+        setToast("Unable to open follow");
+        setTimeout(() => setToast(null), 1600);
+      }
+    }
+
+    async function sendCompliment() {
+      try {
+        const username = player?.username ? `@${player.username} ` : "";
+        const text = `${username}Your bean is awesome! 🌱🔥`;
+        const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
+        await sdk.actions.openUrl({ url });
+      } catch (err) {
+        console.warn("sendCompliment failed", err);
+        setToast("Unable to open compose");
+        setTimeout(() => setToast(null), 1600);
+      }
+    }
+
+    return (
+      <div style={{
+        padding: 18,
+        maxWidth: 480,
+        margin: "0 auto",
+      }}>
+        <button onClick={onClose} style={{ marginBottom: 12, background: "transparent", border: "none", color: "#666", cursor: "pointer" }}>← Back</button>
+
+        <div style={{ background: "linear-gradient(180deg,#fff6f0,#ffe6ca)", borderRadius: 14, padding: 18, textAlign: "center" }}>
+          <div style={{ width: 220, height: 220, margin: "0 auto", borderRadius: 14, background: "#0f1724", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {loadingMeta ? (
+              <div>Loading image…</div>
+            ) : meta?.image ? (
+              <img src={meta.image} alt="bean" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 12 }} />
+            ) : (
+              <img src="/bean.gif" alt="bean" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 12 }} />
+            )}
+          </div>
+
+          <h2 style={{ marginTop: 12 }}>{player?.username || `${viewWallet.slice(0,6)}…${viewWallet.slice(-4)}`}</h2>
+          <p style={{ marginTop: 6, marginBottom: 6, color: "#444" }}>{viewWallet}</p>
+
+          <div style={{ display: "flex", justifyContent: "space-around", marginTop: 12 }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontWeight: 700 }}>{stats ? Number(stats.level) : "—"}</div>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>Level</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontWeight: 700 }}>{stats ? Number(stats.xp) : "—"}</div>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>XP</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontWeight: 700 }}>{stats ? Number(stats.beans) : "—"}</div>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>Beans</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontWeight: 700 }}>{rank ?? "—"}</div>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>Rank</div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 10, marginTop: 14, justifyContent: "center" }}>
+            <button onClick={followUser} style={{ padding: "8px 12px", borderRadius: 12, background: "#ffb07a", border: "none", fontWeight: 700, cursor: "pointer" }}>
+              ⭐ Follow this player
+            </button>
+
+            <button onClick={sendCompliment} style={{ padding: "8px 12px", borderRadius: 12, background: "#fff", border: "1px solid #eee", fontWeight: 700, cursor: "pointer" }}>
+              💬 Send Compliment
+            </button>
+          </div>
+
+          {meta?.tokenId && (
+            <div style={{ marginTop: 12, fontSize: 13, color: "#333" }}>
+              Token #{meta.tokenId} — Rarity: <b>{meta.rarity}</b>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================
   // RENDER content per tab
   // ============================================================
   function renderContent() {
+    // If viewing a bean, render the viewer (takes precedence)
+    if (viewBeanWallet) {
+      return <BeanViewer wallet={viewBeanWallet} onClose={() => setViewBeanWallet(null)} />;
+    }
+
     // MINT
     if (tab === "mint") {
       return (
@@ -371,7 +515,12 @@ export default function App() {
               <div style={{ width: "100%", overflowY: "auto", padding: "8px 0", maxHeight: "56vh" }}>
                 <div className="leader-list">
                   {leaderboard.slice(0, 100).map((p, index) => (
-                    <div className="leader-item" key={p.wallet}>
+                    <div
+                      className="leader-item"
+                      key={p.wallet}
+                      onClick={() => setViewBeanWallet(p.wallet)}
+                      style={{ cursor: "pointer" }}
+                    >
                       <div className="leader-left">
                         <div className="rank-num">{index + 1}</div>
                         <div className="leader-info">
