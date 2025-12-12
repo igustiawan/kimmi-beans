@@ -717,7 +717,6 @@ html, body {
   max-width: 480px;
   box-sizing: border-box;
   max-height: calc(var(--vh) * 100 - 220px);
-  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 0 12px 18px; /* same lateral padding as leader-list */
   display: flex;
