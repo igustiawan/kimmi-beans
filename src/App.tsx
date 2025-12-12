@@ -288,8 +288,6 @@ export default function App() {
       `I just minted a Kimmi Bean! 🌱`,
       `Token #${mintResult.id} — Rarity: ${mintResult.rarity}`,
       "",
-      `Check it out: ${mintResult.image || miniAppURL}`,
-      "",
       `Come mint your own at the Kimmi Beans mini-app!`
     ].map(sanitizeLine).filter(Boolean);
 
