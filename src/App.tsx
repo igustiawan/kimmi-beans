@@ -268,6 +268,52 @@ export default function App() {
     }
   }
 
+  // Share the most-recent mint result (token id + rarity + image)
+  async function shareMintResult() {
+    if (!mintResult) {
+      setToast("Nothing to share yet");
+      setTimeout(() => setToast(null), 1400);
+      return;
+    }
+
+    const miniAppURL = "https://farcaster.xyz/miniapps/VV7PYCDPdD04/kimmi-beans";
+
+    // small sanitizer (same as used for leaderboard share)
+    function sanitizeLine(s: string) {
+      const noZW = s.replace(/[\u200B-\u200F\uFEFF]/g, "");
+      return noZW.trim();
+    }
+
+    const lines = [
+      `I just minted a Kimmi Bean! 🌱`,
+      `Token #${mintResult.id} — Rarity: ${mintResult.rarity}`,
+      "",
+      `Check it out: ${mintResult.image || miniAppURL}`,
+      "",
+      `Come mint your own at the Kimmi Beans mini-app!`
+    ].map(sanitizeLine).filter(Boolean);
+
+    const finalText = lines.join("\n");
+
+    try {
+      // include both the miniapp and the image as embeds (image optional)
+      let url =
+        `https://warpcast.com/~/compose?text=${encodeURIComponent(finalText)}` +
+        `&embeds[]=${encodeURIComponent(miniAppURL)}`;
+
+      if (mintResult.image) {
+        // adding image as an embed helps show the bean in the compose UI
+        url += `&embeds[]=${encodeURIComponent(mintResult.image)}`;
+      }
+
+      await sdk.actions.openUrl({ url });
+    } catch (err) {
+      console.warn("shareMintResult failed", err);
+      setToast("Unable to open compose");
+      setTimeout(() => setToast(null), 1600);
+    }
+  }
+
   // safeSetTab simplified (no daily guard)
   function safeSetTab(t: Tab) {
     // ensure any open viewer is closed when switching tabs
@@ -611,7 +657,7 @@ export default function App() {
                 Token #{mintResult.id} — Rarity: <b>{mintResult.rarity}</b>
               </div>
 
-              <button className="share-btn" onClick={() => shareProgressFromLeaderboard(null)}>
+              <button className="share-btn" onClick={() => shareMintResult()}>
                 Share to Cast 🚀
               </button>
             </>
