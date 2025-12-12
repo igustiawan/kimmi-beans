@@ -413,7 +413,6 @@ export default function App() {
 
     // FAQ as leaderboard-style list
     if (tab === "faq") {
-      // faq data array (easy to update)
       const faqList = [
         { icon: "🫘", q: "What is Kimmi Beans?", a: "A fun Farcaster Mini App where you mint and grow your own Bean NFT." },
         { icon: "⚡", q: "How do I earn XP & Beans?", a: "Take care of your Bean every day by feeding, watering, and training it." },
@@ -426,22 +425,18 @@ export default function App() {
       return (
         <div className="faq-wrapper" role="region" aria-label="FAQ area">
           <div className="faq-card" aria-live="polite">
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#ff6f24" }}>FAQ</div>
-            </div>
+            <div className="faq-title">FAQ</div>
 
             <div>
-              {faqList.map((item, idx) => (
-                <div className="faq-row" key={idx}>
-                  <div className="faq-left">{item.icon}</div>
+              {faqList.map((item, i) => (
+                <div className="faq-row" key={i}>
+                  <div className="faq-left" aria-hidden="true">{item.icon}</div>
 
                   <div className="faq-center">
                     <div className="faq-q">{item.q}</div>
                     <div className="faq-a">{item.a}</div>
                   </div>
 
-                  {/* right area intentionally left empty to mimic leaderboard balance; remove if unnecessary */}
-                  <div className="faq-right" aria-hidden="true"></div>
                 </div>
               ))}
             </div>

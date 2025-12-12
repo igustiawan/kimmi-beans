@@ -872,3 +872,112 @@ html, body {
   .faq-row .faq-q { font-size: 14px; }
   .faq-row .faq-a { font-size: 13px; }
 }
+
+/* ============================
+   Final FAQ (compact, title at top)
+   Replace previous FAQ CSS with this block
+   ============================ */
+
+.faq-wrapper {
+  width: 100%;
+  /* smaller top area so FAQ content starts near top under header */
+  max-height: calc(var(--vh) * 100 - 120px); /* header + bottom nav accounted */
+  padding: 10px 12px 100px; /* small top padding */
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(180deg, #ffb07a 0%, #ff9f52 100%);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+/* container that holds rows, transparent so gradient visible */
+.faq-card {
+  width: 100%;
+  max-width: 480px;
+  background: transparent;
+  padding: 6px 8px 20px;
+  box-sizing: border-box;
+}
+
+/* centered title at the very top of card */
+.faq-title {
+  font-size: 20px;
+  font-weight: 900;
+  text-align: center;
+  color: #ff6f24;
+  margin: 2px 0 12px;
+  letter-spacing: 0.6px;
+}
+
+/* row looks like leaderboard item but tighter */
+.faq-row {
+  background: #ffffffee;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start; /* allow multi-line answers */
+  gap: 12px;
+  margin-bottom: 8px; /* tighter spacing */
+  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+}
+
+/* left icon circle */
+.faq-left {
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg,#fff6f0,#ffe6ca);
+  color: #ff7f2e;
+  font-size: 18px;
+  box-shadow: 0 3px 8px rgba(255,127,46,0.06);
+}
+
+/* center: question + answer; no extra margin pushing down */
+.faq-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* question text: compact */
+.faq-q {
+  font-weight: 800;
+  font-size: 14px;
+  color: #222;
+  margin: 0;
+  line-height: 1.15;
+}
+
+/* answer text: slightly smaller, left aligned, allow wrap, no big left margin */
+.faq-a {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* final spacing bottom */
+.faq-card .faq-row:last-child {
+  margin-bottom: 16px;
+}
+
+/* scrollbar styling (compact) */
+.faq-wrapper::-webkit-scrollbar { width: 9px; }
+.faq-wrapper::-webkit-scrollbar-track { background: rgba(0,0,0,0.03); border-radius: 8px; }
+.faq-wrapper::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.20); border-radius: 8px; border: 2px solid rgba(255,255,255,0.8); }
+.faq-wrapper { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.20) rgba(0,0,0,0.03); }
+
+/* responsive tweaks */
+@media (max-width: 420px) {
+  .faq-wrapper { padding: 8px 10px 110px; max-height: calc(var(--vh) * 100 - 110px); }
+  .faq-title { font-size: 18px; }
+  .faq-row { padding: 9px 10px; border-radius: 12px; gap: 10px; }
+  .faq-left { min-width: 36px; min-height: 36px; font-size: 16px; }
+  .faq-q { font-size: 14px; }
+  .faq-a { font-size: 13px; }
+}
