@@ -698,7 +698,6 @@ html, body {
   margin: 6px 0 10px;
   padding: 10px 12px;
   border-radius: 10px; /* slightly smaller than row so it reads as header */
-  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
