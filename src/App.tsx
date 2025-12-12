@@ -426,18 +426,39 @@ export default function App() {
         <div className="faq-wrapper" role="region" aria-label="FAQ area">
           {/* Header stays above the scrollable list */}
           <div className="faq-header" aria-hidden="true">
-            <h2 className="faq-title">FAQ</h2>
+            {/* reuse leader-title size so FAQ header matches leaderboard */}
+            <div className="leader-title" style={{ margin: 0 }}>FAQ</div>
           </div>
 
           {/* Only this list scrolls */}
           <div className="faq-list" aria-live="polite">
             {faqList.map((item, i) => (
-              <div className="faq-row" key={i}>
-                <div className="faq-left" aria-hidden="true">{item.icon}</div>
-                <div className="faq-center">
-                  <div className="faq-q">{item.q}</div>
-                  <div className="faq-a">{item.a}</div>
+              <div className="leader-item" key={i}>
+                <div className="leader-left">
+                  {/* rank-num area visually — we put icon inside similar box */}
+                  <div style={{
+                    minWidth: 40,
+                    minHeight: 40,
+                    borderRadius: 10,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "linear-gradient(180deg,#fff6f0,#ffe6ca)",
+                    color: "#ff7f2e",
+                    fontSize: 18,
+                    boxShadow: "0 3px 8px rgba(255,127,46,0.06)"
+                  }}>
+                    {item.icon}
+                  </div>
+
+                  <div className="leader-info" style={{ marginTop: -1 }}>
+                    <div className="leader-name" style={{ fontWeight: 700 }}>{item.q}</div>
+                    <div className="leader-wallet" style={{ fontSize: 12, opacity: 0.65 }}>{item.a}</div>
+                  </div>
                 </div>
+
+                {/* right side kept empty to match leaderboard spacing (or could show a small badge) */}
+                <div className="leader-right" aria-hidden="true" />
               </div>
             ))}
           </div>

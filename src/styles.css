@@ -685,10 +685,11 @@ html, body {
 .faq-wrapper {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 12px; /* small padding around whole area */
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: linear-gradient(180deg, #ffb07a 0%, #ff9f52 100%);
 }
 
 /* Header (stays above the scroll area) */
@@ -696,20 +697,19 @@ html, body {
   width: 100%;
   max-width: 480px;
   margin: 6px 0 10px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.95);
-  box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+  padding: 10px 12px;
+  border-radius: 10px; /* slightly smaller than row so it reads as header */
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: none;
 }
 
 .faq-title {
-  font-size: 20px;
-  font-weight: 900;
+  font-size: 26px;    /* match .leader-title */
+  font-weight: 700;
   color: #ff6f24;
-  letter-spacing: 0.6px;
   margin: 0;
 }
 
@@ -718,33 +718,35 @@ html, body {
   width: 100%;
   max-width: 480px;
   box-sizing: border-box;
-  /* calculate available height: viewport minus header + header margin + bottom nav (~70px) */
   max-height: calc(var(--vh) * 100 - 220px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 8px 6px 20px;
+  padding: 0 12px 18px; /* same lateral padding as leader-list */
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* same gap as .leader-list */
 }
 
 /* Row styling (compact, leaderboard-like) */
 .faq-row {
-  background: #ffffffee;
-  border-radius: 12px;
-  padding: 10px 12px;
+  background: #ffffffdd;       /* same translucent white */
+  border-radius: 14px;         /* same as .leader-item */
+  padding: 10px 14px;         /* same padding as .leader-item */
   display: flex;
-  align-items: flex-start;
+  justify-content: space-between; /* align right stat area if needed */
+  align-items: center;
+  box-shadow: none; /* leaderboard uses minimal shadow — keep flat */
   gap: 12px;
-  margin-bottom: 8px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
 }
 
 /* left icon circle */
 .faq-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 40px;
   min-height: 40px;
   border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   background: linear-gradient(180deg,#fff6f0,#ffe6ca);
   color: #ff7f2e;
   font-size: 18px;
@@ -757,35 +759,48 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0; /* allow content truncation like leaderboard */
 }
+
 .faq-q {
-  font-weight: 800;
+  font-weight: 600;
   font-size: 14px;
   color: #222;
-  margin: 0;
   line-height: 1.15;
-}
-.faq-a {
-  font-size: 13px;
-  color: #555;
-  line-height: 1.45;
   margin: 0;
+  white-space: normal;
+  overflow: visible;
 }
 
-/* scrollbar styling for list only */
-.faq-list::-webkit-scrollbar { width: 9px; }
-.faq-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.03); border-radius: 8px; }
-.faq-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.20); border-radius: 8px; border: 2px solid rgba(255,255,255,0.8); }
-.faq-list { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.20) rgba(0,0,0,0.03); }
+.faq-a {
+  font-size: 12px;
+  color: rgba(0,0,0,0.6);
+  line-height: 1.4;
+  margin: 0;
+  word-break: break-word;
+}
 
-/* tighten spacing on small screens */
+.faq-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #333;
+  font-size: 13px;
+}
+
+/* scrollbar for list only (light) */
+.faq-list::-webkit-scrollbar { width: 8px; }
+.faq-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 8px; }
+.faq-list { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.18) transparent; }
+
+/* responsive tweaks to match leaderboard spacing on mobile */
 @media (max-width: 420px) {
-  .faq-wrapper { padding: 8px 10px; }
-  .faq-header { padding: 8px 12px; margin-bottom: 8px; border-radius: 12px; }
-  .faq-title { font-size: 18px; }
-  .faq-list { max-height: calc(var(--vh) * 100 - 200px); padding: 6px 4px 120px; }
-  .faq-row { padding: 9px 10px; border-radius: 12px; gap: 10px; }
+  .faq-header { padding: 8px 10px; border-radius: 10px; }
+  .faq-title { font-size: 22px; }
+  .faq-list { max-height: calc(var(--vh) * 100 - 200px); padding: 0 10px 120px; gap: 8px; }
+  .faq-row { padding: 10px 12px; border-radius: 12px; gap: 10px; }
   .faq-left { min-width: 36px; min-height: 36px; font-size: 16px; }
   .faq-q { font-size: 14px; }
-  .faq-a { font-size: 13px; }
+  .faq-a { font-size: 12px; }
 }
