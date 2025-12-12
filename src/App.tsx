@@ -404,37 +404,69 @@ export default function App() {
     // FAQ
     if (tab === "faq") {
       return (
-        <div className="card">
-          <div className="title">FAQ</div>
-          <div style={{ textAlign: "left", width: "100%", maxWidth: 420 }}>
-            <div style={{ marginBottom: 12 }}>
-              <b>🫘 What is Kimmi Beans?</b>
-              <div style={{ opacity: 0.9 }}>A fun Farcaster Mini App where you mint and grow your own Bean NFT.</div>
+        <div className="faq-wrapper">
+          <div className="faq-card" role="region" aria-label="FAQ about Kimmi Beans">
+            <div className="faq-title">FAQ</div>
+            <div className="faq-sub">Answers to common questions about the Kimmi Beans mini app</div>
+
+            <div className="faq-block">
+              <div className="faq-q">
+                <div className="faq-icon">🫘</div>
+                <div><b>What is Kimmi Beans?</b></div>
+              </div>
+              <div className="faq-a">
+                A fun Farcaster Mini App where you mint and grow your own Bean NFT.
+              </div>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <b>⚡ How do I earn XP & Beans?</b>
-              <div style={{ opacity: 0.9 }}>Take care of your Bean every day by feeding, watering, and training it.</div>
+            <div className="faq-block">
+              <div className="faq-q">
+                <div className="faq-icon">⚡</div>
+                <div><b>How do I earn XP & Beans?</b></div>
+              </div>
+              <div className="faq-a">
+                Take care of your Bean every day by feeding, watering, and training it.
+              </div>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <b>📈 Which action gives the best reward?</b>
-              <div style={{ opacity: 0.9 }}>Train &gt; Water &gt; Feed — higher difficulty = higher XP & Beans reward.</div>
+            <div className="faq-block">
+              <div className="faq-q">
+                <div className="faq-icon">📈</div>
+                <div><b>Which action gives the best reward?</b></div>
+              </div>
+              <div className="faq-a">
+                <b>Train &gt; Water &gt; Feed</b> — higher difficulty gives higher XP & Beans reward.
+              </div>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <b>💰 What are Beans used for?</b>
-              <div style={{ opacity: 0.9 }}>Beans increase leaderboard ranking and unlock future rewards.</div>
+            <div className="faq-block">
+              <div className="faq-q">
+                <div className="faq-icon">💰</div>
+                <div><b>What are Beans used for?</b></div>
+              </div>
+              <div className="faq-a">
+                Beans increase leaderboard ranking and unlock future rewards.
+              </div>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <b>🔒 How many NFTs can I mint?</b>
-              <div style={{ opacity: 0.9 }}>Only 1 NFT per wallet — your Bean is unique and yours forever.</div>
+            <div className="faq-block">
+              <div className="faq-q">
+                <div className="faq-icon">🔒</div>
+                <div><b>How many NFTs can I mint?</b></div>
+              </div>
+              <div className="faq-a">
+                Only 1 NFT per wallet — your Bean is unique and yours forever.
+              </div>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <b>🔵 Is this on Base?</b>
-              <div style={{ opacity: 0.9 }}>Yes! All minting and actions run on Base blockchain.</div>
+            <div className="faq-block">
+              <div className="faq-q">
+                <div className="faq-icon">🔵</div>
+                <div><b>Is this on Base?</b></div>
+              </div>
+              <div className="faq-a">
+                Yes — all minting and actions run on the Base blockchain.
+              </div>
             </div>
           </div>
         </div>
