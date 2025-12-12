@@ -427,7 +427,7 @@ export default function App() {
         <div className="faq-wrapper" role="region" aria-label="FAQ area">
           <div className="faq-card" aria-live="polite">
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#ff6f24" }}>🏆 Leaderboard-style FAQ</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#ff6f24" }}>FAQ</div>
             </div>
 
             <div>
