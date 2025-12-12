@@ -320,20 +320,22 @@ export default function App() {
         margin: "0 auto",
       }}>
 
-        <button
-          onClick={onClose}
-          style={{
-            display: "inline-block",
-            marginBottom: 12,
-            background: "transparent",
-            border: "none",
-            color: "#ff7f2e",
-            cursor: "pointer",
-            fontWeight: 700
-          }}
-        >
-          ← Back
-        </button>
+      <button
+        onClick={onClose}
+        style={{
+          display: "inline-block",
+          marginBottom: 12,
+          background: "transparent",
+          border: "none",
+          color: "#222",        // <- lebih gelap/kontras (bukan oranye)
+          cursor: "pointer",
+          fontWeight: 700,
+          fontSize: 14
+        }}
+        aria-label="Back to leaderboard"
+      >
+        ← Back
+</button>
 
         <div style={{ background: "linear-gradient(180deg,#fff6f0,#ffe6ca)", borderRadius: 14, padding: 18, textAlign: "center" }}>
           <div style={{ width: 220, height: 220, margin: "0 auto", borderRadius: 14, background: "#0f1724", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -531,22 +533,38 @@ export default function App() {
               <div style={{ width: "100%", overflowY: "auto", padding: "8px 0", maxHeight: "56vh" }}>
                 <div className="leader-list">
                   {leaderboard.slice(0, 100).map((p, index) => (
-                    <div
-                      className="leader-item"
-                      key={p.wallet}
-                      onClick={() => setViewBeanWallet(p.wallet)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <div className="leader-left">
+                    <div className="leader-item" key={p.wallet} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                         <div className="rank-num">{index + 1}</div>
-                        <div className="leader-info">
-                          <div className="leader-name">{p.username || p.wallet}</div>
-                          <div className="leader-wallet">{p.wallet.slice(0, 5)}...{p.wallet.slice(-3)}</div>
+
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <div className="leader-name" style={{ fontWeight: 700 }}>{p.username || p.wallet}</div>
+                          <div className="leader-wallet" style={{ fontSize: 12, opacity: 0.65 }}>{p.wallet.slice(0, 5)}...{p.wallet.slice(-3)}</div>
                         </div>
                       </div>
-                      <div className="leader-right">
-                        <span className="leader-stat">Lvl {p.level}</span>
-                        <span className="leader-stat">🫘 {p.beans}</span>
+
+                      {/* Visit CTA: explicit, cute, and discoverable */}
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setViewBeanWallet(p.wallet); }}
+                          style={{
+                            display: "inline-flex",
+                            gap: 8,
+                            alignItems: "center",
+                            padding: "6px 10px",
+                            borderRadius: 12,
+                            background: "linear-gradient(90deg,#ffd7b8,#ffb07a)",
+                            border: "none",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
+                          }}
+                          aria-label={`Visit ${p.username || p.wallet}`}
+                          title="Visit bean"
+                        >
+                          <span style={{ fontSize: 14 }}>👀</span>
+                          <span style={{ fontSize: 13 }}>Visit</span>
+                        </button>
                       </div>
                     </div>
                   ))}
