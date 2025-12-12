@@ -424,22 +424,22 @@ export default function App() {
 
       return (
         <div className="faq-wrapper" role="region" aria-label="FAQ area">
-          <div className="faq-card" aria-live="polite">
-            <div className="faq-title">FAQ</div>
+          {/* Header stays above the scrollable list */}
+          <div className="faq-header" aria-hidden="true">
+            <h2 className="faq-title">FAQ</h2>
+          </div>
 
-            <div>
-              {faqList.map((item, i) => (
-                <div className="faq-row" key={i}>
-                  <div className="faq-left" aria-hidden="true">{item.icon}</div>
-
-                  <div className="faq-center">
-                    <div className="faq-q">{item.q}</div>
-                    <div className="faq-a">{item.a}</div>
-                  </div>
-
+          {/* Only this list scrolls */}
+          <div className="faq-list" aria-live="polite">
+            {faqList.map((item, i) => (
+              <div className="faq-row" key={i}>
+                <div className="faq-left" aria-hidden="true">{item.icon}</div>
+                <div className="faq-center">
+                  <div className="faq-q">{item.q}</div>
+                  <div className="faq-a">{item.a}</div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       );
