@@ -455,23 +455,22 @@ export default function App() {
   return (
     <div className="app">
       {/* HEADER */}
-      <div className="header">
-        <div className="header-left">
-          <img src={pfp || "/icon.png"} className="user-pfp" />
-          <span className="app-name">{displayName || "Guest"}</span>
-        </div>
-
-        <div className="header-right">
-          <div className="header-stats">
-            <div className="header-badge">🫘 {dailyBeans}</div>
-            <div className="header-badge">⭐ {lifetimeXp}</div>
+      <div className="header" role="banner">
+        <div className="header-inner">
+          <div className="header-left">
+            <div className="header-chip">
+              <img src={pfp || "/icon.png"} className="user-pfp" />
+              <span className="app-name">{displayName || "Guest"}</span>
+            </div>
           </div>
 
-          {wallet && (
-            <div className="wallet-badge">
-              {wallet.slice(0, 4)}...{wallet.slice(-3)}
+          <div className="header-right">
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <div className="header-badge">🫘 {dailyBeans}</div>
+              <div className="header-badge">⭐ {lifetimeXp}</div>
+              {wallet && <div className="wallet-badge">{wallet.slice(0, 4)}...{wallet.slice(-3)}</div>}
             </div>
-          )}
+          </div>
         </div>
       </div>
 

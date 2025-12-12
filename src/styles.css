@@ -37,19 +37,46 @@ html, body {
    HEADER
    ============================================================ */
 .header {
+  position: sticky;
+  top: env(safe-area-inset-top, 0);
+  z-index: 90; /* sit above content but below any global overlays */
+  width: 100%;
+  background: linear-gradient(180deg, #ffb07a 0%, #ff9f52 100%); /* same family as content-bg */
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* centers inner row */
   align-items: center;
-  padding: calc(12px + env(safe-area-inset-top)) 16px 10px;
-  background: white;
-  max-width: 480px;
-  margin: 0 auto;
+  padding: calc(8px + env(safe-area-inset-top)) 0 8px; /* small vertical padding, safe for notch */
+  box-sizing: border-box;
+  /* subtle bottom border for separation when scrolling */
+  box-shadow: 0 2px 0 rgba(255,255,255,0.06) inset;
 }
+
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+.header .header-inner {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  min-height: 38px;
 }
 
 .app-icon {
@@ -59,12 +86,13 @@ html, body {
 }
 
 .app-name {
-  font-size: 13px;         /* lebih kecil */
-  font-weight: 600;
-  max-width: 120px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  max-width: 170px;
   overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* RIGHT SIDE — BEANS + XP + WALLET */
@@ -77,21 +105,26 @@ html, body {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 10px;  /* jarak ke wallet */
+  gap: 10px;
 }
 
-
 .header-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-
-  padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.35);
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(255,255,255,0.95);
   border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #333;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
 
-  font-size: 12px;         /* angka lebih kecil */
-  font-weight: 600;
+@media (max-width: 420px) {
+  .header .header-inner { margin: 0 8px; }
+  .header-chip { padding: 6px 8px; gap: 6px; min-height: 34px; }
+  .header-badge, .wallet-badge { padding: 5px 8px; font-size: 12px; }
 }
 
 /* ============================================================
@@ -311,13 +344,15 @@ html, body {
 }
 
 .wallet-badge {
-  background: rgba(255, 255, 255, 0.35);
-  padding: 4px 10px;
+  padding: 6px 10px;
   border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  font-weight: 700;
   color: #333;
+  font-size: 13px;
 }
+
 
 .evolution-box {
   width: 100%;
