@@ -781,3 +781,94 @@ html, body {
   scrollbar-width: thin;
   scrollbar-color: rgba(0,0,0,0.22) rgba(0,0,0,0.04);
 }
+
+/* FAQ as Leaderboard-style rows (white rounded items) */
+.faq-wrapper {
+  width: 100%;
+  max-height: calc(var(--vh) * 100 - 140px);
+  padding: 20px 12px 120px;
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(180deg, #ffb07a 0%, #ff9f52 100%);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+.faq-card {
+  width: 100%;
+  max-width: 480px;
+  background: transparent; /* keep outer card invisible, rows will be white */
+  padding: 6px 6px 24px;
+  box-sizing: border-box;
+}
+
+/* Use same look as leaderboard row */
+.faq-row {
+  background: #ffffffdd;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+/* left: icon circle */
+.faq-row .faq-left {
+  min-width: 42px;
+  min-height: 42px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg,#fff6f0,#ffe6ca);
+  color: #ff7f2e;
+  font-size: 18px;
+  box-shadow: 0 3px 8px rgba(255,127,46,0.08);
+}
+
+/* center: question + answer */
+.faq-row .faq-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* question title */
+.faq-row .faq-q {
+  font-weight: 700;
+  font-size: 15px;
+  color: #222;
+}
+
+/* answer smaller text */
+.faq-row .faq-a {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.45;
+}
+
+/* optional right badge area — currently unused but kept for parity */
+.faq-row .faq-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* last spacing */
+.faq-card .faq-row:last-child {
+  margin-bottom: 26px;
+}
+
+/* responsive tweak */
+@media (max-width: 420px) {
+  .faq-row { padding: 10px 12px; border-radius: 12px; }
+  .faq-row .faq-left { min-width: 36px; min-height: 36px; font-size: 16px; }
+  .faq-row .faq-q { font-size: 14px; }
+  .faq-row .faq-a { font-size: 13px; }
+}

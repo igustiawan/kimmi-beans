@@ -411,76 +411,39 @@ export default function App() {
       );
     }
 
-    // FAQ - we put this inside a scrollable wrapper so scrollbar works reliably
+    // FAQ as leaderboard-style list
     if (tab === "faq") {
+      // faq data array (easy to update)
+      const faqList = [
+        { icon: "🫘", q: "What is Kimmi Beans?", a: "A fun Farcaster Mini App where you mint and grow your own Bean NFT." },
+        { icon: "⚡", q: "How do I earn XP & Beans?", a: "Take care of your Bean every day by feeding, watering, and training it." },
+        { icon: "📈", q: "Which action gives the best reward?", a: "Train > Water > Feed — higher difficulty gives higher XP & Beans reward." },
+        { icon: "💰", q: "What are Beans used for?", a: "Beans increase leaderboard ranking and unlock future rewards." },
+        { icon: "🔒", q: "How many NFTs can I mint?", a: "Only 1 NFT per wallet — your Bean is unique and yours forever." },
+        { icon: "🔵", q: "Is this on Base?", a: "Yes — all minting and actions run on the Base blockchain." },
+      ];
+
       return (
-        <div className="container">
-          <div className="content-bg">
-            <div className="faq-wrapper" role="region" aria-label="FAQ area">
-              <div className="faq-card" aria-live="polite">
-                <div className="faq-title">FAQ</div>
-                <div className="faq-sub">Answers to common questions about the Kimmi Beans mini app</div>
+        <div className="faq-wrapper" role="region" aria-label="FAQ area">
+          <div className="faq-card" aria-live="polite">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#ff6f24" }}>🏆 Leaderboard-style FAQ</div>
+            </div>
 
-                <div className="faq-block">
-                  <div className="faq-q">
-                    <div className="faq-icon">🫘</div>
-                    <div><b>What is Kimmi Beans?</b></div>
-                  </div>
-                  <div className="faq-a">
-                    A fun Farcaster Mini App where you mint and grow your own Bean NFT.
-                  </div>
-                </div>
+            <div>
+              {faqList.map((item, idx) => (
+                <div className="faq-row" key={idx}>
+                  <div className="faq-left">{item.icon}</div>
 
-                <div className="faq-block">
-                  <div className="faq-q">
-                    <div className="faq-icon">⚡</div>
-                    <div><b>How do I earn XP & Beans?</b></div>
+                  <div className="faq-center">
+                    <div className="faq-q">{item.q}</div>
+                    <div className="faq-a">{item.a}</div>
                   </div>
-                  <div className="faq-a">
-                    Take care of your Bean every day by feeding, watering, and training it.
-                  </div>
-                </div>
 
-                <div className="faq-block">
-                  <div className="faq-q">
-                    <div className="faq-icon">📈</div>
-                    <div><b>Which action gives the best reward?</b></div>
-                  </div>
-                  <div className="faq-a">
-                    <b>Train &gt; Water &gt; Feed</b> — higher difficulty gives higher XP & Beans reward.
-                  </div>
+                  {/* right area intentionally left empty to mimic leaderboard balance; remove if unnecessary */}
+                  <div className="faq-right" aria-hidden="true"></div>
                 </div>
-
-                <div className="faq-block">
-                  <div className="faq-q">
-                    <div className="faq-icon">💰</div>
-                    <div><b>What are Beans used for?</b></div>
-                  </div>
-                  <div className="faq-a">
-                    Beans increase leaderboard ranking and unlock future rewards.
-                  </div>
-                </div>
-
-                <div className="faq-block">
-                  <div className="faq-q">
-                    <div className="faq-icon">🔒</div>
-                    <div><b>How many NFTs can I mint?</b></div>
-                  </div>
-                  <div className="faq-a">
-                    Only 1 NFT per wallet — your Bean is unique and yours forever.
-                  </div>
-                </div>
-
-                <div className="faq-block">
-                  <div className="faq-q">
-                    <div className="faq-icon">🔵</div>
-                    <div><b>Is this on Base?</b></div>
-                  </div>
-                  <div className="faq-a">
-                    Yes — all minting and actions run on the Base blockchain.
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
