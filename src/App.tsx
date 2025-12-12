@@ -370,15 +370,15 @@ export default function App() {
             </div>
           </div>
 
-          {/* <div style={{ display: "flex", gap: 10, marginTop: 14, justifyContent: "center" }}>
-            <button onClick={followUser} style={{ padding: "8px 12px", borderRadius: 12, background: "#ffb07a", border: "none", fontWeight: 700, cursor: "pointer" }}>
+          <div style={{ display: "flex", gap: 10, marginTop: 14, justifyContent: "center" }}>
+            {/* <button onClick={followUser} style={{ padding: "8px 12px", borderRadius: 12, background: "#ffb07a", border: "none", fontWeight: 700, cursor: "pointer" }}>
               ⭐ Follow this player
             </button>
 
             <button onClick={sendCompliment} style={{ padding: "8px 12px", borderRadius: 12, background: "#fff", border: "1px solid #eee", fontWeight: 700, cursor: "pointer" }}>
               💬 Send Compliment
-            </button>
-          </div> */}
+            </button> */}
+          </div>
 
           {meta?.tokenId && (
             <div style={{ marginTop: 12, fontSize: 13, color: "#333" }}>
