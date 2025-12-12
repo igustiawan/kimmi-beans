@@ -220,6 +220,8 @@ export default function App() {
 
   // safeSetTab simplified (no daily guard)
   function safeSetTab(t: Tab) {
+    // ensure any open viewer is closed when switching tabs
+    setViewBeanWallet(null);
     setTab(t);
   }
 
@@ -317,7 +319,21 @@ export default function App() {
         maxWidth: 480,
         margin: "0 auto",
       }}>
-        <button onClick={onClose} style={{ marginBottom: 12, background: "transparent", border: "none", color: "#666", cursor: "pointer" }}>← Back</button>
+
+        <button
+          onClick={onClose}
+          style={{
+            display: "inline-block",
+            marginBottom: 12,
+            background: "transparent",
+            border: "none",
+            color: "#ff7f2e",
+            cursor: "pointer",
+            fontWeight: 700
+          }}
+        >
+          ← Back
+        </button>
 
         <div style={{ background: "linear-gradient(180deg,#fff6f0,#ffe6ca)", borderRadius: 14, padding: 18, textAlign: "center" }}>
           <div style={{ width: 220, height: 220, margin: "0 auto", borderRadius: 14, background: "#0f1724", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -331,7 +347,7 @@ export default function App() {
           </div>
 
           <h2 style={{ marginTop: 12 }}>{player?.username || `${viewWallet.slice(0,6)}…${viewWallet.slice(-4)}`}</h2>
-          <p style={{ marginTop: 6, marginBottom: 6, color: "#444" }}>{viewWallet}</p>
+          {/* <p style={{ marginTop: 6, marginBottom: 6, color: "#444" }}>{viewWallet}</p> */}
 
           <div style={{ display: "flex", justifyContent: "space-around", marginTop: 12 }}>
             <div style={{ textAlign: "center" }}>
