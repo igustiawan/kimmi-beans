@@ -388,14 +388,68 @@ export default function App() {
 </button>
 
         <div style={{ background: "linear-gradient(180deg,#fff6f0,#ffe6ca)", borderRadius: 14, padding: 18, textAlign: "center" }}>
-          <div style={{ width: 220, height: 220, margin: "0 auto", borderRadius: 14, background: "#0f1724", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {loadingMeta ? (
-              <div>Loading image…</div>
-            ) : meta?.image ? (
-              <img src={meta.image} alt="bean" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 12 }} />
-            ) : (
-              <img src="/bean.gif" alt="bean" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 12 }} />
+          <div style={{ width: 220, height: 220, margin: "0 auto", borderRadius: 14, position: "relative", overflow: "hidden", background: "#0f1724", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {/* placeholder always present for stable layout */}
+            <img
+              src="/bean.gif"
+              alt="Bean placeholder"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                borderRadius: 12,
+                display: "block",
+                filter: loadingMeta ? "blur(6px) brightness(0.95)" : "none",
+                transition: "filter 240ms ease"
+              }}
+            />
+
+            {/* overlay actual image when meta?.image is set (preloaded via useEffect) */}
+            {meta?.image && (
+              <img
+                src={meta.image}
+                alt="Bean"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: 12,
+                  transition: "opacity 260ms ease",
+                  opacity: loadingMeta ? 0 : 1
+                }}
+              />
             )}
+
+            {/* subtle loading indicator while preloading */}
+            {loadingMeta && (
+              <div style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                pointerEvents: "none"
+              }}>
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  border: "4px solid rgba(0,0,0,0.10)",
+                  borderTopColor: "rgba(0,0,0,0.60)",
+                  boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
+                  animation: "km-spin 1s linear infinite"
+                }} />
+              </div>
+            )}
+
+            <style>{`
+              @keyframes km-spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
           </div>
 
           <h2 style={{ marginTop: 12 }}>{player?.username || `${viewWallet.slice(0,6)}…${viewWallet.slice(-4)}`}</h2>
