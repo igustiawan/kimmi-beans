@@ -651,7 +651,6 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(180deg, #ffb07a 0%, #ff9f52 100%);
 }
 
 /* Header (stays above the scroll area) */
