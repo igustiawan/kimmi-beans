@@ -49,6 +49,9 @@ export default function App() {
   const [mintImageLoading, setMintImageLoading] = useState<boolean>(false);
   const [preloadedMintImage, setPreloadedMintImage] = useState<string | null>(null);
 
+  const [pendingXp, setPendingXp] = useState<number | null>(null);
+  const [pendingBeans, setPendingBeans] = useState<number | null>(null);
+
   // LOAD LEADERBOARD (top 100) when rank tab is opened; also used for share
   useEffect(() => {
     if (tab !== "rank") return;
@@ -185,16 +188,37 @@ export default function App() {
     if (!headerStatsRaw) return;
 
     const stats = headerStatsRaw as StatsStruct;
+    const fetchedXp = Number(stats.xp);
+    const fetchedBeans = Number(stats.beans);
+    const fetchedLevel = Number(stats.level);
 
-    setLifetimeXp(Number(stats.xp));
-    setDailyBeans(Number(stats.beans));
-    setLifetimeLevel(Number(stats.level));
+    // If we have pending optimistic values, prefer the larger (or the pending)
+    const finalXp = pendingXp !== null ? Math.max(fetchedXp, pendingXp) : fetchedXp;
+    const finalBeans = pendingBeans !== null ? Math.max(fetchedBeans, pendingBeans) : fetchedBeans;
+
+    setLifetimeXp(finalXp);
+    setDailyBeans(finalBeans);
+    setLifetimeLevel(fetchedLevel);
+
+    // clear pending if we reconciled (we used pending to protect against overwrite)
+    setPendingXp(null);
+    setPendingBeans(null);
   }, [headerStatsRaw]);
 
   function handleStatsUpdate(newXp: number, newBeans: number) {
+    // mark as pending (optimistic)
+    setPendingXp(newXp);
+    setPendingBeans(newBeans);
+
+    // update UI immediately
     setLifetimeXp(newXp);
     setDailyBeans(newBeans);
-    refetchHeaderStats();
+
+    // schedule a gentle refetch in background (optional)
+    // but don't immediately overwrite local state — we'll merge on headerStatsRaw arrival
+    setTimeout(() => {
+      try { refetchHeaderStats(); } catch { /* ignore */ }
+    }, 1200); // small debounce so chain has time to process
   }
 
   // ============================================================
