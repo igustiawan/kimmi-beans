@@ -23,7 +23,9 @@
       "title": "Mint Your Daily Kimmi Bean!",
       "description": "Mint cute, unique beans daily. Collect your favorites and enjoy the world of Kimmi Beans!",
       "image": "https://xkimmi.fun/share/og-soft.png?v=3"
-    }
+    },
+
+    "webhookUrl": "https://xkimmi.fun/api/farcaster/webhook"
   },
 
   "accountAssociation": {
