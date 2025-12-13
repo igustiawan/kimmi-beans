@@ -1,51 +1,40 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import {
+  saveNotificationToken,
+  removeNotificationToken
+} from "/farcaster/kimmi-beans/api/farcaster/notificationStore";
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  // WAJIB POST
+
+export default async function handler(req: Request): Promise<Response> {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return new Response(
+      JSON.stringify({ error: "Method not allowed" }),
+      { status: 405 }
+    );
   }
 
-  const event = req.body;
+  const event = await req.json();
 
   console.log("[FARCASTER WEBHOOK]", JSON.stringify(event, null, 2));
 
-  /**
-   * event.event bisa:
-   * - miniapp_added
-   * - miniapp_removed
-   * - notifications_enabled
-   * - notifications_disabled
-   *
-   * event.fid => number
-   *
-   * event.notificationDetails = {
-   *   token: string,
-   *   url: string
-   * }
-   */
-
-  if (event?.notificationDetails) {
+  if (event.notificationDetails) {
     const { token, url } = event.notificationDetails;
     const fid = event.fid;
 
-    // TODO: simpan ke DB
+    await saveNotificationToken({
+      fid,
+      token,
+      url
+    });
+
     console.log("SAVE TOKEN", { fid, token, url });
   }
 
   if (
-    event?.event === "miniapp_removed" ||
-    event?.event === "notifications_disabled"
+    event.event === "miniapp_removed" ||
+    event.event === "notifications_disabled"
   ) {
-    const fid = event.fid;
-
-    // TODO: hapus token
-    console.log("REMOVE TOKEN FOR FID", fid);
+    await removeNotificationToken(event.fid);
   }
 
-  // ⚠️ WAJIB BALIK 200
-  return res.status(200).json({ ok: true });
+  return new Response(JSON.stringify({ ok: true }), { status: 200 });
 }
