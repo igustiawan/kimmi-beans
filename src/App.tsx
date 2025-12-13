@@ -50,6 +50,8 @@ export default function App() {
   const [preloadedMintImage, setPreloadedMintImage] = useState<string | null>(null);
 
   const hasMinted = Boolean(mintResult);
+  const [appLoading, setAppLoading] = useState(true);
+
   // LOAD LEADERBOARD (top 100) when rank tab is opened; also used for share
   useEffect(() => {
     if (tab !== "rank") return;
@@ -101,75 +103,103 @@ export default function App() {
   // Check minted NFT (with image preloading to avoid flash)
   // ============================================================
   useEffect(() => {
-    async function checkMinted() {
-      if (!wallet) {
-        // clear if wallet disconnected
-        setMintResult(null);
-        setPreloadedMintImage(null);
-        setMintImageLoading(false);
-        return;
-      }
+      let cancelled = false;
 
-      try {
-        const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
-        const data = await res.json();
-
-        if (data.minted) {
-          // if there's an image url, preload it first
-          const imgUrl = data.image || null;
-
-          if (imgUrl) {
-            setMintImageLoading(true);
-            setPreloadedMintImage(null);
-
-            // preload using Image()
-            const img = new Image();
-            img.src = imgUrl;
-            img.onload = () => {
-              // only set result after image loaded to avoid flash
-              setMintResult({
-                id: data.tokenId,
-                rarity: data.rarity,
-                image: imgUrl
-              });
-              setPreloadedMintImage(imgUrl);
-              setMintImageLoading(false);
-            };
-            img.onerror = () => {
-              // fallback: still set result but keep using default placeholder visually
-              console.warn("Failed to preload mint image", imgUrl);
-              setMintResult({
-                id: data.tokenId,
-                rarity: data.rarity,
-                image: imgUrl
-              });
-              setPreloadedMintImage(null);
-              setMintImageLoading(false);
-            };
-          } else {
-            // no image available
-            setMintResult({
-              id: data.tokenId,
-              rarity: data.rarity,
-              image: ""
-            });
-            setPreloadedMintImage(null);
-            setMintImageLoading(false);
-          }
-        } else {
+      async function checkMinted() {
+        // WALLET BELUM ADA → STOP LOADING
+        if (!wallet) {
           setMintResult(null);
           setPreloadedMintImage(null);
           setMintImageLoading(false);
+          setAppLoading(false);
+          return;
         }
-      } catch (err) {
-        console.error("checkMinted error", err);
-        setMintResult(null);
-        setPreloadedMintImage(null);
-        setMintImageLoading(false);
+
+        // ⛔ START GLOBAL LOADING
+        setAppLoading(true);
+
+        try {
+          const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
+          const data = await res.json();
+
+          if (cancelled) return;
+
+          if (data.minted) {
+            const imgUrl = data.image || null;
+
+            if (imgUrl) {
+              setMintImageLoading(true);
+              setPreloadedMintImage(null);
+
+              const img = new Image();
+              img.src = imgUrl;
+
+              img.onload = () => {
+                if (cancelled) return;
+
+                setMintResult({
+                  id: data.tokenId,
+                  rarity: data.rarity,
+                  image: imgUrl
+                });
+                setPreloadedMintImage(imgUrl);
+                setMintImageLoading(false);
+
+                // ✅ END GLOBAL LOADING (FINAL STATE READY)
+                setAppLoading(false);
+              };
+
+              img.onerror = () => {
+                if (cancelled) return;
+
+                setMintResult({
+                  id: data.tokenId,
+                  rarity: data.rarity,
+                  image: imgUrl
+                });
+                setPreloadedMintImage(null);
+                setMintImageLoading(false);
+
+                // ✅ END GLOBAL LOADING
+                setAppLoading(false);
+              };
+            } else {
+              // minted tapi tidak ada image
+              setMintResult({
+                id: data.tokenId,
+                rarity: data.rarity,
+                image: ""
+              });
+              setPreloadedMintImage(null);
+              setMintImageLoading(false);
+
+              setAppLoading(false);
+            }
+          } else {
+            // belum mint
+            setMintResult(null);
+            setPreloadedMintImage(null);
+            setMintImageLoading(false);
+
+            setAppLoading(false);
+          }
+        } catch (err) {
+          console.error("checkMinted error", err);
+
+          setMintResult(null);
+          setPreloadedMintImage(null);
+          setMintImageLoading(false);
+
+          setAppLoading(false);
+        }
       }
-    }
-    checkMinted();
-  }, [wallet]);
+
+      checkMinted();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [wallet]);
 
   // ============================================================
   // Auto-load stats for header directly from CONTRACT
@@ -225,6 +255,45 @@ export default function App() {
     const interval = setInterval(loadSupply, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  function FullscreenLoading() {
+    return (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "linear-gradient(180deg,#fff6f0,#ffe6ca)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 9999
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: "50%",
+              border: "5px solid rgba(0,0,0,0.15)",
+              borderTopColor: "#ff9548",
+              animation: "km-spin 1s linear infinite"
+            }}
+          />
+          <div style={{ marginTop: 14, fontSize: 13, opacity: 0.65 }}>
+            Loading Kimmi Beans…
+          </div>
+
+          <style>{`
+            @keyframes km-spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      </div>
+    );
+  }
 
   // ============================================================
   // Share to Cast helper (used by leaderboard small share button)
@@ -900,61 +969,117 @@ export default function App() {
   // ============================================================
   // UI Layout
   // ============================================================
-  return (
-    <div className="app">
-      {/* HEADER */}
-      <div className="header" role="banner">
-        <div className="header-inner">
-          <div className="header-left">
-            <img src={pfp || "/icon.png"} className="user-pfp" alt="pfp" />
-            <span className="app-name">{displayName || "Kimmi"}</span>
-          </div>
+    return (
+      <>
+        {appLoading ? (
+          // =========================
+          // FULLSCREEN GLOBAL LOADING
+          // =========================
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "linear-gradient(180deg,#fff6f0,#ffe6ca)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 9999
+            }}
+          >
+            <div style={{ textAlign: "center" }}>
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: "50%",
+                  border: "5px solid rgba(0,0,0,0.15)",
+                  borderTopColor: "#ff9548",
+                  animation: "km-spin 1s linear infinite"
+                }}
+              />
+              <div style={{ marginTop: 14, fontSize: 13, opacity: 0.65 }}>
+                Loading Kimmi Beans…
+              </div>
 
-          <div className="header-right">
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <span className="header-badge">🫘 {dailyBeans}</span>
-              <span className="header-badge">⭐ {lifetimeXp}</span>
-              {wallet && <span className="wallet-badge">{wallet.slice(0, 6)}…{wallet.slice(-4)}</span>}
+              <style>{`
+                @keyframes km-spin {
+                  from { transform: rotate(0deg); }
+                  to { transform: rotate(360deg); }
+                }
+              `}</style>
             </div>
           </div>
-        </div>
-      </div>
+        ) : (
+          // =========================
+          // REAL APP (NO GLITCH)
+          // =========================
+          <div className="app">
+            {/* HEADER */}
+            <div className="header" role="banner">
+              <div className="header-inner">
+                <div className="header-left">
+                  <img src={pfp || "/icon.png"} className="user-pfp" alt="pfp" />
+                  <span className="app-name">{displayName || "Kimmi"}</span>
+                </div>
 
-      {/* CONTENT */}
-      <div className={`content-bg ${tab === "rank" ? "leader-mode" : ""}`}>
-        {renderContent()}
-      </div>
-
-      <div id="toast-root"></div>
-
-      {/* NAV */}
-      <div className="bottom-nav">
-          {!hasMinted && (
-            <div
-              className={`nav-item ${tab === "mint" ? "active" : ""}`}
-              onClick={() => safeSetTab("mint")}
-            >
-              🫘<span>Mint</span>
+                <div className="header-right">
+                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <span className="header-badge">🫘 {dailyBeans}</span>
+                    <span className="header-badge">⭐ {lifetimeXp}</span>
+                    {wallet && (
+                      <span className="wallet-badge">
+                        {wallet.slice(0, 6)}…{wallet.slice(-4)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
 
-        <div className={`nav-item ${tab === "bean" ? "active" : ""}`} onClick={() => safeSetTab("bean")}>
-          🌱<span>My Bean</span>
-        </div>
+            {/* CONTENT */}
+            <div className={`content-bg ${tab === "rank" ? "leader-mode" : ""}`}>
+              {renderContent()}
+            </div>
 
-        <div className={`nav-item ${tab === "rank" ? "active" : ""}`} onClick={() => safeSetTab("rank")}>
-          🏆<span>Rank</span>
-        </div>
+            <div id="toast-root"></div>
 
-        <div className={`nav-item ${tab === "faq" ? "active" : ""}`} onClick={() => safeSetTab("faq")}>
-          ❓<span>FAQ</span>
-        </div>
-      </div>
+            {/* NAV */}
+            <div className="bottom-nav">
+              {!hasMinted && (
+                <div
+                  className={`nav-item ${tab === "mint" ? "active" : ""}`}
+                  onClick={() => safeSetTab("mint")}
+                >
+                  🫘<span>Mint</span>
+                </div>
+              )}
 
-      {/* small toast */}
-      {toast && (
-        <div className="toast-popup">{toast}</div>
-      )}
-    </div>
-  );
+              <div
+                className={`nav-item ${tab === "bean" ? "active" : ""}`}
+                onClick={() => safeSetTab("bean")}
+              >
+                🌱<span>My Bean</span>
+              </div>
+
+              <div
+                className={`nav-item ${tab === "rank" ? "active" : ""}`}
+                onClick={() => safeSetTab("rank")}
+              >
+                🏆<span>Rank</span>
+              </div>
+
+              <div
+                className={`nav-item ${tab === "faq" ? "active" : ""}`}
+                onClick={() => safeSetTab("faq")}
+              >
+                ❓<span>FAQ</span>
+              </div>
+            </div>
+
+            {/* small toast */}
+            {toast && <div className="toast-popup">{toast}</div>}
+          </div>
+        )}
+      </>
+    );
 }
