@@ -50,6 +50,9 @@ export default function App() {
   const [preloadedMintImage, setPreloadedMintImage] = useState<string | null>(null);
 
   const hasMinted = Boolean(mintResult);
+
+  const [appLoading, setAppLoading] = useState(true);
+
   // LOAD LEADERBOARD (top 100) when rank tab is opened; also used for share
   useEffect(() => {
     if (tab !== "rank") return;
@@ -103,30 +106,28 @@ export default function App() {
   useEffect(() => {
     async function checkMinted() {
       if (!wallet) {
-        // clear if wallet disconnected
         setMintResult(null);
         setPreloadedMintImage(null);
         setMintImageLoading(false);
+        setAppLoading(false); // ⬅️ selesai
         return;
       }
+
+      setAppLoading(true); // ⬅️ mulai loading GLOBAL
 
       try {
         const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
         const data = await res.json();
 
         if (data.minted) {
-          // if there's an image url, preload it first
           const imgUrl = data.image || null;
 
           if (imgUrl) {
             setMintImageLoading(true);
-            setPreloadedMintImage(null);
 
-            // preload using Image()
             const img = new Image();
             img.src = imgUrl;
             img.onload = () => {
-              // only set result after image loaded to avoid flash
               setMintResult({
                 id: data.tokenId,
                 rarity: data.rarity,
@@ -134,40 +135,37 @@ export default function App() {
               });
               setPreloadedMintImage(imgUrl);
               setMintImageLoading(false);
+              setAppLoading(false); // ⬅️ DONE setelah image siap
             };
+
             img.onerror = () => {
-              // fallback: still set result but keep using default placeholder visually
-              console.warn("Failed to preload mint image", imgUrl);
               setMintResult({
                 id: data.tokenId,
                 rarity: data.rarity,
                 image: imgUrl
               });
-              setPreloadedMintImage(null);
               setMintImageLoading(false);
+              setAppLoading(false);
             };
           } else {
-            // no image available
             setMintResult({
               id: data.tokenId,
               rarity: data.rarity,
               image: ""
             });
-            setPreloadedMintImage(null);
-            setMintImageLoading(false);
+            setAppLoading(false);
           }
         } else {
           setMintResult(null);
-          setPreloadedMintImage(null);
-          setMintImageLoading(false);
+          setAppLoading(false);
         }
       } catch (err) {
-        console.error("checkMinted error", err);
+        console.error(err);
         setMintResult(null);
-        setPreloadedMintImage(null);
-        setMintImageLoading(false);
+        setAppLoading(false);
       }
     }
+
     checkMinted();
   }, [wallet]);
 
@@ -547,10 +545,35 @@ export default function App() {
   // RENDER content per tab
   // ============================================================
   function renderContent() {
-    // If viewing a bean, render the viewer (takes precedence)
-    if (viewBeanWallet) {
-      return <BeanViewer wallet={viewBeanWallet} onClose={() => setViewBeanWallet(null)} />;
-    }
+      if (appLoading) {
+          return (
+            <div className="card" style={{ textAlign: "center", padding: 40 }}>
+              <div style={{ fontSize: 28 }}>🌱</div>
+              <p style={{ marginTop: 12, opacity: 0.7 }}>
+                Preparing your Bean…
+              </p>
+
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  margin: "18px auto 0",
+                  borderRadius: "50%",
+                  border: "4px solid rgba(0,0,0,0.15)",
+                  borderTopColor: "#ff9548",
+                  animation: "km-spin 1s linear infinite"
+                }}
+              />
+
+              <style>{`
+                @keyframes km-spin {
+                  from { transform: rotate(0deg); }
+                  to { transform: rotate(360deg); }
+                }
+              `}</style>
+            </div>
+          );
+        }
 
     // MINT
     if (tab === "mint") {
