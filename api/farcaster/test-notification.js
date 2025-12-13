@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   const payload = {
     notificationId: `test-${Date.now()}`,
     title: "Kimmi Beans 🌱",
-    body: "This is a test notification",
+    body: "This is a test notification for your bean!",
     targetUrl: "https://xkimmi.fun",
     tokens: [data.token]
   };
@@ -28,5 +28,6 @@ export default async function handler(req, res) {
   });
 
   const json = await resp.json();
+
   return res.status(200).json(json);
 }
