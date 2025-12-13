@@ -10,6 +10,7 @@
     "@farcaster/miniapp-sdk": "^0.2.1",
     "@farcaster/miniapp-wagmi-connector": "^1.1.0",
     "@supabase/supabase-js": "^2.86.2",
+    "@vercel/node": "^5.5.15",
     "@wagmi/connectors": "^2.7.0",
     "@wagmi/core": "^2.22.1",
     "ethers": "^6.16.0",
