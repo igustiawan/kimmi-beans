@@ -1,7 +1,9 @@
+// api/farcaster/test-notification.ts
+
 import { getNotificationToken } from "./notificationStore";
 
 export default async function handler(): Promise<Response> {
-  const fid = 1; // TEST ONLY
+  const fid = 299929; // GANTI DENGAN FID KAMU
 
   const data = await getNotificationToken(fid);
 

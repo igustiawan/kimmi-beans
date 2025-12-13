@@ -1,3 +1,5 @@
+// api/farcaster/webhook.ts
+
 import {
   saveNotificationToken,
   removeNotificationToken
@@ -5,10 +7,7 @@ import {
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== "POST") {
-    return new Response(
-      JSON.stringify({ error: "Method not allowed" }),
-      { status: 405 }
-    );
+    return new Response("Method not allowed", { status: 405 });
   }
 
   const event = await req.json();
@@ -20,8 +19,7 @@ export default async function handler(req: Request): Promise<Response> {
     const fid = event.fid;
 
     await saveNotificationToken({ fid, token, url });
-
-    console.log("SAVE TOKEN", { fid, token });
+    console.log("SAVE TOKEN", { fid });
   }
 
   if (
