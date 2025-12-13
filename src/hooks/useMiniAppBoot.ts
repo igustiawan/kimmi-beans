@@ -1,153 +1,119 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
 
-type MintResult = {
-  id: number;
-  rarity: string;
-  image: string;
-};
-
 export function useMiniAppBoot(wallet?: `0x${string}`) {
+  const readyCalled = useRef(false);
+
   const [booting, setBooting] = useState(true);
 
   const [userFID, setUserFID] = useState<number | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [pfp, setPfp] = useState<string | null>(null);
 
-  const [mintResult, setMintResult] = useState<MintResult | null>(null);
+  const [mintResult, setMintResult] = useState<any>(null);
   const [mintImageLoading, setMintImageLoading] = useState(false);
   const [preloadedMintImage, setPreloadedMintImage] = useState<string | null>(null);
 
   const hasMinted = Boolean(mintResult);
 
-  // ============================================================
-  // 1️⃣ FARCASTER READY — HARUS PALING CEPAT
-  // ============================================================
+  // ✅ SDK READY — GUARDED
   useEffect(() => {
-    (sdk.actions as any).addMiniApp?.();
-    sdk.actions.ready();
+    if (readyCalled.current) return;
+    readyCalled.current = true;
+
+    try {
+      (sdk.actions as any).addMiniApp?.();
+      sdk.actions.ready();
+    } catch {
+      console.warn("sdk.ready already called");
+    }
   }, []);
 
-  // ============================================================
-  // 2️⃣ LOAD FID / USER INFO
-  // ============================================================
+  // load FID
   useEffect(() => {
     let cancelled = false;
 
-    async function loadFID() {
+    (async () => {
       try {
         const ctx = await sdk.context;
-        const user = ctx?.user;
-        if (!user || cancelled) return;
+        if (!ctx?.user || cancelled) return;
 
-        setUserFID(user.fid);
-        setDisplayName(user.displayName || null);
-        setPfp(user.pfpUrl || null);
+        setUserFID(ctx.user.fid);
+        setDisplayName(ctx.user.displayName || null);
+        setPfp(ctx.user.pfpUrl || null);
       } catch {}
-    }
+    })();
 
-    loadFID();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // ============================================================
-  // 3️⃣ CHECK MINTED + PRELOAD IMAGE
-  // ============================================================
+  // check minted
   useEffect(() => {
     let cancelled = false;
 
-    async function checkMinted() {
-      if (!wallet) {
-        setMintResult(null);
-        setPreloadedMintImage(null);
-        setMintImageLoading(false);
-        return;
-      }
+    async function run() {
+        if (!wallet) {
+            setMintResult(null);
+            setPreloadedMintImage(null);
+            setMintImageLoading(false);
+            return;
+        }
 
       try {
         const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
         const data = await res.json();
-
         if (!data.minted || cancelled) {
           setMintResult(null);
-          setPreloadedMintImage(null);
-          setMintImageLoading(false);
           return;
         }
 
-        const imgUrl = data.image || "";
-
-        if (!imgUrl) {
-          setMintResult({
-            id: data.tokenId,
-            rarity: data.rarity,
-            image: ""
-          });
-          setMintImageLoading(false);
-          return;
-        }
-
+        const img = data.image ? new Image() : null;
+        if (img) {
         setMintImageLoading(true);
-        setPreloadedMintImage(null);
-
-        const img = new Image();
-        img.src = imgUrl;
+        img.src = data.image;
 
         img.onload = () => {
-          if (cancelled) return;
-          setMintResult({
-            id: data.tokenId,
-            rarity: data.rarity,
-            image: imgUrl
-          });
-          setPreloadedMintImage(imgUrl);
-          setMintImageLoading(false);
+            if (cancelled) return;
+            setMintResult(data);
+            setPreloadedMintImage(data.image);
+            setMintImageLoading(false);
         };
 
         img.onerror = () => {
-          if (cancelled) return;
-          setMintResult({
-            id: data.tokenId,
-            rarity: data.rarity,
-            image: imgUrl
-          });
-          setMintImageLoading(false);
+            if (cancelled) return;
+            setMintResult(data);
+            setPreloadedMintImage(null);
+            setMintImageLoading(false);
         };
-      } catch {
-        if (!cancelled) {
-          setMintResult(null);
-          setMintImageLoading(false);
         }
-      }
+        else {
+          setMintResult(data);
+        }
+      } catch {}
     }
 
-    checkMinted();
+    run();
     return () => {
       cancelled = true;
     };
   }, [wallet]);
 
-  // ============================================================
-  // 4️⃣ BOOT COMPLETE
-  // ============================================================
-  useEffect(() => {
-    // tunggu 1 tick supaya wagmi & state settle
-    const t = setTimeout(() => setBooting(false), 0);
-    return () => clearTimeout(t);
-  }, []);
+  // finish boot
+    useEffect(() => {
+    if (userFID !== null && wallet !== undefined) {
+        setBooting(false);
+    }
+    }, [userFID, wallet]);
 
   return {
     booting,
-
     userFID,
     displayName,
     pfp,
-
     hasMinted,
     mintResult,
-
     mintImageLoading,
     preloadedMintImage,
   };

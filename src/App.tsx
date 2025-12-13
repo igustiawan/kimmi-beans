@@ -5,21 +5,12 @@ import { useAccount, useConnect, useReadContract } from "wagmi";
 import MintButton from "./components/MintButton";
 import EvolutionPanel from "./components/EvolutionPanel";
 import careAbi from "./abi/kimmiBeansCare.json";
+import { useMiniAppBoot } from "./hooks/useMiniAppBoot";
 
 type Tab = "mint" | "bean" | "rank" | "faq";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("mint");
-
-  const [userFID, setUserFID] = useState<number | null>(null);
-  const [displayName, setDisplayName] = useState<string | null>(null);
-  const [pfp, setPfp] = useState<string | null>(null);
-
-  const [mintResult, setMintResult] = useState<{
-    id: number;
-    rarity: string;
-    image: string;
-  } | null>(null);
 
   const [soldOut, setSoldOut] = useState(false);
   const [totalMinted, setTotalMinted] = useState(0);
@@ -28,6 +19,28 @@ export default function App() {
 
   const { isConnected, address: wallet } = useAccount();
   const { connect, connectors } = useConnect();
+
+   const {
+      booting,
+      userFID,
+      displayName,
+      pfp,
+      hasMinted,
+      mintResult,
+      mintImageLoading,
+      preloadedMintImage,
+    } = useMiniAppBoot(wallet);
+
+    if (booting) {
+      return (
+        <div className="boot-screen">
+          <img src="/bean.gif" width={96} />
+          <div style={{ marginTop: 12, opacity: 0.7 }}>
+            Growing your Bean…
+          </div>
+        </div>
+      );
+    }
 
   const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
 
@@ -46,11 +59,7 @@ export default function App() {
   // small toast root (keperluan ringan)
   const [toast, setToast] = useState<string | null>(null);
 
-  const [mintImageLoading, setMintImageLoading] = useState<boolean>(false);
-  const [preloadedMintImage, setPreloadedMintImage] = useState<string | null>(null);
 
-  
-  const hasMinted = Boolean(mintResult);
   // LOAD LEADERBOARD (top 100) when rank tab is opened; also used for share
   useEffect(() => {
     if (tab !== "rank") return;
@@ -77,100 +86,6 @@ export default function App() {
       setTab("bean");
     }
   }, [hasMinted, tab]);
-
-
-  // ============================================================
-  // Load FID (still read for display, but no dev-only logic)
-  // ============================================================
-  useEffect(() => {
-    // attempt to open add-miniapp if supported (safe optional)
-    (sdk.actions as any).addMiniApp?.();
-    sdk.actions.ready();
-    async function loadFID() {
-      const ctx = await sdk.context;
-      const user = ctx?.user;
-      if (user) {
-        setUserFID(user.fid);
-        setDisplayName(user.displayName || null);
-        setPfp(user.pfpUrl || null);
-      }
-    }
-    loadFID();
-  }, []);
-
-  // ============================================================
-  // Check minted NFT (with image preloading to avoid flash)
-  // ============================================================
-  useEffect(() => {
-    async function checkMinted() {
-      if (!wallet) {
-        // clear if wallet disconnected
-        setMintResult(null);
-        setPreloadedMintImage(null);
-        setMintImageLoading(false);
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
-        const data = await res.json();
-
-        if (data.minted) {
-          // if there's an image url, preload it first
-          const imgUrl = data.image || null;
-
-          if (imgUrl) {
-            setMintImageLoading(true);
-            setPreloadedMintImage(null);
-
-            // preload using Image()
-            const img = new Image();
-            img.src = imgUrl;
-            img.onload = () => {
-              // only set result after image loaded to avoid flash
-              setMintResult({
-                id: data.tokenId,
-                rarity: data.rarity,
-                image: imgUrl
-              });
-              setPreloadedMintImage(imgUrl);
-              setMintImageLoading(false);
-            };
-            img.onerror = () => {
-              // fallback: still set result but keep using default placeholder visually
-              console.warn("Failed to preload mint image", imgUrl);
-              setMintResult({
-                id: data.tokenId,
-                rarity: data.rarity,
-                image: imgUrl
-              });
-              setPreloadedMintImage(null);
-              setMintImageLoading(false);
-            };
-          } else {
-            // no image available
-            setMintResult({
-              id: data.tokenId,
-              rarity: data.rarity,
-              image: ""
-            });
-            setPreloadedMintImage(null);
-            setMintImageLoading(false);
-          }
-        } else {
-          setMintResult(null);
-          setPreloadedMintImage(null);
-          setMintImageLoading(false);
-        }
-      } catch (err) {
-        console.error("checkMinted error", err);
-        setMintResult(null);
-        setPreloadedMintImage(null);
-        setMintImageLoading(false);
-      }
-    }
-    checkMinted();
-  }, [wallet]);
 
   // ============================================================
   // Auto-load stats for header directly from CONTRACT
@@ -648,12 +563,7 @@ export default function App() {
                     fid={userFID ?? 0}
                     username={displayName || ""}
                       onMintSuccess={(d) => {
-                        setMintResult(d);
                         setTotalMinted((prev) => prev + 1);
-
-                        setTimeout(() => {
-                          setTab("bean");
-                        }, 600);
                       }}
                   />
                 )
