@@ -972,9 +972,6 @@ export default function App() {
     return (
       <>
         {appLoading ? (
-          // =========================
-          // FULLSCREEN GLOBAL LOADING
-          // =========================
           <div
             style={{
               position: "fixed",
@@ -986,19 +983,36 @@ export default function App() {
               zIndex: 9999
             }}
           >
-            <div style={{ textAlign: "center" }}>
+            {/* optical center wrapper */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                transform: "translateY(-6px)" // ⬅️ naik dikit biar pas di mata
+              }}
+            >
               <div
                 style={{
-                  width: 52,
-                  height: 52,
+                  width: 36,            // ⬅️ LEBIH KECIL
+                  height: 36,
                   borderRadius: "50%",
-                  border: "5px solid rgba(0,0,0,0.15)",
+                  border: "3px solid rgba(0,0,0,0.15)",
                   borderTopColor: "#ff9548",
-                  animation: "km-spin 1s linear infinite"
+                  animation: "km-spin 0.9s linear infinite"
                 }}
               />
-              <div style={{ marginTop: 14, fontSize: 13, opacity: 0.65 }}>
-                Loading Kimmi Beans…
+
+              <div
+                style={{
+                  marginTop: 10,
+                  fontSize: 12,
+                  opacity: 0.6,
+                  fontWeight: 500,
+                  letterSpacing: "0.2px"
+                }}
+              >
+                Loading…
               </div>
 
               <style>{`
