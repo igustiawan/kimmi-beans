@@ -1,33 +1,44 @@
 import { supabase } from "../_supabase";
 
+function decodePayload(payload) {
+  return JSON.parse(
+    Buffer.from(payload, "base64").toString("utf-8")
+  );
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { payload } = req.body;
+  const envelope = req.body;
 
-  if (!payload) {
-    console.log("NO PAYLOAD");
-    return res.status(200).json({ ok: true });
+  console.log("[FARCASTER RAW]", envelope);
+
+  if (!envelope.payload) {
+    return res.status(400).json({ error: "Missing payload" });
   }
 
-  // 🔑 DECODE BASE64 PAYLOAD
-  const decoded = JSON.parse(
-    Buffer.from(payload, "base64").toString("utf8")
-  );
+  const event = decodePayload(envelope.payload);
 
-  console.log("[FARCASTER EVENT]", decoded);
+  console.log("[FARCASTER EVENT]", event);
 
-  const fid = decoded.fid;
-  const eventType = decoded.event;
+  /**
+   * event = {
+   *   event: "frame_added" | "frame_removed" | "notifications_enabled" | ...
+   *   fid: number
+   *   notificationDetails?: { token, url }
+   * }
+   */
 
-  // SAVE TOKEN
-  if (decoded.notificationDetails) {
-    const { token, url } = decoded.notificationDetails;
+  const fid = event.fid;
+
+  // ✅ SAVE TOKEN
+  if (event.notificationDetails) {
+    const { token, url } = event.notificationDetails;
 
     await supabase
-      .from("farcaster_notification") // ✅ sesuai tabel kamu
+      .from("farcaster_notification") // ⛔ jangan ganti nama
       .upsert(
         {
           fid,
@@ -38,20 +49,20 @@ export default async function handler(req, res) {
         { onConflict: "fid" }
       );
 
-    console.log("TOKEN SAVED", fid);
+    console.log("✅ TOKEN SAVED", fid);
   }
 
-  // REMOVE TOKEN
+  // ✅ REMOVE TOKEN
   if (
-    eventType === "miniapp_removed" ||
-    eventType === "notifications_disabled"
+    event.event === "frame_removed" ||
+    event.event === "notifications_disabled"
   ) {
     await supabase
-      .from("farcaster_notification") // ⛔ tadi kamu salah tabel
+      .from("farcaster_notification")
       .delete()
       .eq("fid", fid);
 
-    console.log("TOKEN REMOVED", fid);
+    console.log("🗑️ TOKEN REMOVED", fid);
   }
 
   return res.status(200).json({ ok: true });
