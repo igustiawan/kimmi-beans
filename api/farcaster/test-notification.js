@@ -1,12 +1,12 @@
 import { supabase } from "../_supabase";
 
 export default async function handler(req, res) {
-  const TEST_FID = 299929; // atau FID kamu sendiri
+  const fid = 1; // TEST FID
 
   const { data, error } = await supabase
-    .from("farcaster_notification_tokens")
+    .from("farcaster_notifications")
     .select("*")
-    .eq("fid", TEST_FID)
+    .eq("fid", fid)
     .single();
 
   if (!data) {
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   const payload = {
     notificationId: `test-${Date.now()}`,
     title: "Kimmi Beans 🌱",
-    body: "This is a test notification for your bean!",
+    body: "Your bean misses you!",
     targetUrl: "https://xkimmi.fun",
     tokens: [data.token]
   };

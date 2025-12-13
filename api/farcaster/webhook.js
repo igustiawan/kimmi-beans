@@ -9,13 +9,14 @@ export default async function handler(req, res) {
 
   console.log("[FARCASTER WEBHOOK]", JSON.stringify(event, null, 2));
 
-  // SAVE TOKEN
-  if (event.notificationDetails) {
+  const fid = event.fid;
+
+  // SAVE / UPDATE TOKEN
+  if (event.notificationDetails && fid) {
     const { token, url } = event.notificationDetails;
-    const fid = event.fid;
 
     const { error } = await supabase
-      .from("farcaster_notification_tokens")
+      .from("farcaster_notifications")
       .upsert({
         fid,
         token,
@@ -24,7 +25,10 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error("SUPABASE SAVE ERROR", error);
+      return res.status(500).json({ error: "db error" });
     }
+
+    console.log("TOKEN SAVED", { fid, token });
   }
 
   // REMOVE TOKEN
@@ -33,9 +37,11 @@ export default async function handler(req, res) {
     event.event === "notifications_disabled"
   ) {
     await supabase
-      .from("farcaster_notification_tokens")
+      .from("farcaster_notifications")
       .delete()
-      .eq("fid", event.fid);
+      .eq("fid", fid);
+
+    console.log("TOKEN REMOVED", fid);
   }
 
   return res.status(200).json({ ok: true });
