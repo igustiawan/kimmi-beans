@@ -800,3 +800,10 @@ html, body {
   .faq-q { font-size: 14px; }
   .faq-a { font-size: 12px; }
 }
+
+.app-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
