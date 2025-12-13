@@ -50,7 +50,9 @@ export default function App() {
   const [preloadedMintImage, setPreloadedMintImage] = useState<string | null>(null);
 
   const hasMinted = Boolean(mintResult);
-  
+
+  const [mintStatusLoaded, setMintStatusLoaded] = useState(false);
+
   // LOAD LEADERBOARD (top 100) when rank tab is opened; also used for share
   useEffect(() => {
     if (tab !== "rank") return;
@@ -106,6 +108,7 @@ export default function App() {
       if (!wallet) {
         // clear if wallet disconnected
         setMintResult(null);
+        setMintStatusLoaded(true); // 👈
         setPreloadedMintImage(null);
         setMintImageLoading(false);
         return;
@@ -167,6 +170,8 @@ export default function App() {
         setMintResult(null);
         setPreloadedMintImage(null);
         setMintImageLoading(false);
+      } finally {
+        setMintStatusLoaded(true); // 👈 PENTING
       }
     }
     checkMinted();
@@ -929,28 +934,31 @@ export default function App() {
       <div id="toast-root"></div>
 
       {/* NAV */}
-      <div className="bottom-nav">
+      {mintStatusLoaded && (
+        <div className="bottom-nav">
           {!hasMinted && (
-            <div
-              className={`nav-item ${tab === "mint" ? "active" : ""}`}
-              onClick={() => safeSetTab("mint")}
-            >
+            <div className={`nav-item ${tab === "mint" ? "active" : ""}`}
+                onClick={() => safeSetTab("mint")}>
               🫘<span>Mint</span>
             </div>
           )}
 
-        <div className={`nav-item ${tab === "bean" ? "active" : ""}`} onClick={() => safeSetTab("bean")}>
-          🌱<span>My Bean</span>
-        </div>
+          <div className={`nav-item ${tab === "bean" ? "active" : ""}`}
+              onClick={() => safeSetTab("bean")}>
+            🌱<span>My Bean</span>
+          </div>
 
-        <div className={`nav-item ${tab === "rank" ? "active" : ""}`} onClick={() => safeSetTab("rank")}>
-          🏆<span>Rank</span>
-        </div>
+          <div className={`nav-item ${tab === "rank" ? "active" : ""}`}
+              onClick={() => safeSetTab("rank")}>
+            🏆<span>Rank</span>
+          </div>
 
-        <div className={`nav-item ${tab === "faq" ? "active" : ""}`} onClick={() => safeSetTab("faq")}>
-          ❓<span>FAQ</span>
+          <div className={`nav-item ${tab === "faq" ? "active" : ""}`}
+              onClick={() => safeSetTab("faq")}>
+            ❓<span>FAQ</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* small toast */}
       {toast && (
