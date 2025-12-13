@@ -50,7 +50,105 @@ export default function App() {
   const [preloadedMintImage, setPreloadedMintImage] = useState<string | null>(null);
 
   const hasMinted = Boolean(mintResult);
-  const [appReady, setAppReady] = useState(false);
+  const [booting, setBooting] = useState(true);
+
+   // 2️⃣ BOOT EFFECT — TARO DI SINI
+    useEffect(() => {
+    let cancelled = false;
+
+    async function boot() {
+      // tunggu wagmi settle
+      await new Promise((r) => setTimeout(r, 0));
+
+      if (!wallet) {
+        setMintResult(null);
+        setPreloadedMintImage(null);
+        setMintImageLoading(false);
+        setBooting(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
+        const data = await res.json();
+
+        if (!cancelled && data.minted) {
+          const imgUrl = data.image || "";
+
+          if (imgUrl) {
+            setMintImageLoading(true);
+            setPreloadedMintImage(null);
+
+            const img = new Image();
+            img.src = imgUrl;
+
+            img.onload = () => {
+              if (cancelled) return;
+
+              setMintResult({
+                id: data.tokenId,
+                rarity: data.rarity,
+                image: imgUrl
+              });
+
+              setPreloadedMintImage(imgUrl);
+              setMintImageLoading(false);
+              setBooting(false);
+            };
+
+            img.onerror = () => {
+              if (cancelled) return;
+
+              setMintResult({
+                id: data.tokenId,
+                rarity: data.rarity,
+                image: imgUrl
+              });
+
+              setPreloadedMintImage(null);
+              setMintImageLoading(false);
+              setBooting(false);
+            };
+          } else {
+            setMintResult({
+              id: data.tokenId,
+              rarity: data.rarity,
+              image: ""
+            });
+            setBooting(false);
+          }
+        } else {
+          setMintResult(null);
+          setPreloadedMintImage(null);
+          setMintImageLoading(false);
+          setBooting(false);
+        }
+      } catch (err) {
+        console.error("boot checkMinted error", err);
+        setMintResult(null);
+        setPreloadedMintImage(null);
+        setMintImageLoading(false);
+        setBooting(false);
+      }
+    }
+
+    boot();
+    return () => {
+      cancelled = true;
+    };
+  }, [wallet]);
+
+  // 3️⃣ HARD GATE — TARO DI SINI
+  if (booting) {
+    return (
+      <div className="boot-screen">
+        <img src="/bean.gif" width={96} />
+        <div style={{ marginTop: 12, opacity: 0.7 }}>
+          Growing your Bean…
+        </div>
+      </div>
+    );
+  }
 
   // LOAD LEADERBOARD (top 100) when rank tab is opened; also used for share
   useEffect(() => {
@@ -98,83 +196,6 @@ export default function App() {
     }
     loadFID();
   }, []);
-
-  // ============================================================
-  // Check minted NFT (with image preloading to avoid flash)
-  // ============================================================
-  useEffect(() => {
-    async function checkMinted() {
-      if (!wallet) {
-        // clear if wallet disconnected
-        setMintResult(null);
-        setAppReady(true);
-        setPreloadedMintImage(null);
-        setMintImageLoading(false);
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
-        const data = await res.json();
-
-        if (data.minted) {
-          // if there's an image url, preload it first
-          const imgUrl = data.image || null;
-
-          if (imgUrl) {
-            setMintImageLoading(true);
-            setPreloadedMintImage(null);
-
-            // preload using Image()
-            const img = new Image();
-            img.src = imgUrl;
-            img.onload = () => {
-              // only set result after image loaded to avoid flash
-              setMintResult({
-                id: data.tokenId,
-                rarity: data.rarity,
-                image: imgUrl
-              });
-              setPreloadedMintImage(imgUrl);
-              setMintImageLoading(false);
-            };
-            img.onerror = () => {
-              // fallback: still set result but keep using default placeholder visually
-              console.warn("Failed to preload mint image", imgUrl);
-              setMintResult({
-                id: data.tokenId,
-                rarity: data.rarity,
-                image: imgUrl
-              });
-              setPreloadedMintImage(null);
-              setMintImageLoading(false);
-            };
-          } else {
-            // no image available
-            setMintResult({
-              id: data.tokenId,
-              rarity: data.rarity,
-              image: ""
-            });
-            setPreloadedMintImage(null);
-            setMintImageLoading(false);
-          }
-        } else {
-          setMintResult(null);
-          setPreloadedMintImage(null);
-          setMintImageLoading(false);
-        }
-      } catch (err) {
-        console.error("checkMinted error", err);
-        setMintResult(null);
-        setPreloadedMintImage(null);
-        setMintImageLoading(false);
-      }finally {
-        setAppReady(true); // 👈 INI KUNCI
-      }
-    }
-    checkMinted();
-  }, [wallet]);
 
   // ============================================================
   // Auto-load stats for header directly from CONTRACT
@@ -900,15 +921,6 @@ export default function App() {
 
     // default fallback
     return null;
-  }
-
-  // ⛔ HARD GATE — TARUH DI SINI
-  if (!appReady) {
-    return (
-      <div className="app-loading">
-        <div className="spinner" />
-      </div>
-    );
   }
 
   // ============================================================
