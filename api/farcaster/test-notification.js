@@ -1,16 +1,14 @@
 import { supabase } from "../_supabase";
 
 export default async function handler(req, res) {
-  const fid = 299929; // TEST FID
-
   const { data, error } = await supabase
     .from("farcaster_notification")
     .select("*")
-    .eq("fid", fid)
+    .limit(1)
     .single();
 
   if (!data) {
-    return res.status(404).json({ error: "No token for fid" });
+    return res.status(404).json({ error: "No token found" });
   }
 
   const payload = {

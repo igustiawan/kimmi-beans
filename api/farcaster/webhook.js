@@ -1,8 +1,8 @@
 import { supabase } from "../_supabase";
 
-function decodeBase64Json(str) {
+function decodePayload(payload) {
   return JSON.parse(
-    Buffer.from(str, "base64").toString("utf-8")
+    Buffer.from(payload, "base64").toString("utf-8")
   );
 }
 
@@ -15,38 +15,27 @@ export default async function handler(req, res) {
 
   console.log("[FARCASTER RAW]", envelope);
 
-  // ✅ decode header & payload
-  const header = decodeBase64Json(envelope.header);
-  const event = decodeBase64Json(envelope.payload);
-
-  console.log("[FARCASTER HEADER]", header);
-  console.log("[FARCASTER EVENT]", event);
-
-  // 🔑 FID ADA DI HEADER
-  const fid = header.fid;
-
-  if (!fid) {
-    console.error("❌ FID NOT FOUND");
-    return res.status(400).json({ error: "Missing fid" });
+  if (!envelope.payload) {
+    return res.status(400).json({ error: "Missing payload" });
   }
+
+  const event = decodePayload(envelope.payload);
+
+  console.log("[FARCASTER EVENT]", event);
 
   // ✅ SAVE TOKEN
   if (event.notificationDetails) {
     const { token, url } = event.notificationDetails;
 
     await supabase
-      .from("farcaster_notification") // JANGAN GANTI
-      .upsert(
-        {
-          fid,
-          token,
-          url,
-          updated_at: new Date()
-        },
-        { onConflict: "fid" }
-      );
+      .from("farcaster_notification")
+      .upsert({
+        token,
+        url,
+        updated_at: new Date()
+      });
 
-    console.log("✅ TOKEN SAVED", fid);
+    console.log("✅ TOKEN SAVED", token);
   }
 
   // ✅ REMOVE TOKEN
@@ -54,12 +43,14 @@ export default async function handler(req, res) {
     event.event === "frame_removed" ||
     event.event === "notifications_disabled"
   ) {
+    // kalau remove → hapus SEMUA token client ini
+    // (aman karena 1 user = 1 token di Warpcast)
     await supabase
       .from("farcaster_notification")
       .delete()
-      .eq("fid", fid);
+      .neq("token", "");
 
-    console.log("🗑️ TOKEN REMOVED", fid);
+    console.log("🗑️ TOKENS REMOVED");
   }
 
   return res.status(200).json({ ok: true });
