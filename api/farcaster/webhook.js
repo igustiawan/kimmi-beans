@@ -1,8 +1,8 @@
 import { supabase } from "../_supabase";
 
-function decodeBase64Json(str) {
+function decodePayload(payload) {
   return JSON.parse(
-    Buffer.from(str, "base64").toString("utf-8")
+    Buffer.from(payload, "base64").toString("utf-8")
   );
 }
 
@@ -15,38 +15,36 @@ export default async function handler(req, res) {
 
   console.log("[FARCASTER RAW]", envelope);
 
-  // ✅ decode header & payload
-  const header = decodeBase64Json(envelope.header);
-  const event = decodeBase64Json(envelope.payload);
+  if (!envelope.payload) {
+    return res.status(400).json({ error: "Missing payload" });
+  }
 
-  console.log("[FARCASTER HEADER]", header);
+  const event = decodePayload(envelope.payload);
+
   console.log("[FARCASTER EVENT]", event);
 
-  // 🔑 FID ADA DI HEADER
-  const fid = header.fid;
-
-  if (!fid) {
-    console.error("❌ FID NOT FOUND");
-    return res.status(400).json({ error: "Missing fid" });
-  }
+  const fid = event.fid ?? null;
 
   // ✅ SAVE TOKEN
   if (event.notificationDetails) {
     const { token, url } = event.notificationDetails;
 
-    await supabase
-      .from("farcaster_notification_tokens") // JANGAN GANTI
+    const { error } = await supabase
+      .from("farcaster_notification_tokens") // ✅ FIXED
       .upsert(
         {
           fid,
           token,
-          url,
-          updated_at: new Date()
+          url
         },
         { onConflict: "fid" }
       );
 
-    console.log("✅ TOKEN SAVED", fid);
+    if (error) {
+      console.error("❌ SUPABASE ERROR", error);
+    } else {
+      console.log("✅ TOKEN SAVED", fid);
+    }
   }
 
   // ✅ REMOVE TOKEN
@@ -55,7 +53,7 @@ export default async function handler(req, res) {
     event.event === "notifications_disabled"
   ) {
     await supabase
-      .from("farcaster_notification_tokens")
+      .from("farcaster_notification_tokens") // ✅ FIXED
       .delete()
       .eq("fid", fid);
 

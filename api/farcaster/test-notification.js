@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     .eq("fid", fid)
     .single();
 
-  if (!data) {
+  if (error || !data) {
     return res.status(404).json({ error: "No token for fid" });
   }
 
