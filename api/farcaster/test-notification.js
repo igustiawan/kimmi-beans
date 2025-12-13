@@ -1,10 +1,10 @@
 import { supabase } from "../_supabase";
 
 export default async function handler(req, res) {
-  const fid = 1; // TEST FID
+  const fid = 299929; // TEST FID
 
   const { data, error } = await supabase
-    .from("farcaster_notifications")
+    .from("farcaster_notification")
     .select("*")
     .eq("fid", fid)
     .single();
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   const payload = {
     notificationId: `test-${Date.now()}`,
     title: "Kimmi Beans 🌱",
-    body: "Your bean misses you!",
+    body: "This is a test notification",
     targetUrl: "https://xkimmi.fun",
     tokens: [data.token]
   };
@@ -28,6 +28,5 @@ export default async function handler(req, res) {
   });
 
   const json = await resp.json();
-
   return res.status(200).json(json);
 }

@@ -1,43 +1,40 @@
 import { supabase } from "../_supabase";
 
+function decodePayload(base64) {
+  const json = Buffer.from(base64, "base64").toString("utf8");
+  return JSON.parse(json);
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const event = req.body;
+  const { payload } = req.body;
+  const data = decodePayload(payload);
 
-  console.log("[FARCASTER WEBHOOK]", JSON.stringify(event, null, 2));
+  console.log("[DECODED EVENT]", data);
 
-  const fid = event.fid;
+  const { event, notificationDetails } = data;
+  const fid = data.fid; // kadang ada, kadang tidak (Warpcast inconsistency)
 
-  // SAVE / UPDATE TOKEN
-  if (event.notificationDetails && fid) {
-    const { token, url } = event.notificationDetails;
+  if (notificationDetails) {
+    const { token, url } = notificationDetails;
 
-    const { error } = await supabase
-      .from("farcaster_notifications")
+    await supabase
+      .from("farcaster_notification") // 
       .upsert({
         fid,
         token,
         url
       });
 
-    if (error) {
-      console.error("SUPABASE SAVE ERROR", error);
-      return res.status(500).json({ error: "db error" });
-    }
-
     console.log("TOKEN SAVED", { fid, token });
   }
 
-  // REMOVE TOKEN
-  if (
-    event.event === "miniapp_removed" ||
-    event.event === "notifications_disabled"
-  ) {
+  if (event === "miniapp_removed" || event === "notifications_disabled") {
     await supabase
-      .from("farcaster_notifications")
+      .from("farcaster_notification")
       .delete()
       .eq("fid", fid);
 
