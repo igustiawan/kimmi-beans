@@ -1,4 +1,4 @@
-type NotificationToken = {
+export type NotificationToken = {
   fid: number;
   token: string;
   url: string;

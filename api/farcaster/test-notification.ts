@@ -1,8 +1,7 @@
-import { getNotificationToken 
-    } from "/farcaster/kimmi-beans/api/farcaster/notificationStore";
+import { getNotificationToken } from "./notificationStore";
 
 export default async function handler(): Promise<Response> {
-  const fid = 1; // TEST
+  const fid = 1; // TEST ONLY
 
   const data = await getNotificationToken(fid);
 

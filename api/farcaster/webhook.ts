@@ -1,8 +1,7 @@
 import {
   saveNotificationToken,
   removeNotificationToken
-} from "/farcaster/kimmi-beans/api/farcaster/notificationStore";
-
+} from "./notificationStore";
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== "POST") {
@@ -20,13 +19,9 @@ export default async function handler(req: Request): Promise<Response> {
     const { token, url } = event.notificationDetails;
     const fid = event.fid;
 
-    await saveNotificationToken({
-      fid,
-      token,
-      url
-    });
+    await saveNotificationToken({ fid, token, url });
 
-    console.log("SAVE TOKEN", { fid, token, url });
+    console.log("SAVE TOKEN", { fid, token });
   }
 
   if (
