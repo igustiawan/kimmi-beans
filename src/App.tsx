@@ -49,6 +49,8 @@ export default function App() {
   const [mintImageLoading, setMintImageLoading] = useState<boolean>(false);
   const [preloadedMintImage, setPreloadedMintImage] = useState<string | null>(null);
 
+  const hasMinted = Boolean(mintResult);
+  
   // LOAD LEADERBOARD (top 100) when rank tab is opened; also used for share
   useEffect(() => {
     if (tab !== "rank") return;
@@ -69,6 +71,13 @@ export default function App() {
 
     loadRank();
   }, [tab]);
+
+  useEffect(() => {
+    if (hasMinted && tab === "mint") {
+      setTab("bean");
+    }
+  }, [hasMinted, tab]);
+
 
   // ============================================================
   // Load FID (still read for display, but no dev-only logic)
@@ -288,7 +297,7 @@ export default function App() {
       `I just minted a Kimmi Bean! 🌱`,
       `Token #${mintResult.id} — Rarity: ${mintResult.rarity}`,
       "",
-      `Come mint your own at the Kimmi Beans mini-app!`
+      `Come mint your own at the Kimmi Beans mini-app! @kimmi`
     ].map(sanitizeLine).filter(Boolean);
 
     const finalText = lines.join("\n");
@@ -638,11 +647,14 @@ export default function App() {
                     userAddress={wallet}
                     fid={userFID ?? 0}
                     username={displayName || ""}
-                    onMintSuccess={(d) => {
-                      setMintResult(d);
-                      setTotalMinted((prev) => prev + 1);
-                      setTimeout(() => window.location.reload(), 400);
-                    }}
+                      onMintSuccess={(d) => {
+                        setMintResult(d);
+                        setTotalMinted((prev) => prev + 1);
+
+                        setTimeout(() => {
+                          setTab("bean");
+                        }, 600);
+                      }}
                   />
                 )
               )}
@@ -685,15 +697,26 @@ export default function App() {
           );
         }
 
-      if (!mintResult) {
-        return (
-          <div className="card">
-            <div className="title">My Bean</div>
-            <p>You don’t own a Kimmi Bean NFT yet.</p>
-            <button className="main-btn" onClick={() => setTab("mint")}>Mint Now 🫘</button>
-          </div>
-        );
-      }
+        if (!mintResult) {
+          return (
+            <div className="card">
+              <div className="title">My Bean</div>
+
+              <p style={{ opacity: 0.75 }}>
+                🌱 Your journey starts with a single seed.
+              </p>
+
+              <p style={{ fontSize: 14, opacity: 0.8 }}>
+                Mint your first Bean to unlock daily actions,
+                levels, and the leaderboard.
+              </p>
+
+              <button className="main-btn" onClick={() => setTab("mint")}>
+                Plant My First Bean 🫘
+              </button>
+            </div>
+          );
+        }
 
       return (
         <EvolutionPanel
@@ -907,9 +930,14 @@ export default function App() {
 
       {/* NAV */}
       <div className="bottom-nav">
-        <div className={`nav-item ${tab === "mint" ? "active" : ""}`} onClick={() => safeSetTab("mint")}>
-          🫘<span>Mint</span>
-        </div>
+          {!hasMinted && (
+            <div
+              className={`nav-item ${tab === "mint" ? "active" : ""}`}
+              onClick={() => safeSetTab("mint")}
+            >
+              🫘<span>Mint</span>
+            </div>
+          )}
 
         <div className={`nav-item ${tab === "bean" ? "active" : ""}`} onClick={() => safeSetTab("bean")}>
           🌱<span>My Bean</span>
