@@ -1,17 +1,16 @@
-// api/farcaster/test-notification.ts
+import { supabase } from "../_supabase";
 
-import { getNotificationToken } from "./notificationStore";
+export default async function handler(req, res) {
+  const TEST_FID = 299929; // atau FID kamu sendiri
 
-export default async function handler(): Promise<Response> {
-  const fid = 299929; // GANTI DENGAN FID KAMU
-
-  const data = await getNotificationToken(fid);
+  const { data, error } = await supabase
+    .from("farcaster_notification_tokens")
+    .select("*")
+    .eq("fid", TEST_FID)
+    .single();
 
   if (!data) {
-    return new Response(
-      JSON.stringify({ error: "No token for fid" }),
-      { status: 404 }
-    );
+    return res.status(404).json({ error: "No token for fid" });
   }
 
   const payload = {
@@ -30,5 +29,5 @@ export default async function handler(): Promise<Response> {
 
   const json = await resp.json();
 
-  return new Response(JSON.stringify(json), { status: 200 });
+  return res.status(200).json(json);
 }
