@@ -112,35 +112,48 @@ export default function MyIDPanel({
       </div>
 
       {/* STATS GRID */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 12,
-          marginTop: 14
-        }}
-      >
-        <StatBox label="Active Days" value={stats?.activeDays} loading={loading} />
-        <StatBox
-          label="Wallet Age"
-          value={
-            stats?.walletAgeDays !== undefined && stats?.walletAgeDays !== null
+        {loading ? (
+        <div
+            style={{
+            marginTop: 20,
+            textAlign: "center",
+            fontSize: 13,
+            opacity: 0.6
+            }}
+        >
+            Fetching onchain identity…
+        </div>
+        ) : (
+        <div
+            style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 12,
+            marginTop: 14
+            }}
+        >
+            <StatBox label="Active Days" value={stats?.activeDays} loading={false} />
+            <StatBox
+            label="Wallet Age"
+            value={
+                stats?.walletAgeDays !== undefined
                 ? `${stats.walletAgeDays} days`
                 : undefined
             }
-          loading={loading}
-        />
-        <StatBox label="Total TXs" value={stats?.totalTx} loading={loading} />
-        <StatBox
-          label="Best Streak"
-          value={
-            stats?.bestStreak !== undefined && stats?.bestStreak !== null
+            loading={false}
+            />
+            <StatBox label="Total TXs" value={stats?.totalTx} loading={false} />
+            <StatBox
+            label="Best Streak"
+            value={
+                stats?.bestStreak !== undefined
                 ? `🔥 ${stats.bestStreak} days`
                 : undefined
             }
-          loading={loading}
-        />
-      </div>
+            loading={false}
+            />
+        </div>
+        )}
 
       {/* FOOTNOTE */}
       <div
