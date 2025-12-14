@@ -112,48 +112,75 @@ export default function MyIDPanel({
       </div>
 
       {/* STATS GRID */}
-        {loading ? (
         <div
             style={{
-            marginTop: 20,
-            textAlign: "center",
-            fontSize: 13,
-            opacity: 0.6
+                position: "relative",
+                marginTop: 14,
+                minHeight: 110 // jaga tinggi biar gak lompat
             }}
-        >
-            Fetching onchain identity…
-        </div>
-        ) : (
-        <div
+            >
+            {loading && (
+                <div
+                style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    pointerEvents: "none"
+                }}
+                >
+                <div
+                    style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    border: "3px solid rgba(0,0,0,0.15)",
+                    borderTopColor: "#ff9548",
+                    animation: "km-spin 0.9s linear infinite"
+                    }}
+                />
+                </div>
+            )}
+
+        {!loading && (
+            <div
             style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 12,
-            marginTop: 14
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12
             }}
-        >
+            >
             <StatBox label="Active Days" value={stats?.activeDays} loading={false} />
             <StatBox
-            label="Wallet Age"
-            value={
+                label="Wallet Age"
+                value={
                 stats?.walletAgeDays !== undefined
-                ? `${stats.walletAgeDays} days`
-                : undefined
-            }
-            loading={false}
+                    ? `${stats.walletAgeDays} days`
+                    : undefined
+                }
+                loading={false}
             />
             <StatBox label="Total TXs" value={stats?.totalTx} loading={false} />
             <StatBox
-            label="Best Streak"
-            value={
+                label="Best Streak"
+                value={
                 stats?.bestStreak !== undefined
-                ? `🔥 ${stats.bestStreak} days`
-                : undefined
-            }
-            loading={false}
+                    ? `🔥 ${stats.bestStreak} days`
+                    : undefined
+                }
+                loading={false}
             />
-        </div>
+            </div>
         )}
+
+        <style>{`
+            @keyframes km-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+            }
+        `}</style>
+
 
         <div
         style={{
@@ -180,16 +207,17 @@ export default function MyIDPanel({
         </div>
 
       {/* FOOTNOTE */}
-      <div
-        style={{
-          marginTop: 14,
-          fontSize: 11,
-          opacity: 0.55,
-          textAlign: "center"
-        }}
-      >
-        Identity data powered by Farcaster & Base
-      </div>
+        <div
+            style={{
+            marginTop: 14,
+            fontSize: 11,
+            opacity: 0.55,
+            textAlign: "center"
+            }}
+        >
+            Identity data powered by Farcaster & Base
+        </div>
+        </div>
     </div>
   );
 }
