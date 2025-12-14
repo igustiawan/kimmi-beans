@@ -5,8 +5,9 @@ import { useAccount, useConnect, useReadContract } from "wagmi";
 import MintButton from "./components/MintButton";
 import EvolutionPanel from "./components/EvolutionPanel";
 import careAbi from "./abi/kimmiBeansCare.json";
+import MyIDPanel from "./components/MyIDPanel";
 
-type Tab = "mint" | "bean" | "rank" | "faq";
+type Tab = "mint" | "bean" | "rank" | "faq" | "id";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("mint");
@@ -962,6 +963,17 @@ export default function App() {
       );
     }
 
+    if (tab === "id") {
+        return (
+          <MyIDPanel
+            fid={userFID}
+            displayName={displayName}
+            pfp={pfp}
+            wallet={wallet ?? null}
+          />
+        );
+      }
+
     // default fallback
     return null;
   }
@@ -1073,6 +1085,13 @@ export default function App() {
                 onClick={() => safeSetTab("bean")}
               >
                 🌱<span>My Bean</span>
+              </div>
+
+              <div
+                className={`nav-item ${tab === "id" ? "active" : ""}`}
+                onClick={() => safeSetTab("id")}
+              >
+                🆔<span>My ID</span>
               </div>
 
               <div
