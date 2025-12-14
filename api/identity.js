@@ -1,110 +1,134 @@
-// ===============================
-// 2️⃣ BASE RPC ACTIVITY (FREE)
-// ===============================
-const RPC_URL = process.env.BASE_RPC_URL || "https://mainnet.base.org";
+// /api/identity.js
+export default async function handler(req, res) {
+  try {
+    const { wallet, fid } = req.query;
 
-try {
-  // get latest block
-  const latestBlockRes = await fetch(RPC_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "eth_blockNumber",
-      params: []
-    })
-  });
+    if (!wallet) {
+      return res.status(400).json({ error: "wallet required" });
+    }
 
-  const latestBlockHex = (await latestBlockRes.json()).result;
-  const latestBlock = parseInt(latestBlockHex, 16);
+    const result = {
+      neynarScore: null,
+      activeDays: 0,
+      walletAgeDays: null,
+      totalTx: 0,
+      bestStreak: 0
+    };
 
-  const BLOCK_RANGE = 5000; // safe range
-  const fromBlock = Math.max(latestBlock - BLOCK_RANGE, 0);
+    // ===============================
+    // 1️⃣ NEYNAR SCORE
+    // ===============================
+    if (fid && process.env.NEYNAR_API_KEY) {
+      try {
+        const neynarRes = await fetch(
+          `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
+          {
+            headers: {
+              accept: "application/json",
+              api_key: process.env.NEYNAR_API_KEY
+            }
+          }
+        );
 
-  // get tx logs involving wallet
-  const logsRes = await fetch(RPC_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 2,
-      method: "eth_getLogs",
-      params: [{
-        fromBlock: "0x" + fromBlock.toString(16),
-        toBlock: "latest",
-        address: wallet
-      }]
-    })
-  });
+        if (neynarRes.ok) {
+          const json = await neynarRes.json();
+          const user = json.users?.[0];
+          if (user?.score !== undefined) {
+            result.neynarScore = user.score;
+          }
+        }
+      } catch (_) {}
+    }
 
-  const logs = (await logsRes.json()).result || [];
+    // ===============================
+    // 2️⃣ ALCHEMY BASE ACTIVITY
+    // ===============================
+    const ALCHEMY_URL =
+      `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_BASE_API_KEY}`;
 
-  result.totalTx = logs.length;
+    let pageKey = null;
+    const daySet = new Set();
+    const dayList = [];
 
-  if (logs.length === 0) {
+    do {
+      const rpcRes = await fetch(ALCHEMY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "alchemy_getAssetTransfers",
+          params: [{
+            fromBlock: "0x0",
+            toBlock: "latest",
+            fromAddress: wallet,
+            category: ["external", "erc20", "erc721", "erc1155"],
+            withMetadata: true,
+            maxCount: "0x3e8", // 1000
+            pageKey
+          }]
+        })
+      });
+
+      const json = await rpcRes.json();
+      const transfers = json?.result?.transfers || [];
+
+      result.totalTx += transfers.length;
+
+      for (const tx of transfers) {
+        if (!tx.metadata?.blockTimestamp) continue;
+
+        const day = new Date(tx.metadata.blockTimestamp)
+          .toISOString()
+          .slice(0, 10);
+
+        if (!daySet.has(day)) {
+          daySet.add(day);
+          dayList.push(day);
+        }
+      }
+
+      pageKey = json?.result?.pageKey || null;
+    } while (pageKey && dayList.length < 365); // hard cap safety
+
+    if (dayList.length === 0) {
+      return res.status(200).json(result);
+    }
+
+    // ===============================
+    // 3️⃣ METRICS
+    // ===============================
+    dayList.sort();
+    result.activeDays = dayList.length;
+
+    const firstDayTs = new Date(dayList[0]).getTime();
+    result.walletAgeDays = Math.floor(
+      (Date.now() - firstDayTs) / (1000 * 60 * 60 * 24)
+    );
+
+    let best = 1;
+    let current = 1;
+
+    for (let i = 1; i < dayList.length; i++) {
+      const prev = new Date(dayList[i - 1]);
+      const curr = new Date(dayList[i]);
+
+      const diff =
+        (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+
+      if (diff === 1) {
+        current++;
+        best = Math.max(best, current);
+      } else {
+        current = 1;
+      }
+    }
+
+    result.bestStreak = best;
+
     return res.status(200).json(result);
+  } catch (err) {
+    console.error("identity api error", err);
+    return res.status(500).json({ error: "internal_error" });
   }
-
-  const daySet = new Set();
-  const dayList = [];
-
-  for (const log of logs) {
-    if (!log.blockNumber) continue;
-
-    const blockRes = await fetch(RPC_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 3,
-        method: "eth_getBlockByNumber",
-        params: [log.blockNumber, false]
-      })
-    });
-
-    const block = (await blockRes.json()).result;
-    if (!block?.timestamp) continue;
-
-    const day = new Date(parseInt(block.timestamp, 16) * 1000)
-      .toISOString()
-      .slice(0, 10);
-
-    if (!daySet.has(day)) {
-      daySet.add(day);
-      dayList.push(day);
-    }
-  }
-
-  dayList.sort();
-  result.activeDays = dayList.length;
-
-  const firstDayTs = new Date(dayList[0]).getTime();
-  result.walletAgeDays = Math.floor(
-    (Date.now() - firstDayTs) / (1000 * 60 * 60 * 24)
-  );
-
-  // best streak
-  let best = 1;
-  let current = 1;
-
-  for (let i = 1; i < dayList.length; i++) {
-    const prev = new Date(dayList[i - 1]);
-    const curr = new Date(dayList[i]);
-
-    const diff =
-      (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
-
-    if (diff === 1) {
-      current++;
-      best = Math.max(best, current);
-    } else {
-      current = 1;
-    }
-  }
-
-  result.bestStreak = best;
-
-} catch (err) {
-  console.warn("Base RPC activity error", err);
 }
