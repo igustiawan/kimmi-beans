@@ -34,9 +34,7 @@ export default function MyIDPanel({
 
     async function loadIdentity() {
       try {
-        const res = await fetch(
-          `/api/identity?wallet=${wallet}&fid=${fid}`
-        );
+        const res = await fetch(`/api/identity?wallet=${wallet}&fid=${fid}`);
         const data = await res.json();
         if (!mounted) return;
 
@@ -47,8 +45,7 @@ export default function MyIDPanel({
           totalTx: data.totalTx,
           bestStreak: data.bestStreak
         });
-      } catch (err) {
-        console.warn("Failed to load identity", err);
+      } catch {
         if (mounted) setStats(null);
       } finally {
         if (mounted) setLoading(false);
@@ -66,6 +63,7 @@ export default function MyIDPanel({
       {/* HEADER CARD */}
       <div
         style={{
+          position: "relative",
           background: "linear-gradient(180deg,#fff6f0,#ffe6ca)",
           borderRadius: 16,
           padding: 18,
@@ -73,6 +71,32 @@ export default function MyIDPanel({
           boxShadow: "0 6px 18px rgba(0,0,0,0.06)"
         }}
       >
+        {loading && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(255,255,255,0.65)",
+              borderRadius: 16,
+              zIndex: 2
+            }}
+          >
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                border: "3px solid rgba(0,0,0,0.15)",
+                borderTopColor: "#ff9548",
+                animation: "km-spin 0.9s linear infinite"
+              }}
+            />
+          </div>
+        )}
+
         <img
           src={pfp || "/icon.png"}
           alt="pfp"
@@ -95,14 +119,8 @@ export default function MyIDPanel({
           </div>
         )}
 
-        {stats?.neynarScore !== undefined && (
-          <div
-            style={{
-              marginTop: 10,
-              fontSize: 13,
-              fontWeight: 700
-            }}
-          >
+        {!loading && stats?.neynarScore !== undefined && (
+          <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700 }}>
             Neynar Score{" "}
             <span style={{ color: "#ff7f2e" }}>
               {stats.neynarScore.toFixed(2)}
@@ -111,130 +129,90 @@ export default function MyIDPanel({
         )}
       </div>
 
-      {/* STATS GRID */}
-      <div
-        style={{
-            position: "relative",
-            marginTop: 14,
-            minHeight: 170 // cukup untuk spinner + konten
-        }}
-        >
-        {/* LOADING SPINNER */}
-        {loading && (
-            <div
+      {/* CONTENT */}
+      {!loading && (
+        <>
+          <div
             style={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                pointerEvents: "none"
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+              marginTop: 14
             }}
-            >
-            <div
-                style={{
-                width: 28,
-                height: 28,
-                borderRadius: "50%",
-                border: "3px solid rgba(0,0,0,0.15)",
-                borderTopColor: "#ff9548",
-                animation: "km-spin 0.9s linear infinite"
-                }}
+          >
+            <StatBox label="Active Days" value={stats?.activeDays} />
+            <StatBox
+              label="Wallet Age"
+              value={
+                stats?.walletAgeDays !== undefined
+                  ? `${stats.walletAgeDays} days`
+                  : undefined
+              }
             />
-            </div>
-        )}
+            <StatBox label="Total TXs" value={stats?.totalTx} />
+            <StatBox
+              label="Best Streak"
+              value={
+                stats?.bestStreak !== undefined
+                  ? `🔥 ${stats.bestStreak} days`
+                  : undefined
+              }
+            />
+          </div>
 
-        {/* CONTENT AFTER LOADED */}
-        {!loading && (
-            <>
-            {/* STATS GRID */}
+          <div
+            style={{
+              marginTop: 16,
+              display: "flex",
+              justifyContent: "center"
+            }}
+          >
             <div
-                style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 12
-                }}
+              style={{
+                padding: "10px 18px",
+                borderRadius: 999,
+                background: "linear-gradient(90deg,#ffd7b8,#ffb07a)",
+                color: "#7a3a10",
+                fontWeight: 700,
+                fontSize: 13,
+                letterSpacing: "0.2px",
+                boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+                opacity: 0.85
+              }}
             >
-                <StatBox label="Active Days" value={stats?.activeDays} loading={false} />
-                <StatBox
-                label="Wallet Age"
-                value={
-                    stats?.walletAgeDays !== undefined
-                    ? `${stats.walletAgeDays} days`
-                    : undefined
-                }
-                loading={false}
-                />
-                <StatBox label="Total TXs" value={stats?.totalTx} loading={false} />
-                <StatBox
-                label="Best Streak"
-                value={
-                    stats?.bestStreak !== undefined
-                    ? `🔥 ${stats.bestStreak} days`
-                    : undefined
-                }
-                loading={false}
-                />
+              🆔 Minting ID — Soon
             </div>
+          </div>
 
-            {/* CTA */}
-            <div
-                style={{
-                marginTop: 16,
-                display: "flex",
-                justifyContent: "center"
-                }}
-            >
-                <div
-                style={{
-                    padding: "10px 18px",
-                    borderRadius: 999,
-                    background: "linear-gradient(90deg,#ffd7b8,#ffb07a)",
-                    color: "#7a3a10",
-                    fontWeight: 700,
-                    fontSize: 13,
-                    letterSpacing: "0.2px",
-                    boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-                    opacity: 0.85
-                }}
-                >
-                🆔 Minting ID — Soon
-                </div>
-            </div>
+          <div
+            style={{
+              marginTop: 14,
+              fontSize: 11,
+              opacity: 0.55,
+              textAlign: "center"
+            }}
+          >
+            Identity data powered by Farcaster & Base
+          </div>
+        </>
+      )}
 
-            {/* FOOTNOTE */}
-            <div
-                style={{
-                marginTop: 14,
-                fontSize: 11,
-                opacity: 0.55,
-                textAlign: "center"
-                }}
-            >
-                Identity data powered by Farcaster & Base
-            </div>
-            </>
-        )}
-
-        <style>{`
-            @keyframes km-spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-            }
-        `}</style>
-        </div>
+      <style>{`
+        @keyframes km-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
 
 function StatBox({
   label,
-  value,
-  loading
+  value
 }: {
   label: string;
   value?: string | number;
-  loading: boolean;
 }) {
   return (
     <div
@@ -248,7 +226,7 @@ function StatBox({
     >
       <div style={{ fontSize: 12, opacity: 0.6 }}>{label}</div>
       <div style={{ fontWeight: 800, fontSize: 16, marginTop: 4 }}>
-        {loading ? "—" : value ?? "—"}
+        {value ?? "—"}
       </div>
     </div>
   );
