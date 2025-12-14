@@ -155,6 +155,30 @@ export default function MyIDPanel({
         </div>
         )}
 
+        <div
+        style={{
+            marginTop: 16,
+            display: "flex",
+            justifyContent: "center"
+        }}
+        >
+        <div
+            style={{
+            padding: "10px 18px",
+            borderRadius: 999,
+            background: "linear-gradient(90deg,#ffd7b8,#ffb07a)",
+            color: "#7a3a10",
+            fontWeight: 700,
+            fontSize: 13,
+            letterSpacing: "0.2px",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+            opacity: 0.85
+            }}
+        >
+            🆔 Minting ID — Soon
+        </div>
+        </div>
+
       {/* FOOTNOTE */}
       <div
         style={{
