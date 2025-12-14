@@ -1,44 +1,77 @@
 // ===============================
-// 2️⃣ BASESCAN: TX HISTORY (FIXED)
+// 2️⃣ BASE RPC ACTIVITY (FREE)
 // ===============================
+const RPC_URL = process.env.BASE_RPC_URL || "https://mainnet.base.org";
+
 try {
-  const url =
-    `https://api.basescan.org/api` +
-    `?module=account&action=txlist` +
-    `&address=${wallet}` +
-    `&startblock=0&endblock=99999999` +
-    `&page=1&offset=1000&sort=asc` +
-    `&apikey=${process.env.BASESCAN_API_KEY}`;
+  // get latest block
+  const latestBlockRes = await fetch(RPC_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "eth_blockNumber",
+      params: []
+    })
+  });
 
-  const txRes = await fetch(url);
-  const txJson = await txRes.json();
+  const latestBlockHex = (await latestBlockRes.json()).result;
+  const latestBlock = parseInt(latestBlockHex, 16);
 
-  // ❗ BaseScan success check
-  if (txJson.status !== "1" || !Array.isArray(txJson.result)) {
-    console.warn("BaseScan empty or error:", txJson.message);
+  const BLOCK_RANGE = 5000; // safe range
+  const fromBlock = Math.max(latestBlock - BLOCK_RANGE, 0);
+
+  // get tx logs involving wallet
+  const logsRes = await fetch(RPC_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "eth_getLogs",
+      params: [{
+        fromBlock: "0x" + fromBlock.toString(16),
+        toBlock: "latest",
+        address: wallet
+      }]
+    })
+  });
+
+  const logs = (await logsRes.json()).result || [];
+
+  result.totalTx = logs.length;
+
+  if (logs.length === 0) {
     return res.status(200).json(result);
   }
 
-  const txs = txJson.result;
-
-  result.totalTx = txs.length;
-
-  if (txs.length === 0) {
-    return res.status(200).json(result);
-  }
-
-  // ===============================
-  // 3️⃣ GROUP BY DAY (UTC)
-  // ===============================
+  const daySet = new Set();
   const dayList = [];
 
-  for (const tx of txs) {
-    if (!tx.timeStamp) continue;
-    const day = new Date(Number(tx.timeStamp) * 1000)
+  for (const log of logs) {
+    if (!log.blockNumber) continue;
+
+    const blockRes = await fetch(RPC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 3,
+        method: "eth_getBlockByNumber",
+        params: [log.blockNumber, false]
+      })
+    });
+
+    const block = (await blockRes.json()).result;
+    if (!block?.timestamp) continue;
+
+    const day = new Date(parseInt(block.timestamp, 16) * 1000)
       .toISOString()
       .slice(0, 10);
 
-    if (!dayList.includes(day)) {
+    if (!daySet.has(day)) {
+      daySet.add(day);
       dayList.push(day);
     }
   }
@@ -46,17 +79,12 @@ try {
   dayList.sort();
   result.activeDays = dayList.length;
 
-  // ===============================
-  // 4️⃣ WALLET AGE
-  // ===============================
-  const firstTs = Number(txs[0].timeStamp) * 1000;
+  const firstDayTs = new Date(dayList[0]).getTime();
   result.walletAgeDays = Math.floor(
-    (Date.now() - firstTs) / (1000 * 60 * 60 * 24)
+    (Date.now() - firstDayTs) / (1000 * 60 * 60 * 24)
   );
 
-  // ===============================
-  // 5️⃣ BEST STREAK (BASE ACTIVITY)
-  // ===============================
+  // best streak
   let best = 1;
   let current = 1;
 
@@ -76,6 +104,7 @@ try {
   }
 
   result.bestStreak = best;
+
 } catch (err) {
-  console.warn("BaseScan error", err);
+  console.warn("Base RPC activity error", err);
 }
