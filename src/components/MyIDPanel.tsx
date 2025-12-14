@@ -123,13 +123,21 @@ export default function MyIDPanel({
         <StatBox label="Active Days" value={stats?.activeDays} loading={loading} />
         <StatBox
           label="Wallet Age"
-          value={stats?.walletAgeDays ? `${stats.walletAgeDays} days` : undefined}
+          value={
+            stats?.walletAgeDays !== undefined && stats?.walletAgeDays !== null
+                ? `${stats.walletAgeDays} days`
+                : undefined
+            }
           loading={loading}
         />
         <StatBox label="Total TXs" value={stats?.totalTx} loading={loading} />
         <StatBox
           label="Best Streak"
-          value={stats?.bestStreak ? `🔥 ${stats.bestStreak} days` : undefined}
+          value={
+            stats?.bestStreak !== undefined && stats?.bestStreak !== null
+                ? `🔥 ${stats.bestStreak} days`
+                : undefined
+            }
           loading={loading}
         />
       </div>
