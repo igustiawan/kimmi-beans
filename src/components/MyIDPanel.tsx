@@ -109,7 +109,14 @@ export default function MyIDPanel({
   }, [wallet, fid]);
 
   return (
-    <div style={{ padding: 18, maxWidth: 480, margin: "0 auto" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f6a15a",
+        padding: 18
+      }}
+  >
+  <div style={{ maxWidth: 480, margin: "0 auto" }}>
       {/* HEADER CARD */}
       <div
         style={{
@@ -121,17 +128,24 @@ export default function MyIDPanel({
           boxShadow: "0 6px 18px rgba(0,0,0,0.06)"
         }}
       >
-        {loading && (
+      <div
+        style={{
+          position: "relative",
+          background: "linear-gradient(180deg,#fff6f0,#ffe6ca)",
+          borderRadius: 16,
+          padding: 18,
+          textAlign: "center",
+          boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+          minHeight: 200
+        }}
+      >
+        {loading ? (
           <div
             style={{
-              position: "absolute",
-              inset: 0,
+              height: 160,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              background: "rgba(255,255,255,0.65)",
-              borderRadius: 16,
-              zIndex: 2
+              justifyContent: "center"
             }}
           >
             <div
@@ -145,7 +159,41 @@ export default function MyIDPanel({
               }}
             />
           </div>
+        ) : (
+          <>
+            <img
+              src={pfp || "/icon.png"}
+              alt="pfp"
+              style={{
+                width: 72,
+                height: 72,
+                borderRadius: "50%",
+                objectFit: "cover",
+                marginBottom: 8
+              }}
+            />
+
+            <div style={{ fontWeight: 800, fontSize: 18 }}>
+              {displayName || "Anonymous"}
+            </div>
+
+            {fid && (
+              <div style={{ fontSize: 12, opacity: 0.65, marginTop: 2 }}>
+                FID {fid}
+              </div>
+            )}
+
+            {stats?.neynarScore !== undefined && (
+              <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700 }}>
+                Neynar Score{" "}
+                <span style={{ color: "#ff7f2e" }}>
+                  {stats.neynarScore.toFixed(2)}
+                </span>
+              </div>
+            )}
+          </>
         )}
+      </div>
 
         <img
           src={pfp || "/icon.png"}
@@ -336,6 +384,7 @@ export default function MyIDPanel({
         }
       `}</style>
     </div>
+  </div>
   );
 }
 
