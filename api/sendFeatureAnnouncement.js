@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     notificationId: `kimmi-feature-${Date.now()}`,
     title: "🔥 New Feature on Kimmi Beans",
     body: "You can now view your Neynar Score and Tier directly.",
-    targetUrl: "https://kimmibeans.xyz/frame",
+    targetUrl: "https://xkimmi.fun",
     tokens: [data.token]
   };
 
