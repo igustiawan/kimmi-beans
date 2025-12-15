@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-const [showTierInfo, setShowTierInfo] = useState(false);
 
 type MyIDPanelProps = {
   fid: number | null;
@@ -198,100 +197,8 @@ export default function MyIDPanel({
               minWidth: 220
             }}
           >
-            <div
-              style={{
-                marginTop: 14,
-                marginBottom: 6,
-                display: "flex",
-                justifyContent: "center",
-                position: "relative"
-              }}
-            >
-              <div
-                style={{
-                  padding: "10px 20px",
-                  borderRadius: 14,
-                  background: "linear-gradient(180deg,#ffffff,#fff4e8)",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                  textAlign: "center",
-                  minWidth: 220,
-                  position: "relative"
-                }}
-              >
-                {/* TITLE + INFO */}
-                <div
-                  style={{
-                    fontSize: 12,
-                    opacity: 0.6,
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    gap: 6
-                  }}
-                >
-                  Identity Tier
-                  <span
-                    style={{
-                      cursor: "pointer",
-                      fontSize: 12,
-                      opacity: 0.7
-                    }}
-                    onClick={() => setShowTierInfo((v) => !v)}
-                  >
-                    ⓘ
-                  </span>
-                </div>
-
-                {/* TIER */}
-                <div
-                  style={{
-                    marginTop: 2,
-                    fontSize: 18,
-                    fontWeight: 900,
-                    color: tier.color,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6
-                  }}
-                >
-                  {tier.icon} {tier.label}
-                </div>
-
-                {/* TOOLTIP */}
-                {showTierInfo && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      marginTop: 8,
-                      background: "#fff",
-                      borderRadius: 12,
-                      padding: "12px 14px",
-                      fontSize: 12,
-                      lineHeight: 1.5,
-                      width: 240,
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-                      zIndex: 10
-                    }}
-                    onClick={() => setShowTierInfo(false)}
-                  >
-                    <b>How to upgrade tier</b>
-                    <div style={{ marginTop: 6, opacity: 0.75 }}>
-                      Your tier is calculated from:
-                      <ul style={{ paddingLeft: 16, margin: "6px 0" }}>
-                        <li>Neynar reputation</li>
-                        <li>Active days on Base</li>
-                        <li>Total onchain activity</li>
-                        <li>Consistency (streak)</li>
-                      </ul>
-                      Higher & consistent activity unlocks higher tiers.
-                    </div>
-                  </div>
-                )}
-              </div>
+            <div style={{ fontSize: 12, opacity: 0.6 }}>
+              Identity Tier
             </div>
 
             <div
