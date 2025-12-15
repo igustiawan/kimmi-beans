@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+const [showTierInfo, setShowTierInfo] = useState(false);
+
 type MyIDPanelProps = {
   fid: number | null;
   displayName: string | null;
@@ -197,9 +199,88 @@ export default function MyIDPanel({
               minWidth: 220
             }}
           >
-            <div style={{ fontSize: 12, opacity: 0.6 }}>
-              Identity Tier
-            </div>
+              {tier && (
+                <div
+                  style={{
+                    marginTop: 14,
+                    display: "flex",
+                    justifyContent: "center"
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "10px 20px",
+                      borderRadius: 14,
+                      background: "linear-gradient(180deg,#ffffff,#fff4e8)",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                      textAlign: "center",
+                      minWidth: 220,
+                      position: "relative"
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 12,
+                        opacity: 0.6,
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        gap: 6
+                      }}
+                    >
+                      Identity Tier
+                      <span
+                        style={{
+                          cursor: "pointer",
+                          fontSize: 12
+                        }}
+                        onClick={() => setShowTierInfo(!showTierInfo)}
+                      >
+                        ⓘ
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 4,
+                        fontSize: 18,
+                        fontWeight: 900,
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: 6,
+                        color: tier.color
+                      }}
+                    >
+                      {tier.icon} {tier.label}
+                    </div>
+
+                    {showTierInfo && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "100%",
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          marginTop: 8,
+                          background: "#fff",
+                          borderRadius: 12,
+                          padding: "10px 12px",
+                          width: 220,
+                          fontSize: 12,
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                          zIndex: 10
+                        }}
+                      >
+                        <b>How to upgrade tier</b>
+                        <div style={{ marginTop: 6, opacity: 0.7 }}>
+                          Your tier increases with consistent onchain activity and reputation
+                          on Farcaster.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
             <div
               style={{
