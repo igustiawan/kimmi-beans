@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     }
 
     if (!process.env.ADMIN_NOTIFY_SECRET) {
-      throw new Error("ADMIN_NOTIFY_SECRET missing");
+      throw new Error("ADMIN_NOTIFY_SECRET is missing");
     }
 
     const auth = req.headers.authorization;
@@ -47,14 +47,16 @@ export default async function handler(req, res) {
       })
     });
 
+    const text = await response.text();
+
     if (!response.ok) {
-      const text = await response.text();
       throw new Error(`Farcaster error ${response.status}: ${text}`);
     }
 
     return res.status(200).json({
       ok: true,
-      fid: row.fid
+      fid: row.fid,
+      farcaster_response: text
     });
   } catch (err) {
     console.error("❌ FUNCTION CRASH", err);
