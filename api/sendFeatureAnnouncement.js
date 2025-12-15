@@ -42,17 +42,18 @@ export default async function handler(req, res) {
     // Send Farcaster notification
     const notificationId = `kimmi-feature-${Date.now()}`;
 
-    const fcRes = await fetch(row.url, {
+    const fcRes = await fetch("https://api.farcaster.xyz/v2/notifications", {
     method: "POST",
     headers: {
-        Authorization: `Bearer ${row.token}`,
+        Authorization: `Bearer ${process.env.FARCASTER_APP_SECRET}`,
         "Content-Type": "application/json"
     },
     body: JSON.stringify({
         notificationId,
         title: "🔥 New Feature on Kimmi Beans",
         body: "You can now view your Neynar Score and Tier directly.",
-        targetUrl: "https://kimmibeans.xyz/frame"
+        targetUrl: "https://kimmibeans.xyz/frame",
+        tokens: [row.token] // ⬅️ INI KUNCINYA
     })
     });
 
