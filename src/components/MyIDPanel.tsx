@@ -110,6 +110,46 @@ export default function MyIDPanel({
   return (
     <div style={{ padding: 18, maxWidth: 480, margin: "0 auto" }}>
       {/* HEADER CARD */}
+      {tier && !loading && (
+        <div
+          style={{
+            marginTop: 14,
+            marginBottom: 6,
+            display: "flex",
+            justifyContent: "center"
+          }}
+        >
+          <div
+            style={{
+              padding: "10px 20px",
+              borderRadius: 14,
+              background: "linear-gradient(180deg,#ffffff,#fff4e8)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+              textAlign: "center",
+              minWidth: 220
+            }}
+          >
+            <div style={{ fontSize: 12, opacity: 0.6 }}>
+              Identity Tier
+            </div>
+
+            <div
+              style={{
+                marginTop: 2,
+                fontSize: 18,
+                fontWeight: 900,
+                color: tier.color,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6
+              }}
+            >
+              {tier.icon} {tier.label}
+            </div>
+          </div>
+        </div>
+      )}
       <div
         style={{
           position: "relative",
@@ -226,22 +266,22 @@ export default function MyIDPanel({
           {tier && (
             <div
               style={{
-                marginTop: 16,
+                marginTop: 18,
                 display: "flex",
                 justifyContent: "center"
               }}
             >
               <div
                 style={{
-                  padding: "10px 18px",
+                  padding: "11px 20px",
                   borderRadius: 999,
                   background: "linear-gradient(90deg,#ffd7b8,#ffb07a)",
                   color: "#7a3a10",
-                  fontWeight: 700,
-                  fontSize: 13,
-                  letterSpacing: "0.2px",
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-                  opacity: 0.85
+                  fontWeight: 800,
+                  fontSize: 14,
+                  letterSpacing: "0.3px",
+                  boxShadow: "0 5px 14px rgba(0,0,0,0.12)",
+                  opacity: 0.9
                 }}
               >
                 🆔 {tier.label} ID Mint — Soon
