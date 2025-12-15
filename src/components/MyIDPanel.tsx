@@ -290,7 +290,7 @@ export default function MyIDPanel({
             />
           </div>
 
-          {tier && (
+          {/* {tier && (
             <div
               style={{
                 marginTop: 18,
@@ -314,7 +314,7 @@ export default function MyIDPanel({
                 🆔 {tier.label} ID Mint — Soon
               </div>
             </div>
-          )}
+          )} */}
 
           <div
             style={{
