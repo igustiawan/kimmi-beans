@@ -50,11 +50,9 @@ export default async function handler(req, res) {
     },
     body: JSON.stringify({
         notificationId,
-        notification: {
         title: "🔥 New Feature on Kimmi Beans",
         body: "You can now view your Neynar Score and Tier directly.",
-        target_url: "https://kimmibeans.xyz/frame"
-        }
+        targetUrl: "https://kimmibeans.xyz/frame"
     })
     });
 
