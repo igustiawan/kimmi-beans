@@ -109,234 +109,235 @@ export default function MyIDPanel({
   }, [wallet, fid]);
 
   return (
-    <div style={{ padding: 18, maxWidth: 480, margin: "0 auto" }}>
-      {/* HEADER CARD */}
+  <div style={{ padding: 18, maxWidth: 480, margin: "0 auto" }}>
+    {loading ? (
+      // =========================
+      // FULL LOADING STATE
+      // =========================
       <div
         style={{
-          position: "relative",
-          background: "linear-gradient(180deg,#fff6f0,#ffe6ca)",
-          borderRadius: 16,
-          padding: 18,
-          textAlign: "center",
-          boxShadow: "0 6px 18px rgba(0,0,0,0.06)"
+          minHeight: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
         }}
       >
-        {loading && (
+        <div style={{ textAlign: "center" }}>
           <div
             style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "rgba(255,255,255,0.65)",
-              borderRadius: 16,
-              zIndex: 2
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              border: "4px solid rgba(0,0,0,0.15)",
+              borderTopColor: "#ff9548",
+              animation: "km-spin 0.9s linear infinite"
             }}
-          >
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: "50%",
-                border: "3px solid rgba(0,0,0,0.15)",
-                borderTopColor: "#ff9548",
-                animation: "km-spin 0.9s linear infinite"
-              }}
-            />
-          </div>
-        )}
-
-        <img
-          src={pfp || "/icon.png"}
-          alt="pfp"
-          style={{
-            width: 72,
-            height: 72,
-            borderRadius: "50%",
-            objectFit: "cover",
-            marginBottom: 8
-          }}
-        />
-
-        <div style={{ fontWeight: 800, fontSize: 18 }}>
-          {displayName || "Anonymous"}
+          />
         </div>
-
-        {fid && (
-          <div style={{ fontSize: 12, opacity: 0.65, marginTop: 2 }}>
-            FID {fid}
-          </div>
-        )}
-
-        {!loading && stats?.neynarScore !== undefined && (
-          <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700 }}>
-            Neynar Score{" "}
-            <span style={{ color: "#ff7f2e" }}>
-              {stats.neynarScore.toFixed(2)}
-            </span>
-          </div>
-        )}
       </div>
-       
-      {tier && !loading && (
+    ) : (
+      // =========================
+      // REAL CONTENT
+      // =========================
+      <>
+        {/* HEADER CARD */}
         <div
           style={{
-            marginTop: 14,
-            display: "flex",
-            justifyContent: "center"
+            background: "linear-gradient(180deg,#fff6f0,#ffe6ca)",
+            borderRadius: 16,
+            padding: 18,
+            textAlign: "center",
+            boxShadow: "0 6px 18px rgba(0,0,0,0.06)"
           }}
         >
-          <div
+          <img
+            src={pfp || "/icon.png"}
+            alt="pfp"
             style={{
-              padding: "10px 20px",
-              borderRadius: 14,
-              background: "linear-gradient(180deg,#ffffff,#fff4e8)",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-              textAlign: "center",
-              minWidth: 220,
-              position: "relative"
+              width: 72,
+              height: 72,
+              borderRadius: "50%",
+              objectFit: "cover",
+              marginBottom: 8
             }}
-          >
-            <div
-              style={{
-                fontSize: 12,
-                opacity: 0.6,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 6
-              }}
-            >
-              Identity Tier
-              <span
-                style={{ cursor: "pointer", fontSize: 12 }}
-                onClick={() => setShowTierInfo(v => !v)}
-              >
-                ⓘ
-              </span>
-            </div>
+          />
 
-            <div
-              style={{
-                marginTop: 4,
-                fontSize: 18,
-                fontWeight: 900,
-                display: "flex",
-                justifyContent: "center",
-                gap: 6,
-                color: tier.color
-              }}
-            >
-              {tier.icon} {tier.label}
-            </div>
-
-            {showTierInfo && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  marginTop: 8,
-                  background: "#fff",
-                  borderRadius: 12,
-                  padding: "10px 12px",
-                  width: 220,
-                  fontSize: 12,
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-                  zIndex: 10
-                }}
-              >
-                <b>How to upgrade tier</b>
-                <div style={{ marginTop: 6, opacity: 0.7 }}>
-                  Your tier increases with consistent onchain activity and Farcaster
-                  reputation.
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* CONTENT */}
-      {!loading && (
-        <>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 12,
-              marginTop: 14
-            }}
-          >
-            <StatBox label="Active Days" value={stats?.activeDays} />
-            <StatBox
-              label="Wallet Age"
-              value={
-                stats?.walletAgeDays !== undefined
-                  ? `${stats.walletAgeDays} days`
-                  : undefined
-              }
-            />
-            <StatBox label="Total TXs" value={stats?.totalTx} />
-            <StatBox
-              label="Best Streak"
-              value={
-                stats?.bestStreak !== undefined
-                  ? `🔥 ${stats.bestStreak} days`
-                  : undefined
-              }
-            />
+          <div style={{ fontWeight: 800, fontSize: 18 }}>
+            {displayName || "Anonymous"}
           </div>
 
-          {tier && (
-            <div
-              style={{
-                marginTop: 18,
-                display: "flex",
-                justifyContent: "center"
-              }}
-            >
-              <div
-                style={{
-                  padding: "11px 20px",
-                  borderRadius: 999,
-                  background: "linear-gradient(90deg,#ffd7b8,#ffb07a)",
-                  color: "#7a3a10",
-                  fontWeight: 800,
-                  fontSize: 14,
-                  letterSpacing: "0.3px",
-                  boxShadow: "0 5px 14px rgba(0,0,0,0.12)",
-                  opacity: 0.9
-                }}
-              >
-                🆔 {tier.label} ID Mint — Soon
-              </div>
+          {fid && (
+            <div style={{ fontSize: 12, opacity: 0.65, marginTop: 2 }}>
+              FID {fid}
             </div>
           )}
 
+          {stats?.neynarScore !== undefined && (
+            <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700 }}>
+              Neynar Score{" "}
+              <span style={{ color: "#ff7f2e" }}>
+                {stats.neynarScore.toFixed(2)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* IDENTITY TIER */}
+        {tier && (
           <div
             style={{
               marginTop: 14,
-              fontSize: 11,
-              opacity: 0.55,
-              textAlign: "center"
+              display: "flex",
+              justifyContent: "center"
             }}
           >
-            Identity data powered by Farcaster & Base
-          </div>
-        </>
-      )}
+            <div
+              style={{
+                padding: "10px 20px",
+                borderRadius: 14,
+                background: "linear-gradient(180deg,#ffffff,#fff4e8)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                textAlign: "center",
+                minWidth: 220,
+                position: "relative"
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 12,
+                  opacity: 0.6,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 6
+                }}
+              >
+                Identity Tier
+                <span
+                  style={{ cursor: "pointer", fontSize: 12 }}
+                  onClick={() => setShowTierInfo(v => !v)}
+                >
+                  ⓘ
+                </span>
+              </div>
 
-      <style>{`
-        @keyframes km-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </div>
-  );
+              <div
+                style={{
+                  marginTop: 4,
+                  fontSize: 18,
+                  fontWeight: 900,
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 6,
+                  color: tier.color
+                }}
+              >
+                {tier.icon} {tier.label}
+              </div>
+
+              {showTierInfo && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    marginTop: 8,
+                    background: "#fff",
+                    borderRadius: 12,
+                    padding: "10px 12px",
+                    width: 220,
+                    fontSize: 12,
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                    zIndex: 10
+                  }}
+                >
+                  <b>How to upgrade tier</b>
+                  <div style={{ marginTop: 6, opacity: 0.7 }}>
+                    Your tier increases with consistent onchain activity and
+                    Farcaster reputation.
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* STATS GRID */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 12,
+            marginTop: 14
+          }}
+        >
+          <StatBox label="Active Days" value={stats?.activeDays} />
+          <StatBox
+            label="Wallet Age"
+            value={
+              stats?.walletAgeDays !== undefined
+                ? `${stats.walletAgeDays} days`
+                : undefined
+            }
+          />
+          <StatBox label="Total TXs" value={stats?.totalTx} />
+          <StatBox
+            label="Best Streak"
+            value={
+              stats?.bestStreak !== undefined
+                ? `🔥 ${stats.bestStreak} days`
+                : undefined
+            }
+          />
+        </div>
+
+        {/* CTA */}
+        {tier && (
+          <div
+            style={{
+              marginTop: 18,
+              display: "flex",
+              justifyContent: "center"
+            }}
+          >
+            <div
+              style={{
+                padding: "11px 20px",
+                borderRadius: 999,
+                background: "linear-gradient(90deg,#ffd7b8,#ffb07a)",
+                color: "#7a3a10",
+                fontWeight: 800,
+                fontSize: 14,
+                boxShadow: "0 5px 14px rgba(0,0,0,0.12)"
+              }}
+            >
+              🆔 {tier.label} ID Mint — Soon
+            </div>
+          </div>
+        )}
+
+        <div
+          style={{
+            marginTop: 14,
+            fontSize: 11,
+            opacity: 0.55,
+            textAlign: "center"
+          }}
+        >
+          Identity data powered by Farcaster & Base
+        </div>
+      </>
+    )}
+
+    <style>{`
+      @keyframes km-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    `}</style>
+  </div>
+);
 }
 
 function StatBox({
