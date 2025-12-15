@@ -1,4 +1,4 @@
-import { supabase } from "../_supabase";
+import { supabase } from "./_supabase";
 
 export const config = {
   runtime: "nodejs"
