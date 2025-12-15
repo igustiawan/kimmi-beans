@@ -741,75 +741,138 @@ export default function App() {
     }
 
     // RANK (Leaderboard)
-    if (tab === "rank") {
-      const userRank = leaderboard.findIndex(
-        (p) => p.wallet.toLowerCase() === wallet?.toLowerCase()
-      ) + 1;
+      if (tab === "rank") {
+      // =========================
+      // FULL LOADING SCENE
+      // =========================
+      if (loadingRank) {
+        return (
+          <div
+            style={{
+              minHeight: "60vh",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                border: "4px solid rgba(0,0,0,0.15)",
+                borderTopColor: "#ff9548",
+                animation: "km-spin 0.9s linear infinite"
+              }}
+            />
+
+            <style>{`
+              @keyframes km-spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
+          </div>
+        );
+      }
+
+      // =========================
+      // NORMAL CONTENT
+      // =========================
+      const userRank =
+        leaderboard.findIndex(
+          (p) => p.wallet.toLowerCase() === wallet?.toLowerCase()
+        ) + 1;
 
       return (
         <div className="leaderboard-card">
           <div className="leader-title">🏆 Leaderboard</div>
 
-          <div style={{
-            textAlign: "center",
-            fontSize: "13px",
-            opacity: 0.75,
-            marginTop: "-4px",
-            marginBottom: "10px",
-            fontWeight: 500
-          }}>
+          <div
+            style={{
+              textAlign: "center",
+              fontSize: 13,
+              opacity: 0.75,
+              marginTop: -4,
+              marginBottom: 10,
+              fontWeight: 500
+            }}
+          >
             Season 1 — December 10, 2025 to January 10, 2026
           </div>
 
-          {loadingRank ? (
-            <p className="leader-loading">Loading...</p>
-          ) : leaderboard.length === 0 ? (
+          {leaderboard.length === 0 ? (
             <p className="leader-loading">No players yet.</p>
           ) : (
             <>
-              <div style={{ width: "100%", overflowY: "auto", padding: "8px 0", maxHeight: "56vh" }}>
+              <div
+                style={{
+                  width: "100%",
+                  overflowY: "auto",
+                  padding: "8px 0",
+                  maxHeight: "56vh"
+                }}
+              >
                 <div className="leader-list">
                   {leaderboard.slice(0, 100).map((p, index) => (
-                    <div className="leader-item" key={p.wallet} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div
+                      className="leader-item"
+                      key={p.wallet}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between"
+                      }}
+                    >
                       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                         <div className="rank-num">{index + 1}</div>
 
                         <div style={{ display: "flex", flexDirection: "column" }}>
-                          <div className="leader-name" style={{ fontWeight: 700 }}>{p.username || p.wallet}</div>
-                          <div className="leader-wallet" style={{ fontSize: 12, opacity: 0.65 }}>{p.wallet.slice(0, 5)}...{p.wallet.slice(-3)}</div>
+                          <div className="leader-name" style={{ fontWeight: 700 }}>
+                            {p.username || p.wallet}
+                          </div>
+                          <div className="leader-wallet" style={{ fontSize: 12, opacity: 0.65 }}>
+                            {p.wallet.slice(0, 5)}...{p.wallet.slice(-3)}
+                          </div>
                         </div>
                       </div>
 
-                      {/* Visit CTA: explicit, cute, and discoverable */}
-                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setViewBeanWallet(p.wallet); }}
-                          style={{
-                            display: "inline-flex",
-                            gap: 8,
-                            alignItems: "center",
-                            padding: "6px 10px",
-                            borderRadius: 12,
-                            background: "linear-gradient(90deg,#ffd7b8,#ffb07a)",
-                            border: "none",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
-                          }}
-                          aria-label={`Visit ${p.username || p.wallet}`}
-                          title="Visit bean"
-                        >
-                          <span style={{ fontSize: 14 }}>👀</span>
-                          <span style={{ fontSize: 13 }}>Visit</span>
-                        </button>
-                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewBeanWallet(p.wallet);
+                        }}
+                        style={{
+                          display: "inline-flex",
+                          gap: 8,
+                          alignItems: "center",
+                          padding: "6px 10px",
+                          borderRadius: 12,
+                          background: "linear-gradient(90deg,#ffd7b8,#ffb07a)",
+                          border: "none",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
+                        }}
+                      >
+                        <span style={{ fontSize: 14 }}>👀</span>
+                        <span style={{ fontSize: 13 }}>Visit</span>
+                      </button>
                     </div>
                   ))}
                 </div>
               </div>
 
               {wallet && (
-                <div className="user-rank-box" style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div
+                  className="user-rank-box"
+                  style={{
+                    marginTop: 12,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center"
+                  }}
+                >
                   <div>
                     <span className="user-rank-label">Your Rank</span>
                     <span className="user-rank-value" style={{ marginLeft: 8 }}>
@@ -817,24 +880,24 @@ export default function App() {
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      onClick={() => shareProgressFromLeaderboard(userRank > 0 ? userRank : null)}
-                      style={{
-                        padding: "8px 14px",
-                        borderRadius: "20px",
-                        background: "#ff9548",
-                        color: "white",
-                        border: "none",
-                        fontWeight: 700,
-                        fontSize: "14px",
-                        cursor: "pointer",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
-                      }}
-                    >
-                      🚀 Share Progress
-                    </button>
-                  </div>
+                  <button
+                    onClick={() =>
+                      shareProgressFromLeaderboard(userRank > 0 ? userRank : null)
+                    }
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 20,
+                      background: "#ff9548",
+                      color: "white",
+                      border: "none",
+                      fontWeight: 700,
+                      fontSize: 14,
+                      cursor: "pointer",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
+                    }}
+                  >
+                    🚀 Share Progress
+                  </button>
                 </div>
               )}
             </>
