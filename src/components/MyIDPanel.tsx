@@ -15,6 +15,43 @@ type IdentityStats = {
   bestStreak?: number;
 };
 
+function normalizeIdentityScore({
+  neynarScore = 0,
+  activeDays = 0,
+  bestStreak = 0,
+  totalTx = 0
+}: {
+  neynarScore?: number;
+  activeDays?: number;
+  bestStreak?: number;
+  totalTx?: number;
+}) {
+  const clamp = (v: number, min = 0, max = 1) =>
+    Math.max(min, Math.min(max, v));
+
+  const neynarNorm = clamp(neynarScore);
+  const activeDaysNorm = clamp(activeDays / 90);
+  const streakNorm = clamp(bestStreak / 30);
+  const txNorm = clamp(Math.log10(totalTx + 1) / 4);
+
+  const baseScore =
+    activeDaysNorm * 0.4 +
+    streakNorm * 0.4 +
+    txNorm * 0.2;
+
+  const finalScore =
+    neynarNorm * 0.5 +
+    baseScore * 0.5;
+
+  return Math.round(finalScore * 100);
+}
+
+function getTier(score: number) {
+  if (score >= 70) return { label: "Gold", icon: "🥇", color: "#d4a017" };
+  if (score >= 40) return { label: "Silver", icon: "🥈", color: "#8a8a8a" };
+  return { label: "Bronze", icon: "🥉", color: "#b87333" };
+}
+
 export default function MyIDPanel({
   fid,
   displayName,
@@ -23,6 +60,18 @@ export default function MyIDPanel({
 }: MyIDPanelProps) {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<IdentityStats | null>(null);
+
+  const identityScore =
+    !loading && stats
+      ? normalizeIdentityScore({
+          neynarScore: stats.neynarScore,
+          activeDays: stats.activeDays,
+          bestStreak: stats.bestStreak,
+          totalTx: stats.totalTx
+        })
+      : null;
+
+  const tier = identityScore !== null ? getTier(identityScore) : null;
 
   useEffect(() => {
     if (!wallet || !fid) {
@@ -113,6 +162,20 @@ export default function MyIDPanel({
           {displayName || "Anonymous"}
         </div>
 
+        {!loading && tier && (
+          <div
+            style={{
+              marginTop: 4,
+              fontSize: 13,
+              fontWeight: 800,
+              color: tier.color,
+              letterSpacing: "0.2px"
+            }}
+          >
+            {tier.icon} {tier.label} Identity
+          </div>
+        )}
+
         {fid && (
           <div style={{ fontSize: 12, opacity: 0.65, marginTop: 2 }}>
             FID {fid}
@@ -160,29 +223,31 @@ export default function MyIDPanel({
             />
           </div>
 
-          <div
-            style={{
-              marginTop: 16,
-              display: "flex",
-              justifyContent: "center"
-            }}
-          >
+          {tier && (
             <div
               style={{
-                padding: "10px 18px",
-                borderRadius: 999,
-                background: "linear-gradient(90deg,#ffd7b8,#ffb07a)",
-                color: "#7a3a10",
-                fontWeight: 700,
-                fontSize: 13,
-                letterSpacing: "0.2px",
-                boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-                opacity: 0.85
+                marginTop: 16,
+                display: "flex",
+                justifyContent: "center"
               }}
             >
-              🆔 Minting ID — Soon
+              <div
+                style={{
+                  padding: "10px 18px",
+                  borderRadius: 999,
+                  background: "linear-gradient(90deg,#ffd7b8,#ffb07a)",
+                  color: "#7a3a10",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  letterSpacing: "0.2px",
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+                  opacity: 0.85
+                }}
+              >
+                🆔 {tier.label} ID Mint — Soon
+              </div>
             </div>
-          </div>
+          )}
 
           <div
             style={{

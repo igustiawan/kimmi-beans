@@ -257,45 +257,6 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  function FullscreenLoading() {
-    return (
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "linear-gradient(180deg,#fff6f0,#ffe6ca)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 9999
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: "50%",
-              border: "5px solid rgba(0,0,0,0.15)",
-              borderTopColor: "#ff9548",
-              animation: "km-spin 1s linear infinite"
-            }}
-          />
-          <div style={{ marginTop: 14, fontSize: 13, opacity: 0.65 }}>
-            Loading Kimmi Beans…
-          </div>
-
-          <style>{`
-            @keyframes km-spin {
-              from { transform: rotate(0deg); }
-              to { transform: rotate(360deg); }
-            }
-          `}</style>
-        </div>
-      </div>
-    );
-  }
-
   // ============================================================
   // Share to Cast helper (used by leaderboard small share button)
   // ============================================================
@@ -458,32 +419,6 @@ export default function App() {
     const player = leaderboard.find((p) => p.wallet.toLowerCase() === viewWallet.toLowerCase());
 
     const rank = player ? leaderboard.findIndex((p) => p.wallet.toLowerCase() === viewWallet.toLowerCase()) + 1 : null;
-
-    async function followUser() {
-      try {
-        const username = player?.username;
-        // if username exists, use follow by username; otherwise open the wallet profile
-        const url = username ? `https://warpcast.com/~/follow/${username}` : `https://warpcast.com/${viewWallet}`;
-        await sdk.actions.openUrl({ url });
-      } catch (err) {
-        console.warn("followUser failed", err);
-        setToast("Unable to open follow");
-        setTimeout(() => setToast(null), 1600);
-      }
-    }
-
-    async function sendCompliment() {
-      try {
-        const username = player?.username ? `@${player.username} ` : "";
-        const text = `${username}Your bean is awesome! 🌱🔥`;
-        const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
-        await sdk.actions.openUrl({ url });
-      } catch (err) {
-        console.warn("sendCompliment failed", err);
-        setToast("Unable to open compose");
-        setTimeout(() => setToast(null), 1600);
-      }
-    }
 
     return (
       <div style={{
