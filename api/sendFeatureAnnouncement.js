@@ -40,19 +40,22 @@ export default async function handler(req, res) {
     }
 
     // Send Farcaster notification
+    const notificationId = `kimmi-feature-${Date.now()}`;
+
     const fcRes = await fetch(row.url, {
-      method: "POST",
-      headers: {
+    method: "POST",
+    headers: {
         Authorization: `Bearer ${row.token}`,
         "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
+    },
+    body: JSON.stringify({
+        notificationId,
         notification: {
-          title: "🔥 New Feature on Kimmi Beans",
-          body: "You can now view your Neynar Score and Tier directly.",
-          target_url: "https://kimmibeans.xyz/frame"
+        title: "🔥 New Feature on Kimmi Beans",
+        body: "You can now view your Neynar Score and Tier directly.",
+        target_url: "https://kimmibeans.xyz/frame"
         }
-      })
+    })
     });
 
     if (!fcRes.ok) {
