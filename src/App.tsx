@@ -345,6 +345,7 @@ export default function App() {
             wallet={wallet}
             dailyBeans={dailyBeans}
             lifetimeXp={lifetimeXp}
+            toast={toast}
             onTabChange={safeSetTab}
           >
             {renderContent()}

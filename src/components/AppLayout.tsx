@@ -10,6 +10,7 @@ type Props = {
   lifetimeXp: number;
   onTabChange: (tab: Tab) => void;
   children: React.ReactNode;
+  toast?: string | null;
 };
 
 export default function AppLayout({
@@ -21,7 +22,8 @@ export default function AppLayout({
   dailyBeans,
   lifetimeXp,
   onTabChange,
-  children
+  children,
+  toast
 }: Props) {
   return (
     <div className="app">
@@ -49,6 +51,9 @@ export default function AppLayout({
       <div className={`content-bg ${tab === "rank" ? "leader-mode" : ""}`}>
         {children}
       </div>
+
+      {/* 🔥 TOAST */}
+      {toast && <div className="toast-popup">{toast}</div>}
 
       {/* NAV */}
       <div className="bottom-nav">
