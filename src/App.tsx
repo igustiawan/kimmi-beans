@@ -10,6 +10,7 @@ import BeanPanel from "./components/BeanPanel";
 import MintPanel from "./components/MintPanel";
 import BeanViewer from "./components/BeanViewer";
 import { useLeaderboard } from "./hooks/useLeaderboard";
+import { useMintStatus } from "./hooks/useMintStatus";
 
 type Tab = "mint" | "bean" | "rank" | "faq" | "id";
 
@@ -19,12 +20,6 @@ export default function App() {
   const [userFID, setUserFID] = useState<number | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [pfp, setPfp] = useState<string | null>(null);
-
-  const [mintResult, setMintResult] = useState<{
-    id: number;
-    rarity: string;
-    image: string;
-  } | null>(null);
 
   const {
     leaderboard,
@@ -43,10 +38,16 @@ export default function App() {
   const [lifetimeLevel, setLifetimeLevel] = useState(0);
   const [viewBeanWallet, setViewBeanWallet] = useState<`0x${string}` | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [mintImageLoading, setMintImageLoading] = useState<boolean>(false);
-  const [preloadedMintImage, setPreloadedMintImage] = useState<string | null>(null);
+
+  const {
+    mintResult,
+    setMintResult,
+    mintImageLoading,
+    preloadedMintImage,
+    appLoading
+  } = useMintStatus(wallet);
+
   const hasMinted = Boolean(mintResult);
-  const [appLoading, setAppLoading] = useState(true);
 
   useEffect(() => {
     if (hasMinted && tab === "mint") {
@@ -71,100 +72,6 @@ export default function App() {
     }
     loadFID();
   }, []);
-
-  // ============================================================
-  // Check minted NFT (with image preloading to avoid flash)
-  // ============================================================
-  useEffect(() => {
-      let cancelled = false;
-
-      async function checkMinted() {
-        if (!wallet) {
-          setMintResult(null);
-          setPreloadedMintImage(null);
-          setMintImageLoading(false);
-          setAppLoading(false);
-          return;
-        }
-
-        setAppLoading(true);
-
-        try {
-          const res = await fetch(`/api/checkMinted?wallet=${wallet}`);
-          const data = await res.json();
-
-          if (cancelled) return;
-
-          if (data.minted) {
-            const imgUrl = data.image || null;
-
-            if (imgUrl) {
-              setMintImageLoading(true);
-              setPreloadedMintImage(null);
-
-              const img = new Image();
-              img.src = imgUrl;
-
-              img.onload = () => {
-                if (cancelled) return;
-
-                setMintResult({
-                  id: data.tokenId,
-                  rarity: data.rarity,
-                  image: imgUrl
-                });
-                setPreloadedMintImage(imgUrl);
-                setMintImageLoading(false);
-                setAppLoading(false);
-              };
-
-              img.onerror = () => {
-                if (cancelled) return;
-
-                setMintResult({
-                  id: data.tokenId,
-                  rarity: data.rarity,
-                  image: imgUrl
-                });
-                setPreloadedMintImage(null);
-                setMintImageLoading(false);
-                setAppLoading(false);
-              };
-            } else {
-              setMintResult({
-                id: data.tokenId,
-                rarity: data.rarity,
-                image: ""
-              });
-              setPreloadedMintImage(null);
-              setMintImageLoading(false);
-
-              setAppLoading(false);
-            }
-          } else {
-            setMintResult(null);
-            setPreloadedMintImage(null);
-            setMintImageLoading(false);
-
-            setAppLoading(false);
-          }
-        } catch (err) {
-          console.error("checkMinted error", err);
-
-          setMintResult(null);
-          setPreloadedMintImage(null);
-          setMintImageLoading(false);
-
-          setAppLoading(false);
-        }
-      }
-
-      checkMinted();
-
-      return () => {
-        cancelled = true;
-      };
-    }, [wallet]);
 
   // ============================================================
   // Auto-load stats for header directly from CONTRACT
