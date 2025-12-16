@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { useAccount, useConnect, useReadContract } from "wagmi";
-import careAbi from "./abi/kimmiBeansCare.json";
 import MyIDPanel from "./components/MyIDPanel";
 import FAQPanel from "./components/FAQPanel";
 import LeaderboardPanel from "./components/LeaderboardPanel";
@@ -11,6 +10,7 @@ import MintPanel from "./components/MintPanel";
 import BeanViewer from "./components/BeanViewer";
 import { useLeaderboard } from "./hooks/useLeaderboard";
 import { useMintStatus } from "./hooks/useMintStatus";
+import { useHeaderStats } from "./hooks/useHeaderStats";
 
 type Tab = "mint" | "bean" | "rank" | "faq" | "id";
 
@@ -33,9 +33,6 @@ export default function App() {
   const { isConnected, address: wallet } = useAccount();
   const { connect, connectors } = useConnect();
   const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
-  const [dailyBeans, setDailyBeans] = useState(0);
-  const [lifetimeXp, setLifetimeXp] = useState(0);
-  const [lifetimeLevel, setLifetimeLevel] = useState(0);
   const [viewBeanWallet, setViewBeanWallet] = useState<`0x${string}` | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -48,6 +45,15 @@ export default function App() {
   } = useMintStatus(wallet);
 
   const hasMinted = Boolean(mintResult);
+
+  const {
+    dailyBeans,
+    lifetimeXp,
+    lifetimeLevel,
+    refreshHeaderStats,
+    ready: headerStatsReady
+  } = useHeaderStats(wallet);
+
 
   useEffect(() => {
     if (hasMinted && tab === "mint") {
@@ -73,38 +79,8 @@ export default function App() {
     loadFID();
   }, []);
 
-  // ============================================================
-  // Auto-load stats for header directly from CONTRACT
-  // ============================================================
-  type StatsStruct = {
-    xp: bigint;
-    level: bigint;
-    beans: bigint;
-    lastAction: bigint;
-  };
-
-  const { data: headerStatsRaw, refetch: refetchHeaderStats } = useReadContract({
-    address: CONTRACT,
-    abi: careAbi,
-    functionName: "getStats",
-    args: wallet ? [wallet] : undefined,
-    query: { enabled: Boolean(wallet) }
-  });
-
-  useEffect(() => {
-    if (!headerStatsRaw) return;
-
-    const stats = headerStatsRaw as StatsStruct;
-
-    setLifetimeXp(Number(stats.xp));
-    setDailyBeans(Number(stats.beans));
-    setLifetimeLevel(Number(stats.level));
-  }, [headerStatsRaw]);
-
   function handleStatsUpdate(newXp: number, newBeans: number) {
-    setLifetimeXp(newXp);
-    setDailyBeans(newBeans);
-    refetchHeaderStats();
+    refreshHeaderStats();
   }
 
   // ============================================================
@@ -262,7 +238,7 @@ export default function App() {
           mintResult={mintResult}
           fid={userFID}
           username={displayName}
-          headerStatsReady={Boolean(headerStatsRaw)}
+          headerStatsReady={headerStatsReady}
           onGoMint={() => setTab("mint")}
           onStatsUpdate={(xp, beans) => {
             handleStatsUpdate(xp, beans);
