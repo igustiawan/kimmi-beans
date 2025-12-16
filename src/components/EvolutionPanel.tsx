@@ -48,6 +48,14 @@ export default function EvolutionPanel({
   const [loading, setLoading] = useState<"" | "feed" | "water" | "train">("");
   const [toast, setToast] = useState<string | null>(null);
 
+  const [questOpen, setQuestOpen] = useState(false);
+
+  const [quests, setQuests] = useState({
+    feed: { done: 0, max: 1 },
+    water: { done: 0, max: 3 },
+    visit: { done: 0, max: 2 },
+  });
+
   // ---------------------------------------------------------------
   // LOAD STATS
   // ---------------------------------------------------------------
@@ -237,6 +245,36 @@ export default function EvolutionPanel({
           {loading === "train" ? "Training..." : "🏋️ Train"}
         </button>
 
+      </div>
+
+      {/* TODAY'S QUEST */}
+      <div className="quest-card">
+        <div
+          className="quest-header"
+          onClick={() => setQuestOpen(o => !o)}
+        >
+          🎯 Today’s Quest
+          <span className="chevron">{questOpen ? "▲" : "▼"}</span>
+        </div>
+
+        {questOpen && (
+          <div className="quest-body">
+            <div className="quest-item">
+              {quests.feed.done >= quests.feed.max ? "✔" : "⬜"} Feed your Bean
+              <span>+5 XP</span>
+            </div>
+
+            <div className="quest-item">
+              {quests.water.done}/{quests.water.max} Water your Bean
+              <span>+5 XP</span>
+            </div>
+
+            <div className="quest-item">
+              {quests.visit.done}/{quests.visit.max} Visit profiles
+              <span>+5 XP</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {toast &&
