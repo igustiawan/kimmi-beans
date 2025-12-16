@@ -9,6 +9,7 @@ import LeaderboardPanel from "./components/LeaderboardPanel";
 import BeanPanel from "./components/BeanPanel";
 import MintPanel from "./components/MintPanel";
 import BeanViewer from "./components/BeanViewer";
+import { useLeaderboard } from "./hooks/useLeaderboard";
 
 type Tab = "mint" | "bean" | "rank" | "faq" | "id";
 
@@ -25,10 +26,11 @@ export default function App() {
     image: string;
   } | null>(null);
 
-  type Player = {
-    wallet: `0x${string}`;
-    username?: string;
-  };
+  const {
+    leaderboard,
+    loading: loadingRank,
+    refresh: refreshLeaderboard
+  } = useLeaderboard(tab);
 
   const [soldOut, setSoldOut] = useState(false);
   const [totalMinted, setTotalMinted] = useState(0);
@@ -38,9 +40,7 @@ export default function App() {
   const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
   const [dailyBeans, setDailyBeans] = useState(0);
   const [lifetimeXp, setLifetimeXp] = useState(0);
-  const [lifetimeLevel, setLifetimeLevel] = useState(0); // show level in leaderboard share
-  const [leaderboard, setLeaderboard] = useState<Player[]>([]);
-  const [loadingRank, setLoadingRank] = useState(false);
+  const [lifetimeLevel, setLifetimeLevel] = useState(0);
   const [viewBeanWallet, setViewBeanWallet] = useState<`0x${string}` | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [mintImageLoading, setMintImageLoading] = useState<boolean>(false);
@@ -49,31 +49,10 @@ export default function App() {
   const [appLoading, setAppLoading] = useState(true);
 
   useEffect(() => {
-    if (tab !== "rank") return;
-
-    async function loadRank() {
-      setLoadingRank(true);
-      try {
-        const res = await fetch("/api/leaderboard");
-        const data = await res.json();
-        setLeaderboard((data.leaderboard || []) as Player[]);
-      } catch (err) {
-        console.error("Failed to load leaderboard", err);
-        setLeaderboard([]);
-      } finally {
-        setLoadingRank(false);
-      }
-    }
-
-    loadRank();
-  }, [tab]);
-
-  useEffect(() => {
     if (hasMinted && tab === "mint") {
       setTab("bean");
     }
   }, [hasMinted, tab]);
-
 
   // ============================================================
   // Load FID (still read for display, but no dev-only logic)
@@ -100,7 +79,6 @@ export default function App() {
       let cancelled = false;
 
       async function checkMinted() {
-        // WALLET BELUM ADA → STOP LOADING
         if (!wallet) {
           setMintResult(null);
           setPreloadedMintImage(null);
@@ -150,12 +128,9 @@ export default function App() {
                 });
                 setPreloadedMintImage(null);
                 setMintImageLoading(false);
-
-                // ✅ END GLOBAL LOADING
                 setAppLoading(false);
               };
             } else {
-              // minted tapi tidak ada image
               setMintResult({
                 id: data.tokenId,
                 rarity: data.rarity,
@@ -167,7 +142,6 @@ export default function App() {
               setAppLoading(false);
             }
           } else {
-            // belum mint
             setMintResult(null);
             setPreloadedMintImage(null);
             setMintImageLoading(false);
@@ -335,20 +309,6 @@ export default function App() {
   }
 
   // ============================================================
-  // helper to refresh leaderboard on demand
-  // (declared before renderContent so it's available)
-  // ============================================================
-  async function fetchLeaderboardNow() {
-    try {
-      const res = await fetch("/api/leaderboard");
-      const data = await res.json();
-      setLeaderboard((data.leaderboard || []) as Player[]);
-    } catch (err) {
-      console.warn("fetchLeaderboardNow failed", err);
-    }
-  }
-
-  // ============================================================
   // RENDER content per tab
   // ============================================================
   function renderContent() {
@@ -399,7 +359,7 @@ export default function App() {
           onGoMint={() => setTab("mint")}
           onStatsUpdate={(xp, beans) => {
             handleStatsUpdate(xp, beans);
-            fetchLeaderboardNow();
+            refreshLeaderboard();
           }}
         />
       );
@@ -458,12 +418,12 @@ export default function App() {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                transform: "translateY(-6px)" // ⬅️ naik dikit biar pas di mata
+                transform: "translateY(-6px)" 
               }}
             >
               <div
                 style={{
-                  width: 36,            // ⬅️ LEBIH KECIL
+                  width: 36,         
                   height: 36,
                   borderRadius: "50%",
                   border: "3px solid rgba(0,0,0,0.15)",
@@ -566,7 +526,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* small toast */}
             {toast && <div className="toast-popup">{toast}</div>}
           </div>
         )}
