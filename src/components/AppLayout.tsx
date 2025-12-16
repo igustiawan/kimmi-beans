@@ -52,9 +52,6 @@ export default function AppLayout({
         {children}
       </div>
 
-      {/* 🔥 TOAST */}
-      {toast && <div className="toast-popup">{toast}</div>}
-
       {/* NAV */}
       <div className="bottom-nav">
         {!hasMinted && (
@@ -94,6 +91,7 @@ export default function AppLayout({
           ❓<span>FAQ</span>
         </div>
       </div>
+           {toast && <div className="toast-popup">{toast}</div>}
     </div>
   );
 }
