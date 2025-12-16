@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useWriteContract, useReadContract } from "wagmi";
 import careAbi from "../abi/kimmiBeansCare.json";
-import { createPortal } from "react-dom";
 
 interface Props {
   wallet: string | undefined;
@@ -10,6 +9,7 @@ interface Props {
   fid: number | null;
   username: string | null;
   onStatsUpdate?: (xp: number, beans: number) => void;
+  onToast?: (msg: string) => void; 
 }
 
 const CONTRACT = import.meta.env.VITE_BEAN_CONTRACT as `0x${string}`;
@@ -27,7 +27,8 @@ export default function EvolutionPanel({
   isConnected,
   fid,
   username,
-  onStatsUpdate
+  onStatsUpdate,
+  onToast
 }: Props) {
 
   const { writeContractAsync } = useWriteContract();
@@ -46,7 +47,6 @@ export default function EvolutionPanel({
 
   // UI state
   const [loading, setLoading] = useState<"" | "feed" | "water" | "train">("");
-  const [toast, setToast] = useState<string | null>(null);
 
   // ---------------------------------------------------------------
   // LOAD STATS
@@ -158,8 +158,7 @@ export default function EvolutionPanel({
         const beansGain = newBeans - beans;
 
         if (xpGain > 0 || beansGain > 0) {
-          setToast(`+${xpGain} XP   +${beansGain} Beans`);
-          setTimeout(() => setToast(null), 1800);
+          onToast?.(`+${xpGain} XP   +${beansGain} Beans`);
         }
 
         // Sync ke Supabase
@@ -238,13 +237,6 @@ export default function EvolutionPanel({
         </button>
 
       </div>
-
-      {toast &&
-        createPortal(
-          <div className="toast-popup">{toast}</div>,
-          document.getElementById("toast-root") as HTMLElement
-        )
-      }
     </div>
   );
 }

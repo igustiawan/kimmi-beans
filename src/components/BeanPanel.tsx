@@ -16,7 +16,7 @@ type Props = {
 
   // stats
   headerStatsReady: boolean;
-
+  onToast?: (msg: string) => void;
   // callbacks
   onGoMint: () => void;
   onStatsUpdate: (xp: number, beans: number) => void;
@@ -29,6 +29,7 @@ export default function BeanPanel({
   fid,
   username,
   headerStatsReady,
+  onToast,
   onGoMint,
   onStatsUpdate
 }: Props) {
@@ -120,6 +121,7 @@ export default function BeanPanel({
       bean={mintResult}
       fid={fid}
       username={username}
+      onToast={onToast}
       onStatsUpdate={onStatsUpdate}
     />
   );

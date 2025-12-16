@@ -11,6 +11,7 @@ import BeanViewer from "./components/BeanViewer";
 import { useLeaderboard } from "./hooks/useLeaderboard";
 import { useMintStatus } from "./hooks/useMintStatus";
 import { useHeaderStats } from "./hooks/useHeaderStats";
+import AppLayout from "./components/AppLayout";
 
 type Tab = "mint" | "bean" | "rank" | "faq" | "id";
 
@@ -191,6 +192,34 @@ export default function App() {
     setTab(t);
   }
 
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 1800);
+  }
+
+  function renderContentWithToast() {
+    if (tab === "bean") {
+      return (
+        <BeanPanel
+          wallet={wallet ?? null}
+          isConnected={isConnected}
+          mintResult={mintResult}
+          fid={userFID}
+          username={displayName}
+          headerStatsReady={headerStatsReady}
+          onGoMint={() => setTab("mint")}
+          onStatsUpdate={(xp, beans) => {
+            handleStatsUpdate(xp, beans);
+            refreshLeaderboard();
+          }}
+          onToast={showToast} 
+        />
+      );
+    }
+
+    return renderContent();
+  }
+
   // ============================================================
   // RENDER content per tab
   // ============================================================
@@ -336,81 +365,19 @@ export default function App() {
             </div>
           </div>
         ) : (
-          // =========================
-          // REAL APP (NO GLITCH)
-          // =========================
-          <div className="app">
-            {/* HEADER */}
-            <div className="header" role="banner">
-              <div className="header-inner">
-                <div className="header-left">
-                  <img src={pfp || "/icon.png"} className="user-pfp" alt="pfp" />
-                  <span className="app-name">{displayName || "Kimmi"}</span>
-                </div>
-
-                <div className="header-right">
-                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                    <span className="header-badge">🫘 {dailyBeans}</span>
-                    <span className="header-badge">⭐ {lifetimeXp}</span>
-                    {wallet && (
-                      <span className="wallet-badge">
-                        {wallet.slice(0, 6)}…{wallet.slice(-4)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* CONTENT */}
-            <div className={`content-bg ${tab === "rank" ? "leader-mode" : ""}`}>
-              {renderContent()}
-            </div>
-
-            <div id="toast-root"></div>
-
-            {/* NAV */}
-            <div className="bottom-nav">
-              {!hasMinted && (
-                <div
-                  className={`nav-item ${tab === "mint" ? "active" : ""}`}
-                  onClick={() => safeSetTab("mint")}
-                >
-                  🫘<span>Mint</span>
-                </div>
-              )}
-
-              <div
-                className={`nav-item ${tab === "bean" ? "active" : ""}`}
-                onClick={() => safeSetTab("bean")}
-              >
-                🌱<span>My Bean</span>
-              </div>
-
-              <div
-                className={`nav-item ${tab === "id" ? "active" : ""}`}
-                onClick={() => safeSetTab("id")}
-              >
-                🆔<span>My ID</span>
-              </div>
-
-              <div
-                className={`nav-item ${tab === "rank" ? "active" : ""}`}
-                onClick={() => safeSetTab("rank")}
-              >
-                🏆<span>Rank</span>
-              </div>
-
-              <div
-                className={`nav-item ${tab === "faq" ? "active" : ""}`}
-                onClick={() => safeSetTab("faq")}
-              >
-                ❓<span>FAQ</span>
-              </div>
-            </div>
-
-            {toast && <div className="toast-popup">{toast}</div>}
-          </div>
+          <AppLayout
+            tab={tab}
+            hasMinted={hasMinted}
+            pfp={pfp}
+            displayName={displayName}
+            wallet={wallet}
+            dailyBeans={dailyBeans}
+            lifetimeXp={lifetimeXp}
+            toast={toast}
+            onTabChange={safeSetTab}
+          >
+            {renderContentWithToast()}
+          </AppLayout>
         )}
       </>
     );
