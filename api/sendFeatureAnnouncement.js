@@ -30,13 +30,21 @@ export default async function handler(req, res) {
   const tokens = rows.map(r => r.token);
 
   // 📦 payload notif (schema yang TERBUKTI WORK)
-  const payload = {
-    notificationId: `kimmi-feature-${Date.now()}`,
-    title: "🔥 New Feature on Kimmi Beans",
-    body: "You can now view your Neynar Score and Tier directly.",
-    targetUrl: "https://xkimmi.fun",
-    tokens
-  };
+  // const payload = {
+  //   notificationId: `kimmi-feature-${Date.now()}`,
+  //   title: "🔥 New Feature on Kimmi Beans",
+  //   body: "You can now view your Neynar Score and Tier directly.",
+  //   targetUrl: "https://xkimmi.fun",
+  //   tokens
+  // };
+
+const payload = {
+  notificationId: `kimmi-reminder-${Date.now()}`,
+  title: "⏰ Don’t Break Your Streak!",
+  body: "Keep your win streak alive by updating your on-chain data in Kimmi Beans 🌱",
+  targetUrl: "https://xkimmi.fun",
+  tokens
+};
 
   // 🚀 kirim ke Farcaster (1 request = banyak user)
   const resp = await fetch(notifyUrl, {
